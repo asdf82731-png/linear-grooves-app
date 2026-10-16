@@ -166,13 +166,9 @@ const HEEL = [
     tip: '最難的一個。先在 60 BPM 以下踩穩，可以試 Swivel 轉腳或 Heel-Toe 輪流，讓大腿不用每下都出力。' },
 ];
 
-const ACCENT_BASES = {
-  single: { name: '單擊', p: 'RL' },
-  double: { name: '雙擊', p: 'RRLL' },
-};
 const COUNTS = { 1: [''], 2: ['', '&'], 3: ['', '&', 'a'], 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
 const SUB_NAME = { 1: '4 分音符', 2: '8 分音符', 3: '三連音', 4: '16 分音符', 6: '六連音' };
-const MODES = ['basic', 'heel', 'groove', 'combo', 'hh', 'acc', 'rand'];
+const MODES = ['basic', 'heel', 'groove', 'combo', 'hh', 'rand'];
 const LANES = ['RH', 'LH', 'RF', 'LF'];
 const INST_NAME = { hh: 'Hi-hat', ride: 'Ride', sn: '小鼓', bd: '大鼓', hf: '腳踩鈸' };
 const LIMB_NAME = { RH: '右手', LH: '左手', RF: '右腳', LF: '左腳' };
@@ -180,10 +176,10 @@ const AMP = { X: 1, x: 0.62, g: 0.22 };
 
 const MIN_BPM = 30;
 const DEFAULTS = {
-  mode: 'basic', rSub: 4, rRun: 2, rRest: false, aBase: 'single', aSub: 4,
+  mode: 'basic', rSub: 4, rRun: 2, rRest: false,
   reps: 8, autoNext: true, leftLead: false, playPart: 'all', timer: 0,
   bpm: 70, click: true, countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false, idx: { basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, acc: 0, rand: 0 },
+  seenGuide: false, idx: { basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, rand: 0 },
 };
 
 /* ---------- Storage (best effort) ---------- */
@@ -263,27 +259,9 @@ function makeRandomSheet() {
 function sheet() {
   const lists = { basic: BASIC, heel: HEEL, groove: GROOVE, combo: COMBO, hh: HIHAT };
   if (lists[S.mode]) return lists[S.mode].map((d) => build(d, S.mode));
-  if (S.mode === 'rand') {
-    if (!randomSheet || randomSheet.sub !== S.rSub || randomSheet.run !== S.rRun || randomSheet.rest !== S.rRest) makeRandomSheet();
-    return randomSheet.list.map((f, i) => feetFrom(f, [...f].map((_, k) => k % randomSheet.sub === 0), randomSheet.sub,
-      'rand:' + f, `隨機 ${i + 1}`, { tip: '先看清楚整排再開始，休止（·）的地方腳要停住。' }));
-  }
-  // Accent moving: the same foot pattern, accent walks through every position.
-  const base = ACCENT_BASES[S.aBase].p;
-  const unit = Math.max(base.length, S.aSub);
-  const total = Math.ceil((S.aSub * 4) / unit) * unit;
-  const out = [];
-  for (let k = 0; k < unit; k++) {
-    let st = '';
-    const acc = [];
-    for (let i = 0; i < total; i++) { st += base[i % base.length]; acc.push(i % unit === k); }
-    const pos = k % S.aSub;
-    const beat = Math.floor(k / S.aSub) + 1;
-    const where = `${beat}${pos ? ' ' + COUNTS[S.aSub][pos] : ''}`;
-    out.push(feetFrom(st, acc, S.aSub, `acc:${S.aBase}:${S.aSub}:${k}`, `重音在「${where}」`,
-      { en: `${ACCENT_BASES[S.aBase].name} · 重音踩大聲，其他踩小聲`, tip: '重音用腳跟抬起踩大聲，其他用腳跟放下踩小聲，兩種音量要分得清楚。' }));
-  }
-  return out;
+  if (!randomSheet || randomSheet.sub !== S.rSub || randomSheet.run !== S.rRun || randomSheet.rest !== S.rRest) makeRandomSheet();
+  return randomSheet.list.map((f, i) => feetFrom(f, [...f].map((_, k) => k % randomSheet.sub === 0), randomSheet.sub,
+    'rand:' + f, `隨機 ${i + 1}`, { tip: '先看清楚整排再開始，休止（·）的地方腳要停住。' }));
 }
 
 let SHEET = [];
@@ -417,8 +395,6 @@ function renderModeOpts() {
   $(`#rSub${S.rSub}`).checked = true;
   $('#rRun').value = S.rRun;
   $('#rRest').checked = S.rRest;
-  $('#aBase').value = S.aBase;
-  $(`#aSub${S.aSub}`).checked = true;
 }
 
 let hlMap = [], lastHl = -1;
@@ -717,8 +693,6 @@ function bind() {
   $('#rRun').addEventListener('change', rebuild(() => { S.rRun = +$('#rRun').value; }));
   $('#rRest').addEventListener('change', rebuild(() => { S.rRest = $('#rRest').checked; }));
   $('#btnReroll').addEventListener('click', () => { if (playing) stop(); makeRandomSheet(); renderAll(); flash('換了一組新的隨機腳順'); });
-  $('#aBase').addEventListener('change', rebuild(() => { S.aBase = $('#aBase').value; S.idx.acc = 0; }));
-  document.querySelectorAll('input[name="aSub"]').forEach((el) => el.addEventListener('change', rebuild(() => { S.aSub = +el.value; S.idx.acc = 0; })));
 
   $('#exList').addEventListener('click', (e) => {
     const b = e.target.closest('.ex');
@@ -765,7 +739,6 @@ function bind() {
 
 /* ---------- Boot ---------- */
 if (!MODES.includes(S.mode)) S.mode = 'basic';
-if (!ACCENT_BASES[S.aBase]) S.aBase = 'single';
 if (![2, 3, 4].includes(S.rSub)) S.rSub = 4;
 syncControls();
 bind();
