@@ -1,0 +1,559 @@
+'use strict';
+
+/* ---------- Sticking library ----------
+ * Linear = no two limbs ever strike together. A groove is built by
+ * chaining short groups of hand notes that end on a kick (RLK, RLRK …),
+ * so each slot of the bar has exactly one voice.
+ */
+const LIB = {
+  2: ['RK', 'LK'],
+  3: ['RLK', 'LRK', 'RRK', 'LLK'],
+  4: ['RLRK', 'RLLK', 'LRLK', 'RRLK', 'LRRK'],
+  5: ['RLRLK', 'RLRRK', 'RLLRK', 'LRLLK', 'RRLLK'],
+  6: ['RLRLRK', 'RLRLLK', 'RRLLRK', 'RLLRLK'],
+};
+const DOUBLE_KICK = {
+  3: ['RKK', 'LKK'],
+  4: ['RLKK', 'LRKK'],
+  5: ['RLRKK', 'RLLKK'],
+  6: ['RLRLKK', 'RLLRKK'],
+};
+
+// y = offset from the top staff line, in px (half a staff space = 4).
+const VOICES = {
+  hh:   { label: 'HH', y: -4, cym: true },  // G5, above the staff
+  ride: { label: 'RD', y: 0,  cym: true },  // F5, top line
+  t1:   { label: 'T1', y: 4 },              // E5
+  sn:   { label: 'SN', y: 12 },             // C5
+  ft:   { label: 'FT', y: 20 },             // A4
+  k:    { label: 'BD', y: 28 },             // F4
+};
+const COUNTS = { 4: ['', 'e', '&', 'a'], 3: ['', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
+const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' };
+
+const DEFAULTS = {
+  sub: 4, beats: 4, bars: 1, sizes: [3, 4, 5], kickPos: 'end', doubleKick: false,
+  orch: 'hh', accents: true, bpm: 80, click: true, countIn: false,
+  trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
+};
+
+/* ---------- Storage (best effort) ---------- */
+function load(key, fallback) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key));
+    return v == null ? fallback : v;
+  } catch { return fallback; }
+}
+function save(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
+}
+
+const S = Object.assign({}, DEFAULTS, load('lg.settings', {}));
+let favs = load('lg.favs', []);
+let pattern = load('lg.pattern', null);
+let SL = [];          // flattened slots of the current pattern
+
+const $ = (s) => document.querySelector(s);
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+
+/* ---------- Generator ---------- */
+function pool(size) {
+  let list = LIB[size].slice();
+  if (S.doubleKick && DOUBLE_KICK[size]) list = list.concat(DOUBLE_KICK[size]);
+  if (S.kickPos === 'start') list = list.map((s) => s.slice(-1) + s.slice(0, -1));
+  return list;
+}
+
+function voicesFor(stick) {
+  let rv = 'hh', lv = 'sn';
+  if (S.orch === 'ride') rv = 'ride';
+  else if (S.orch === 'toms') { rv = pick(['hh', 't1', 'ft', 'ft']); lv = pick(['sn', 'sn', 't1']); }
+  return [...stick].map((c) => (c === 'K' ? 'k' : c === 'R' ? rv : lv));
+}
+
+function makeGroup(size, avoid) {
+  let list = pool(size);
+  if (avoid && list.length > 1) list = list.filter((s) => s !== avoid);
+  const stick = pick(list);
+  return { stick, voices: voicesFor(stick) };
+}
+
+// Random composition of n using only the allowed sizes (DP keeps every step solvable).
+function partition(n, sizes) {
+  const ok = Array(n + 1).fill(false);
+  ok[0] = true;
+  for (let i = 1; i <= n; i++) ok[i] = sizes.some((s) => s <= i && ok[i - s]);
+  if (!ok[n]) return null;
+  const out = [];
+  let rem = n;
+  while (rem > 0) {
+    const s = pick(sizes.filter((x) => x <= rem && ok[rem - x]));
+    out.push(s);
+    rem -= s;
+  }
+  return out;
+}
+
+function generate() {
+  const n = S.beats * S.sub * S.bars;
+  const sizes = S.sizes.slice().sort((a, b) => a - b);
+  const parts = sizes.length ? partition(n, sizes) : null;
+  if (!parts) {
+    flash(`選的分組長度湊不出 ${n} 個音，請多勾選幾種長度`);
+    return false;
+  }
+  pattern = { sub: S.sub, beats: S.beats, bars: S.bars, groups: parts.map((s) => makeGroup(s)) };
+  patternChanged(true);
+  return true;
+}
+
+function flatten(p) {
+  const out = [];
+  p.groups.forEach((g, gi) => {
+    [...g.stick].forEach((limb, k) => {
+      out.push({ limb, voice: g.voices[k], acc: S.accents && k === 0, g: gi });
+    });
+  });
+  return out;
+}
+
+/* ---------- Rendering ---------- */
+function renderNotation() {
+  const p = pattern;
+  const per = p.beats * p.sub;
+  const slotW = p.sub === 3 ? 30 : p.sub === 6 ? 19 : 24;
+  const beatGap = 12, x0 = 60, top = 56, H = 132;
+  const beatW = p.sub * slotW + beatGap;
+  const W = x0 + p.beats * beatW + 8;
+  const beamY = 30;
+  let html = '';
+
+  for (let b = 0; b < p.bars; b++) {
+    const ph = [], body = [], beams = [];
+    let s = `<svg class="staff" viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * 0.74)}px" role="img" aria-label="第 ${b + 1} 小節譜例">`;
+
+    for (let bt = 0; bt < p.beats; bt++) {
+      const xs = [];
+      for (let k = 0; k < p.sub; k++) {
+        const idx = b * per + bt * p.sub + k;
+        const sl = SL[idx];
+        const x = x0 + bt * beatW + k * slotW + slotW / 2;
+        xs.push(x);
+        ph.push(`<rect class="ph" data-i="${idx}" x="${x - slotW / 2}" y="4" width="${slotW}" height="${H - 8}" rx="3"/>`);
+        const v = VOICES[sl.voice];
+        const y = top + v.y;
+        if (v.cym) {
+          body.push(`<path class="xh" d="M${x - 3.6} ${y - 3.6}L${x + 3.6} ${y + 3.6}M${x - 3.6} ${y + 3.6}L${x + 3.6} ${y - 3.6}"/>`);
+        } else {
+          body.push(`<ellipse class="nh" cx="${x}" cy="${y}" rx="4.7" ry="3.4" transform="rotate(-22 ${x} ${y})"/>`);
+        }
+        body.push(`<line class="st" x1="${x + 4.2}" y1="${y - 1}" x2="${x + 4.2}" y2="${beamY}"/>`);
+        if (sl.acc) body.push(`<path class="ac" d="M${x - 3} ${beamY - 13}L${x + 5} ${beamY - 10}L${x - 3} ${beamY - 7}"/>`);
+        body.push(`<text class="stk ${sl.limb}" x="${x}" y="108" text-anchor="middle">${sl.limb}</text>`);
+        body.push(`<text class="cnt" x="${x}" y="124" text-anchor="middle">${k === 0 ? bt + 1 : COUNTS[p.sub][k]}</text>`);
+      }
+      const bx1 = xs[0] + 4.2 - 0.6, bx2 = xs[xs.length - 1] + 4.2 + 0.6;
+      beams.push(`<rect class="bm" x="${bx1}" y="${beamY}" width="${bx2 - bx1}" height="4"/>`);
+      if (p.sub !== 3) beams.push(`<rect class="bm" x="${bx1}" y="${beamY + 7}" width="${bx2 - bx1}" height="4"/>`);
+      if (p.sub !== 4) {
+        beams.push(`<text class="tup" x="${(bx1 + bx2) / 2}" y="12" text-anchor="middle">${p.sub}</text>`);
+      }
+    }
+
+    // Group brackets under the sticking row, split at group borders.
+    let runStart = 0;
+    for (let k = 1; k <= per; k++) {
+      const idx = b * per + k;
+      if (k === per || SL[idx].g !== SL[idx - 1].g) {
+        const a = slotX(runStart), z = slotX(k - 1);
+        body.push(`<line class="gb" x1="${a - 6}" y1="113" x2="${z + 6}" y2="113"/>`);
+        runStart = k;
+      }
+    }
+    function slotX(k) {
+      const bt = Math.floor(k / p.sub);
+      return x0 + bt * beatW + (k % p.sub) * slotW + slotW / 2;
+    }
+
+    s += ph.join('');
+    for (let i = 0; i < 5; i++) s += `<line class="sl" x1="6" x2="${W - 4}" y1="${top + i * 8}" y2="${top + i * 8}"/>`;
+    s += `<rect class="bl" x="12" y="${top + 8}" width="3.5" height="16"/><rect class="bl" x="19" y="${top + 8}" width="3.5" height="16"/>`;
+    if (b === 0) s += `<text class="ts" x="40" y="${top + 15}" text-anchor="middle">${p.beats}</text><text class="ts" x="40" y="${top + 31}" text-anchor="middle">4</text>`;
+    if (p.bars > 1) s += `<text class="bnum" x="6" y="${top - 8}">${b + 1}</text>`;
+    s += `<rect class="bl" x="6" y="${top}" width="1" height="32"/>`;
+    if (b === p.bars - 1) {
+      s += `<rect class="bl" x="${W - 10}" y="${top}" width="1" height="32"/><rect class="bl" x="${W - 7}" y="${top}" width="3.5" height="32"/>`;
+    } else {
+      s += `<rect class="bl" x="${W - 5}" y="${top}" width="1" height="32"/>`;
+    }
+    s += beams.join('') + body.join('') + '</svg>';
+    html += s;
+  }
+  $('#notation').innerHTML = html;
+}
+
+function renderStrip() {
+  let i = 0;
+  $('#strip').innerHTML = pattern.groups.map((g, gi) => {
+    const chips = [...g.stick].map((limb, k) => {
+      const acc = S.accents && k === 0 ? ' acc' : '';
+      return `<span class="chip ${limb}${acc}" data-i="${i++}">${limb}<small>${VOICES[g.voices[k]].label}</small></span>`;
+    }).join('');
+    return `<button type="button" class="grp" data-g="${gi}" aria-label="重新產生第 ${gi + 1} 組（${g.stick}）">${chips}</button>`;
+  }).join('');
+}
+
+let hlMap = [];
+function indexHighlights() {
+  hlMap = SL.map(() => []);
+  document.querySelectorAll('.ph[data-i], .chip[data-i]').forEach((el) => {
+    hlMap[+el.dataset.i].push(el);
+  });
+}
+
+function patternChanged(fresh) {
+  SL = flatten(pattern);
+  $('#meta').textContent = `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`;
+  renderNotation();
+  renderStrip();
+  indexHighlights();
+  lastHl = -1;
+  save('lg.pattern', pattern);
+  if (fresh && playing) cur = 0;   // restart the new groove on the next slot
+}
+
+function stickingText(p) {
+  return p.groups.map((g) => [...g.stick].join(' ')).join(' | ');
+}
+
+/* ---------- Audio (synthesised kit, no samples) ---------- */
+let ctx = null, master = null, noiseBuf = null;
+
+function ensureAudio() {
+  if (!ctx) {
+    ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const comp = ctx.createDynamicsCompressor();
+    master = ctx.createGain();
+    master.gain.value = 0.9;
+    master.connect(comp).connect(ctx.destination);
+    noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+    const d = noiseBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  if (ctx.state === 'suspended') ctx.resume();
+}
+
+function env(g, t, peak, dec) {
+  g.gain.setValueAtTime(peak, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + dec);
+}
+function noise(t, dec, type, freq, peak, q) {
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter();
+  f.type = type;
+  f.frequency.value = freq;
+  if (q) f.Q.value = q;
+  const g = ctx.createGain();
+  env(g, t, peak, dec);
+  src.connect(f).connect(g).connect(master);
+  src.start(t, Math.random() * 0.5);
+  src.stop(t + dec + 0.02);
+}
+function tone(t, f0, f1, dec, peak, type) {
+  const o = ctx.createOscillator();
+  o.type = type || 'sine';
+  o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dec * 0.6);
+  const g = ctx.createGain();
+  env(g, t, peak, dec);
+  o.connect(g).connect(master);
+  o.start(t);
+  o.stop(t + dec + 0.02);
+}
+const KIT = {
+  k:    (t, a) => { tone(t, 150, 44, 0.36, 1.0 * a); noise(t, 0.012, 'lowpass', 3000, 0.25 * a); },
+  sn:   (t, a) => { noise(t, 0.16, 'highpass', 1400, 0.6 * a); tone(t, 230, 170, 0.08, 0.35 * a, 'triangle'); },
+  hh:   (t, a) => { noise(t, 0.045, 'highpass', 7800, 0.38 * a); },
+  ride: (t, a) => { noise(t, 0.5, 'bandpass', 6200, 0.18 * a, 0.9); tone(t, 2400, 2350, 0.35, 0.03 * a, 'triangle'); },
+  t1:   (t, a) => { tone(t, 230, 155, 0.28, 0.75 * a); noise(t, 0.02, 'bandpass', 1500, 0.15 * a); },
+  ft:   (t, a) => { tone(t, 125, 82, 0.4, 0.85 * a); noise(t, 0.02, 'bandpass', 900, 0.15 * a); },
+};
+function click(t, downbeat) {
+  const f = downbeat ? 2000 : 1400;
+  tone(t, f, f, 0.03, 0.22, 'square');
+}
+
+/* ---------- Transport ---------- */
+let playing = false, cur = 0, nextTime = 0, timer = null, countSlots = 0, loops = 0;
+let queue = [], lastHl = -1, wakeLock = null;
+
+function slotDur() { return 60 / S.bpm / pattern.sub; }
+
+function scheduleSlot(n, t) {
+  const sub = pattern.sub;
+  if (n < 0) {
+    const k = n + countSlots;
+    if (k % sub === 0) {
+      click(t, k === 0);
+      queue.push({ t, i: -1, count: k / sub + 1 });
+    }
+    return;
+  }
+  const len = SL.length;
+  const i = n % len;
+  if (i === 0 && n > 0) {
+    loops++;
+    if (S.trainer && loops % S.trainerEvery === 0 && S.bpm < S.trainerMax) {
+      setBpm(Math.min(S.trainerMax, S.bpm + S.trainerStep));
+      queue.push({ t, i: -2, msg: `加速到 ${S.bpm} BPM` });
+    }
+  }
+  const s = SL[i];
+  KIT[s.voice](t, s.acc ? 1 : 0.55);
+  if (S.click && i % sub === 0) click(t, i % (pattern.beats * sub) === 0);
+  queue.push({ t, i });
+}
+
+function tick() {
+  while (nextTime < ctx.currentTime + 0.12) {
+    scheduleSlot(cur, nextTime);
+    nextTime += slotDur();
+    cur++;
+  }
+}
+
+function draw() {
+  if (!playing) return;
+  const now = ctx.currentTime;
+  while (queue.length && queue[0].t <= now) {
+    const e = queue.shift();
+    if (e.i === -1) { $('#status').textContent = `預備 ${e.count}`; }
+    else if (e.i === -2) { $('#status').textContent = e.msg; }
+    else {
+      if (e.i === 0 && $('#status').textContent.startsWith('預備')) $('#status').textContent = '';
+      highlight(e.i);
+    }
+  }
+  requestAnimationFrame(draw);
+}
+
+function highlight(i) {
+  if (lastHl >= 0 && hlMap[lastHl]) hlMap[lastHl].forEach((el) => el.classList.remove('on'));
+  if (hlMap[i]) hlMap[i].forEach((el) => el.classList.add('on'));
+  lastHl = i;
+}
+
+async function play() {
+  ensureAudio();
+  playing = true;
+  countSlots = S.countIn ? pattern.beats * pattern.sub : 0;
+  cur = -countSlots;
+  loops = 0;
+  queue = [];
+  nextTime = ctx.currentTime + 0.08;
+  tick();
+  timer = setInterval(tick, 25);
+  requestAnimationFrame(draw);
+  setPlayIcon();
+  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { wakeLock = null; }
+}
+
+function stop() {
+  playing = false;
+  clearInterval(timer);
+  queue = [];
+  highlight(-1);
+  $('#status').textContent = '';
+  setPlayIcon();
+  try { wakeLock?.release(); } catch { /* ignore */ }
+  wakeLock = null;
+}
+
+function setPlayIcon() {
+  $('#playIcon').setAttribute('d', playing ? 'M6 5h4.5v14H6zM13.5 5H18v14h-4.5z' : 'M7 4.5v15l13-7.5z');
+  $('#btnPlay').setAttribute('aria-label', playing ? '停止' : '播放');
+}
+
+function setBpm(v) {
+  S.bpm = Math.max(40, Math.min(240, Math.round(v)));
+  $('#bpm').value = S.bpm;
+  $('#bpmOut').textContent = S.bpm;
+  saveSettings();
+}
+
+/* ---------- UI helpers ---------- */
+let flashTimer = null;
+function flash(msg) {
+  $('#status').textContent = msg;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { if ($('#status').textContent === msg) $('#status').textContent = ''; }, 2600);
+}
+function saveSettings() { save('lg.settings', S); }
+
+function renderFavs() {
+  const ul = $('#favs');
+  if (!favs.length) {
+    ul.innerHTML = '<li class="empty">按「收藏」把喜歡的節奏存在這台裝置上。</li>';
+    return;
+  }
+  ul.innerHTML = favs.map((f, i) => `
+    <li class="fav">
+      <div class="fav-main">
+        <div class="fav-stk">${stickingText(f.p)}</div>
+        <div class="fav-meta">${SUB_NAME[f.p.sub]} · ${f.p.beats}/4 · ${f.p.bars} 小節 · ${f.bpm} BPM</div>
+      </div>
+      <button type="button" class="ghost" data-load="${i}">載入</button>
+      <button type="button" class="ghost del" data-del="${i}">刪除</button>
+    </li>`).join('');
+}
+
+function syncControls() {
+  $(`#sub${S.sub}`).checked = true;
+  $('#beats').value = S.beats;
+  $(`#bars${S.bars}`).checked = true;
+  [2, 3, 4, 5, 6].forEach((n) => { $(`#size${n}`).checked = S.sizes.includes(n); });
+  $(S.kickPos === 'start' ? '#kpStart' : '#kpEnd').checked = true;
+  $('#orch').value = S.orch;
+  $('#doubleKick').checked = S.doubleKick;
+  $('#accents').checked = S.accents;
+  $('#click').checked = S.click;
+  $('#countIn').checked = S.countIn;
+  $('#trainer').checked = S.trainer;
+  $('#trainerEvery').value = S.trainerEvery;
+  $('#trainerStep').value = S.trainerStep;
+  $('#trainerMax').value = S.trainerMax;
+  $('#trainerOpts').hidden = !S.trainer;
+  setBpm(S.bpm);
+}
+
+/* ---------- Events ---------- */
+function bind() {
+  $('#btnPlay').addEventListener('click', () => (playing ? stop() : play()));
+  $('#btnGen').addEventListener('click', generate);
+  $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
+  $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
+  $('#bpmUp').addEventListener('click', () => setBpm(S.bpm + 5));
+
+  // Structural rules → regenerate.
+  document.querySelectorAll('input[name="sub"]').forEach((el) => el.addEventListener('change', () => { S.sub = +el.value; saveSettings(); generate(); }));
+  document.querySelectorAll('input[name="bars"]').forEach((el) => el.addEventListener('change', () => { S.bars = +el.value; saveSettings(); generate(); }));
+  document.querySelectorAll('input[name="kickPos"]').forEach((el) => el.addEventListener('change', () => { S.kickPos = el.value; saveSettings(); generate(); }));
+  $('#beats').addEventListener('change', (e) => { S.beats = +e.target.value; saveSettings(); generate(); });
+  $('#sizes').addEventListener('change', () => {
+    S.sizes = [2, 3, 4, 5, 6].filter((n) => $(`#size${n}`).checked);
+    saveSettings();
+    generate();
+  });
+  $('#doubleKick').addEventListener('change', (e) => { S.doubleKick = e.target.checked; saveSettings(); generate(); });
+
+  // Cosmetic rules → keep the sticking.
+  $('#orch').addEventListener('change', (e) => { S.orch = e.target.value; saveSettings(); revoice(); });
+  $('#accents').addEventListener('change', (e) => { S.accents = e.target.checked; saveSettings(); patternChanged(false); });
+
+  $('#click').addEventListener('change', (e) => { S.click = e.target.checked; saveSettings(); });
+  $('#countIn').addEventListener('change', (e) => { S.countIn = e.target.checked; saveSettings(); });
+  $('#trainer').addEventListener('change', (e) => { S.trainer = e.target.checked; $('#trainerOpts').hidden = !S.trainer; loops = 0; saveSettings(); });
+  $('#trainerEvery').addEventListener('change', (e) => { S.trainerEvery = +e.target.value; saveSettings(); });
+  $('#trainerStep').addEventListener('change', (e) => { S.trainerStep = +e.target.value; saveSettings(); });
+  $('#trainerMax').addEventListener('change', (e) => {
+    S.trainerMax = Math.max(40, Math.min(260, +e.target.value || DEFAULTS.trainerMax));
+    e.target.value = S.trainerMax;
+    saveSettings();
+  });
+
+  $('#strip').addEventListener('click', (e) => {
+    const btn = e.target.closest('.grp');
+    if (!btn) return;
+    const gi = +btn.dataset.g;
+    const old = pattern.groups[gi];
+    pattern.groups[gi] = makeGroup(old.stick.length, old.stick);
+    patternChanged(false);
+  });
+
+  $('#btnRevoice').addEventListener('click', revoice);
+  $('#btnMirror').addEventListener('click', () => {
+    const swap = { R: 'L', L: 'R', K: 'K' };
+    pattern.groups.forEach((g) => {
+      g.stick = [...g.stick].map((c) => swap[c]).join('');
+      g.voices = voicesFor(g.stick);
+    });
+    patternChanged(false);
+    flash('已左右對調');
+  });
+  $('#btnCopy').addEventListener('click', async () => {
+    const text = `${stickingText(pattern)}  (${SUB_NAME[pattern.sub]}, ${pattern.beats}/4, ${S.bpm} BPM)`;
+    try { await navigator.clipboard.writeText(text); flash('已複製手順'); }
+    catch { flash(text); }
+  });
+  $('#btnFav').addEventListener('click', () => {
+    favs.unshift({ p: JSON.parse(JSON.stringify(pattern)), bpm: S.bpm });
+    favs = favs.slice(0, 50);
+    save('lg.favs', favs);
+    renderFavs();
+    flash('已收藏');
+  });
+  $('#favs').addEventListener('click', (e) => {
+    const l = e.target.closest('[data-load]');
+    const d = e.target.closest('[data-del]');
+    if (l) {
+      const f = favs[+l.dataset.load];
+      pattern = JSON.parse(JSON.stringify(f.p));
+      Object.assign(S, { sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
+      syncControls();
+      setBpm(f.bpm);
+      patternChanged(true);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      flash('已載入');
+    } else if (d) {
+      if (!d.classList.contains('armed')) {
+        d.classList.add('armed');
+        d.textContent = '確定刪除？';
+        setTimeout(() => { if (d.isConnected) { d.classList.remove('armed'); d.textContent = '刪除'; } }, 3000);
+        return;
+      }
+      favs.splice(+d.dataset.del, 1);
+      save('lg.favs', favs);
+      renderFavs();
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.target.matches('input, select, textarea')) return;
+    if (e.code === 'Space') { e.preventDefault(); playing ? stop() : play(); }
+    else if (e.key === 'g' || e.key === 'G') generate();
+  });
+  document.addEventListener('visibilitychange', async () => {
+    if (playing && document.visibilityState === 'visible' && !wakeLock) {
+      try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* ignore */ }
+    }
+  });
+}
+
+function revoice() {
+  pattern.groups.forEach((g) => { g.voices = voicesFor(g.stick); });
+  patternChanged(false);
+}
+
+/* ---------- Boot ---------- */
+function validPattern(p) {
+  return p && Array.isArray(p.groups) && p.groups.length && [3, 4, 6].includes(p.sub) &&
+    p.groups.reduce((n, g) => n + g.stick.length, 0) === p.beats * p.sub * p.bars;
+}
+
+syncControls();
+bind();
+renderFavs();
+if (validPattern(pattern)) {
+  Object.assign(S, { sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
+  syncControls();
+  patternChanged(false);
+} else if (!generate()) {
+  Object.assign(S, { sizes: DEFAULTS.sizes });
+  syncControls();
+  generate();
+}
+
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  try { navigator.serviceWorker?.register('sw.js').catch(() => {}); } catch { /* not allowed here */ }
+}

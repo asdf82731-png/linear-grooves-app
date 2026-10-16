@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linear Grooves</title>
+<meta name="description" content="爵士鼓線性節奏（Linear Grooves）產生器與練習器">
+<meta name="theme-color" content="#15191E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--APP-START-->
+<div class="app">
+  <header class="top">
+    <h1 class="brand">Linear Grooves</h1>
+    <p class="tag">線性鼓組節奏產生器 · 同一時間只有一個肢體發聲</p>
+  </header>
+
+  <section class="sheet" aria-label="目前的節奏">
+    <div class="sheet-head">
+      <div class="meta" id="meta">16 分音符 · 4/4 · 1 小節</div>
+      <div class="status" id="status" aria-live="polite"></div>
+    </div>
+    <div class="notation" id="notation"></div>
+    <div class="strip-label">分組（點一下可重新產生該組）</div>
+    <div class="strip" id="strip"></div>
+    <div class="actions">
+      <button type="button" id="btnRevoice" class="ghost">換配器</button>
+      <button type="button" id="btnMirror" class="ghost">左右對調</button>
+      <button type="button" id="btnCopy" class="ghost">複製手順</button>
+      <button type="button" id="btnFav" class="ghost">收藏</button>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-gen">
+    <h2 id="h-gen">產生規則</h2>
+
+    <div class="field">
+      <span class="lbl">音符分割</span>
+      <div class="seg" role="radiogroup" aria-label="音符分割">
+        <label><input type="radio" name="sub" value="4" id="sub4"><span>16 分</span></label>
+        <label><input type="radio" name="sub" value="3" id="sub3"><span>8 分三連</span></label>
+        <label><input type="radio" name="sub" value="6" id="sub6"><span>6 連音</span></label>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <label class="lbl" for="beats">拍號</label>
+        <select id="beats">
+          <option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option>
+          <option value="5">5/4</option><option value="6">6/4</option><option value="7">7/4</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="lbl">小節數</span>
+        <div class="seg" role="radiogroup" aria-label="小節數">
+          <label><input type="radio" name="bars" value="1" id="bars1"><span>1</span></label>
+          <label><input type="radio" name="bars" value="2" id="bars2"><span>2</span></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <span class="lbl">分組長度（音符數）</span>
+      <div class="chips" id="sizes">
+        <label><input type="checkbox" value="2" id="size2"><span>2</span></label>
+        <label><input type="checkbox" value="3" id="size3"><span>3</span></label>
+        <label><input type="checkbox" value="4" id="size4"><span>4</span></label>
+        <label><input type="checkbox" value="5" id="size5"><span>5</span></label>
+        <label><input type="checkbox" value="6" id="size6"><span>6</span></label>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div class="field">
+        <span class="lbl">大鼓位置</span>
+        <div class="seg" role="radiogroup" aria-label="大鼓位置">
+          <label><input type="radio" name="kickPos" value="end" id="kpEnd"><span>組尾</span></label>
+          <label><input type="radio" name="kickPos" value="start" id="kpStart"><span>組首</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">配器</span>
+        <select id="orch" aria-label="配器">
+          <option value="hh">右手 Hi-hat</option>
+          <option value="ride">右手 Ride</option>
+          <option value="toms">Fill（混合筒鼓）</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="toggles">
+      <label class="tg"><input type="checkbox" id="doubleKick"><span>允許雙踩（KK）</span></label>
+      <label class="tg"><input type="checkbox" id="accents"><span>每組第一音加重音</span></label>
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-prac">
+    <h2 id="h-prac">練習</h2>
+    <div class="toggles">
+      <label class="tg"><input type="checkbox" id="click"><span>節拍器（每拍）</span></label>
+      <label class="tg"><input type="checkbox" id="countIn"><span>預備拍一小節</span></label>
+      <label class="tg"><input type="checkbox" id="trainer"><span>自動加速</span></label>
+    </div>
+    <div class="trainer" id="trainerOpts">
+      每 <select id="trainerEvery" aria-label="每幾次循環"><option>2</option><option>4</option><option>8</option></select> 次循環
+      加 <select id="trainerStep" aria-label="每次加多少 BPM"><option>2</option><option>5</option><option>10</option></select> BPM，
+      最高 <input type="number" id="trainerMax" min="40" max="260" step="1" inputmode="numeric"> BPM
+    </div>
+  </section>
+
+  <section class="panel" aria-labelledby="h-fav">
+    <h2 id="h-fav">收藏</h2>
+    <ul class="favs" id="favs"></ul>
+  </section>
+
+  <footer class="foot">R = 右手 · L = 左手 · K = 大鼓。可從瀏覽器選單「加到主畫面」安裝成 App，離線也能用。</footer>
+</div>
+
+<nav class="transport" aria-label="播放控制">
+  <div class="transport-in">
+    <button type="button" id="btnPlay" class="play" aria-label="播放">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+    <div class="tempo">
+      <div class="tempo-top">
+        <button type="button" id="bpmDown" class="step" aria-label="減慢 5 BPM">−</button>
+        <output id="bpmOut" for="bpm" class="bpm">80</output>
+        <span class="bpm-unit">BPM</span>
+        <button type="button" id="bpmUp" class="step" aria-label="加快 5 BPM">+</button>
+      </div>
+      <input type="range" id="bpm" min="40" max="240" step="1" aria-label="速度">
+    </div>
+    <button type="button" id="btnGen" class="gen">產生</button>
+  </div>
+</nav>
+<!--APP-END-->
+<script src="app.js"></script>
+</body>
+</html>
