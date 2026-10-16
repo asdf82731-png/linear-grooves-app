@@ -126,7 +126,8 @@
     <summary><span class="fold-title">練習設定</span><span class="fold-sub">節拍器、預備拍、自動加速</span></summary>
     <div class="toggles">
       <label class="tg"><input type="checkbox" id="click"><span>節拍器：每拍響一聲</span></label>
-      <label class="tg"><input type="checkbox" id="clickSub"><span>節拍器也打細分音（例如 16 分音符的 e &amp; a，同一個聲音、比較小聲）</span></label>
+      <div class="trainer">節拍器的細分音（例如 16 分音符的 e &amp; a）
+        <select id="clickSub" aria-label="節拍器的細分音"><option value="soft">比拍點小聲</option><option value="same">跟拍點一樣大聲</option><option value="off">不打，只有拍點</option></select></div>
       <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
       <label class="tg"><input type="checkbox" id="trainer"><span>自動加速：打熟了自動變快</span></label>
     </div>

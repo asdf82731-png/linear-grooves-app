@@ -60,7 +60,7 @@ const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' 
 const MIN_BPM = 40;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
-  orch: 'hh', accents: true, bpm: 80, click: true, clickSub: true, countIn: false,
+  orch: 'hh', accents: true, bpm: 80, click: true, clickSub: 'soft', countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
 
@@ -413,7 +413,7 @@ const KIT = {
   ft:   (t, a) => { tone(t, 125, 82, 0.4, 0.85 * a); noise(t, 0.02, 'bandpass', 900, 0.15 * a); },
 };
 // Metronome: the same wood-block click on every beat — no louder or higher first beat.
-// Subdivisions (e & a …) use the very same click at a lower level.
+// Subdivisions (e & a …) use the very same click, softer or (setting 「跟拍點一樣大聲」) at the same level.
 // Pitch sweep from Pro Metronome's 木魚 kit, but a filtered square wave held at full level for 25 ms,
 // so it stays clearly louder than the drums instead of hiding under them.
 const SUB_CLICK = 0.3;   // subdivision clicks: same sound, about 10 dB under the beat
@@ -461,7 +461,7 @@ function scheduleSlot(n, t) {
   const s = SL[i];
   KIT[s.voice](t, s.acc ? 1 : 0.55);
   if (S.click && i % sub === 0) click(t);
-  else if (S.click && S.clickSub) click(t, SUB_CLICK);
+  else if (S.click && S.clickSub !== 'off') click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
   queue.push({ t, i });
 }
 
@@ -569,7 +569,7 @@ function syncControls() {
   $('#doubleKick').checked = S.doubleKick;
   $('#accents').checked = S.accents;
   $('#click').checked = S.click;
-  $('#clickSub').checked = S.clickSub;
+  $('#clickSub').value = S.clickSub;
   $('#countIn').checked = S.countIn;
   $('#trainer').checked = S.trainer;
   $('#trainerEvery').value = S.trainerEvery;
@@ -635,7 +635,7 @@ function bind() {
   $('#accents').addEventListener('change', (e) => { S.accents = e.target.checked; saveSettings(); patternChanged(false); });
 
   $('#click').addEventListener('change', (e) => { S.click = e.target.checked; saveSettings(); });
-  $('#clickSub').addEventListener('change', (e) => { S.clickSub = e.target.checked; saveSettings(); });
+  $('#clickSub').addEventListener('change', (e) => { S.clickSub = e.target.value; saveSettings(); });
   $('#countIn').addEventListener('change', (e) => { S.countIn = e.target.checked; saveSettings(); });
   $('#trainer').addEventListener('change', (e) => { S.trainer = e.target.checked; $('#trainerOpts').hidden = !S.trainer; loops = 0; saveSettings(); });
   $('#trainerEvery').addEventListener('change', (e) => { S.trainerEvery = +e.target.value; saveSettings(); });
@@ -771,6 +771,7 @@ function revoice() {
 }
 
 /* ---------- Boot ---------- */
+if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
 function validPattern(p) {
   return p && Array.isArray(p.groups) && p.groups.length && [3, 4, 6].includes(p.sub) &&
     p.groups.reduce((n, g) => n + g.stick.length, 0) === p.beats * p.sub * p.bars;
