@@ -344,10 +344,28 @@ let ctx = null, master = null, noiseBuf = null;
 function ensureAudio() {
   if (!ctx) {
     ctx = new (window.AudioContext || window.webkitAudioContext)();
+    // Loud but clean for phone speakers: boost, then a limiter that only touches the loudest peaks,
+    // then a soft clipper that rounds off any attack the limiter lets through (output stays below 0 dBFS).
     const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = 0;
+    comp.knee.value = 0;
+    comp.ratio.value = 20;
+    comp.attack.value = 0;
+    comp.release.value = 0.05;
+    // The shaper's input range is ±1, so feed it half the signal and let its curve cover ±2:
+    // straight line up to 0.7 (soft and accented notes keep their difference), then bends smoothly toward 0.98.
+    const half = ctx.createGain();
+    half.gain.value = 0.5;
+    const clip = ctx.createWaveShaper();
+    const curve = new Float32Array(2048);
+    for (let i = 0; i < curve.length; i++) {
+      const x = ((i / (curve.length - 1)) * 2 - 1) * 2, a = Math.abs(x);
+      curve[i] = Math.sign(x) * (a <= 0.7 ? a : 0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
+    }
+    clip.curve = curve;
     master = ctx.createGain();
-    master.gain.value = 0.9;
-    master.connect(comp).connect(ctx.destination);
+    master.gain.value = 2;
+    master.connect(comp).connect(half).connect(clip).connect(ctx.destination);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
