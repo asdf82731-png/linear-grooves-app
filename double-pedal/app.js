@@ -178,7 +178,7 @@ const MIN_BPM = 30;
 const DEFAULTS = {
   mode: 'basic', rSub: 4, rRun: 2, rRest: false,
   reps: 8, autoNext: true, leftLead: false, playPart: 'all', timer: 0,
-  bpm: 70, click: true, clickSub: true, countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
+  bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
   seenGuide: false, idx: { basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, rand: 0 },
 };
 
@@ -506,7 +506,7 @@ function hit(inst, t, amp, pan) {
 }
 const PAN = { RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35 };
 // Metronome: the same wood-block click on every beat — no louder or higher first beat.
-// Subdivisions (e & a …) use the very same click at a lower level.
+// Subdivisions (e & a …) use the very same click, softer or (setting 「跟拍點一樣大聲」) at the same level.
 // Pitch sweep from Pro Metronome's 木魚 kit, but a filtered square wave held at full level for 25 ms,
 // so it stays clearly louder than the drums instead of hiding under them.
 const SUB_CLICK = 0.3;   // subdivision clicks: same sound, about 10 dB under the beat
@@ -566,7 +566,7 @@ function scheduleSlot(n, t) {
     if (h !== '.' && audible(l.limb)) hit(l.inst, t, AMP[h], PAN[l.limb]);
   }
   if (S.click && i % sub === 0) click(t);
-  else if (S.click && S.clickSub) click(t, SUB_CLICK);
+  else if (S.click && S.clickSub !== 'off') click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
   queue.push({ t, i });
 }
 
@@ -663,7 +663,7 @@ function syncControls() {
   $('#playPart').value = S.playPart;
   $('#timerSel').value = S.timer;
   $('#click').checked = S.click;
-  $('#clickSub').checked = S.clickSub;
+  $('#clickSub').value = S.clickSub;
   $('#countIn').checked = S.countIn;
   $('#trainer').checked = S.trainer;
   $('#trainerEvery').value = S.trainerEvery;
@@ -743,7 +743,7 @@ function bind() {
     if (was) play();
   });
   $('#click').addEventListener('change', (e) => { S.click = e.target.checked; saveSettings(); });
-  $('#clickSub').addEventListener('change', (e) => { S.clickSub = e.target.checked; saveSettings(); });
+  $('#clickSub').addEventListener('change', (e) => { S.clickSub = e.target.value; saveSettings(); });
   $('#countIn').addEventListener('change', (e) => { S.countIn = e.target.checked; saveSettings(); });
   $('#trainer').addEventListener('change', (e) => { S.trainer = e.target.checked; $('#trainerOpts').hidden = !S.trainer; loops = 0; saveSettings(); });
   $('#trainerEvery').addEventListener('change', (e) => { S.trainerEvery = +e.target.value; saveSettings(); });
@@ -768,6 +768,7 @@ function bind() {
 }
 
 /* ---------- Boot ---------- */
+if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
 if (!MODES.includes(S.mode)) S.mode = 'basic';
 if (![2, 3, 4].includes(S.rSub)) S.rSub = 4;
 syncControls();
