@@ -9,9 +9,6 @@ const RUDIMENTS = [
   { id: 'double',  name: '雙擊',              en: 'Double Stroke Roll',   sub: 4, p: 'R R L L R R L L' },
   { id: 'triple',  name: '三擊',              en: 'Triple Stroke Roll',   sub: 3, p: 'R R R L L L' },
   { id: 'para',    name: '單 Paradiddle',     en: 'Single Paradiddle',    sub: 4, p: 'R> L R R L> R L L' },
-  { id: 'invpara', name: '反向 Paradiddle',   en: 'Inverted Paradiddle',  sub: 4, p: 'R> L L R L> R R L' },
-  { id: 'dblpara', name: '雙 Paradiddle',     en: 'Double Paradiddle',    sub: 6, p: 'R> L R L R R L> R L R L L' },
-  { id: 'paradd',  name: 'Paradiddle-diddle', en: 'Paradiddle-diddle',    sub: 6, p: 'R> L R R L L R> L R R L L' },
   { id: 'six',     name: '六擊滾奏',          en: 'Six Stroke Roll',      sub: 6, p: 'R> L L R R L> R> L L R R L>' },
   { id: 'flam',    name: 'Flam（裝飾音）',    en: 'Flam',                 sub: 1, p: 'fR> fL> fR> fL>' },
   { id: 'flamtap', name: 'Flam Tap',          en: 'Flam Tap',             sub: 4, p: 'fR> R fL> L fR> R fL> L' },
@@ -20,6 +17,25 @@ const RUDIMENTS = [
   { id: 'drag',    name: 'Drag（雙裝飾音）',  en: 'Drag',                 sub: 1, p: 'dR> dL> dR> dL>' },
 ];
 
+// Paradiddle family: the four inversions of R L R R, then the longer and ornamented versions.
+const PARADIDDLES = [
+  { id: 'para',      name: '單 Paradiddle',            en: 'Single Paradiddle · R L R R',   sub: 4, p: 'R> L R R L> R L L' },
+  { id: 'para-rev',  name: '反轉 Paradiddle',          en: 'Reverse · R R L R',             sub: 4, p: 'R> R L R L> L R L' },
+  { id: 'invpara',   name: '反向 Paradiddle',          en: 'Inverted · R L L R',            sub: 4, p: 'R> L L R L> R R L' },
+  { id: 'para-del',  name: '延遲 Paradiddle',          en: 'Delayed · R L R L',             sub: 4, p: 'R> L R L L> R L R' },
+  { id: 'dblpara',   name: '雙 Paradiddle',            en: 'Double Paradiddle',             sub: 6, p: 'R> L R L R R L> R L R L L' },
+  { id: 'tripara',   name: '三 Paradiddle',            en: 'Triple Paradiddle',             sub: 4, p: 'R> L R L R L R R L> R L R L R L L' },
+  { id: 'paradd',    name: 'Paradiddle-diddle',        en: 'R L R R L L',                   sub: 6, p: 'R> L R R L L R> L R R L L' },
+  { id: 'para-6',    name: 'Paradiddle 打六連音',      en: '8 個音的手順放在 6 連音上，重音會錯開', sub: 6,
+    p: 'R> L R R L> R L L R> L R R L> R L L R> L R R L> R L L' },
+  { id: 'flampara',  name: 'Flam Paradiddle',          en: 'Flam Paradiddle',               sub: 4, p: 'fR> L R R fL> R L L' },
+  { id: 'flamparadd', name: 'Flam Paradiddle-diddle',  en: 'Flam Paradiddle-diddle',        sub: 6, p: 'fR> L R R L L fL> R L L R R' },
+];
+
+// Polyrhythms a:b — the right hand plays a evenly spaced notes while the left plays b
+// over the same span. The span is b beats of a slots each, so the click follows the b hand.
+const POLYS = [[3, 2], [4, 3], [5, 4], [5, 3], [5, 2], [7, 4], [2, 3], [3, 4]];
+
 const ACCENT_BASES = {
   single: { name: '單擊', p: 'RL' },
   double: { name: '雙擊', p: 'RRLL' },
@@ -27,12 +43,13 @@ const ACCENT_BASES = {
 };
 const COUNTS = { 1: [''], 2: ['', '&'], 3: ['', '&', 'a'], 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
 const SUB_NAME = { 1: '4 分音符', 2: '8 分音符', 3: '三連音', 4: '16 分音符', 6: '六連音' };
+const MODES = ['rud', 'para', 'rand', 'acc', 'poly'];
 
 const DEFAULTS = {
   mode: 'rud', rSub: 4, rRun: 2, aBase: 'single', aSub: 4,
   reps: 8, autoNext: true, leftLead: false,
   bpm: 70, click: true, countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
-  seenGuide: false, idx: { rud: 0, rand: 0, acc: 0 },
+  seenGuide: false, polyMute: 'none', idx: { rud: 0, para: 0, rand: 0, acc: 0, poly: 0 },
 };
 
 /* ---------- Storage (best effort) ---------- */
@@ -86,8 +103,19 @@ function makeRandomSheet() {
 }
 
 function sheet() {
-  if (S.mode === 'rud') {
-    return RUDIMENTS.map((r) => ({ key: 'rud:' + r.id, name: r.name, sub: r.sub, notes: parse(r.p), en: r.en }));
+  if (S.mode === 'rud' || S.mode === 'para') {
+    return (S.mode === 'rud' ? RUDIMENTS : PARADIDDLES)
+      .map((r) => ({ key: 'rud:' + r.id, name: r.name, sub: r.sub, notes: parse(r.p), en: r.en }));
+  }
+  if (S.mode === 'poly') {
+    return POLYS.map(([a, b]) => {
+      const notes = [];
+      for (let i = 0; i < a * b; i++) {
+        const r = i % b === 0, l = i % a === 0;
+        notes.push({ h: r && l ? 'B' : r ? 'R' : l ? 'L' : '-', acc: i === 0, g: 0 });
+      }
+      return { key: `poly:${a}:${b}`, name: `${a} 對 ${b}`, sub: a, notes, poly: { a, b } };
+    });
   }
   if (S.mode === 'rand') {
     if (!randomSheet || randomSheet.sub !== S.rSub || randomSheet.run !== S.rRun) makeRandomSheet();
@@ -118,7 +146,8 @@ let SL = [];         // its notes after the left-lead swap
 
 function swapped(notes) {
   if (!S.leftLead) return notes;
-  return notes.map((n) => Object.assign({}, n, { h: n.h === 'R' ? 'L' : 'R' }));
+  const swap = { R: 'L', L: 'R', B: 'B', '-': '-' };
+  return notes.map((n) => Object.assign({}, n, { h: swap[n.h] }));
 }
 function exAt(i) { return SHEET[((i % SHEET.length) + SHEET.length) % SHEET.length]; }
 
@@ -138,8 +167,15 @@ function showExercise(i) {
   SL = swapped(cur.notes);
   $('#exName').textContent = cur.name;
   $('#exEn').textContent = cur.en ? (cur.en === cur.name ? '' : cur.en) : stickString(SL).replace(/(.{4})/g, '$1 ').trim();
-  $('#exMeta').textContent = `${SUB_NAME[cur.sub]} · ${cur.notes.length / cur.sub} 拍一循環 · 第 ${S.idx[S.mode] + 1} / ${SHEET.length} 個`;
+  if (cur.poly) {
+    const many = S.leftLead ? '左' : '右', few = S.leftLead ? '右' : '左';
+    $('#exEn').textContent = `${many}手平均打 ${cur.poly.a} 下，${few}手同時平均打 ${cur.poly.b} 下`;
+    $('#exMeta').textContent = `節拍器跟著${few}手（每拍一下） · 第 ${S.idx[S.mode] + 1} / ${SHEET.length} 個`;
+  } else {
+    $('#exMeta').textContent = `${SUB_NAME[cur.sub]} · ${cur.notes.length / cur.sub} 拍一循環 · 第 ${S.idx[S.mode] + 1} / ${SHEET.length} 個`;
+  }
   renderBest();
+  $('#big').hidden = !!cur.poly;
   renderBig();
   renderNotation();
   indexHighlights();
@@ -160,14 +196,43 @@ function renderBig() {
     for (let k = 0; k < cur.sub; k++) {
       const i = b * cur.sub + k, n = SL[i];
       const g = n.g ? `<sup>${(n.h === 'R' ? 'l' : 'r').repeat(n.g)}</sup>` : '';
-      html += `<span class="n ${n.h}${n.acc ? ' acc' : ''}" data-i="${i}">${g}${n.h}</span>`;
+      const txt = n.h === 'B' ? '<b class="R">R</b><b class="L">L</b>' : n.h === '-' ? '·' : n.h;
+      const cls = n.h === '-' ? 'rest' : n.h;
+      html += `<span class="n ${cls}${n.acc && !cur.poly ? ' acc' : ''}" data-i="${i}">${g}${txt}</span>`;
     }
     html += '</span>';
   }
   $('#big').innerHTML = html;
 }
 
+// Polyrhythms read better as two lanes than as notation.
+function renderLanes() {
+  const { a, b } = cur.poly, total = a * b;
+  const slotW = Math.max(11, Math.min(30, 330 / total));
+  const x0 = 30, W = x0 + total * slotW + 8, H = 120, yR = 34, yL = 74;
+  const parts = [];
+  for (let i = 0; i < total; i++) {
+    const x = x0 + i * slotW;
+    parts.push(`<rect class="ph" data-i="${i}" x="${x}" y="10" width="${slotW}" height="${H - 34}" rx="3"/>`);
+  }
+  parts.push(`<line class="sl" x1="${x0}" x2="${W - 8}" y1="${yR}" y2="${yR}"/><line class="sl" x1="${x0}" x2="${W - 8}" y1="${yL}" y2="${yL}"/>`);
+  for (let bt = 0; bt <= b; bt++) {
+    const x = x0 + bt * a * slotW;
+    parts.push(`<line class="beat" x1="${x}" x2="${x}" y1="14" y2="${H - 28}"/>`);
+    if (bt < b) parts.push(`<text class="cnt" x="${x + 3}" y="${H - 12}">${bt + 1}</text>`);
+  }
+  const r = Math.min(8, slotW * 0.42);
+  SL.forEach((n, i) => {
+    const cx = x0 + i * slotW + slotW / 2;
+    if (n.h === 'R' || n.h === 'B') parts.push(`<circle class="hit R" cx="${cx}" cy="${yR}" r="${r}"/>`);
+    if (n.h === 'L' || n.h === 'B') parts.push(`<circle class="hit L" cx="${cx}" cy="${yL}" r="${r}"/>`);
+  });
+  parts.push(`<text class="stk R" x="10" y="${yR + 4}">R</text><text class="stk L" x="10" y="${yL + 4}">L</text>`);
+  $('#notation').innerHTML = `<svg class="staff lanes" viewBox="0 0 ${W} ${H}" role="img" aria-label="${cur.name} 雙手位置圖">${parts.join('')}</svg>`;
+}
+
 function renderNotation() {
+  if (cur.poly) return renderLanes();
   const sub = cur.sub, beats = SL.length / sub;
   const slotW = { 1: 46, 2: 34, 3: 28, 4: 24, 6: 19 }[sub];
   const beatGap = sub === 1 ? 0 : 10, x0 = 34, line = 70, beamY = 38, H = 122;
@@ -213,7 +278,9 @@ function renderNotation() {
 function renderList() {
   $('#exList').innerHTML = SHEET.map((ex, i) => {
     const b = best[ex.key];
-    const st = swapped(ex.notes).map((n) => `<b class="${n.h}${n.acc ? ' acc' : ''}">${n.h}</b>`).join('');
+    const st = ex.poly
+      ? swapped(ex.notes).map((n) => (n.h === '-' ? '<b class="rest">·</b>' : n.h === 'B' ? '<b class="B">✕</b>' : `<b class="${n.h}">${n.h}</b>`)).join('')
+      : swapped(ex.notes).map((n) => `<b class="${n.h}${n.acc ? ' acc' : ''}">${n.h}</b>`).join('');
     return `<li><button type="button" class="ex" data-i="${i}">
       <span class="ex-main"><span class="ex-name">${ex.name}</span><span class="ex-st">${st}</span></span>
       <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span>
@@ -228,6 +295,7 @@ function renderModeOpts() {
   $('#rRun').value = S.rRun;
   $('#aBase').value = S.aBase;
   $(`#aSub${S.aSub}`).checked = true;
+  $('#polyMute').value = S.polyMute;
 }
 
 let hlMap = [], lastHl = -1;
@@ -336,11 +404,17 @@ function scheduleSlot(n, t) {
   }
   const note = schedSL[i];
   const amp = note.acc ? 1 : 0.42;
-  if (note.g) {
-    const other = note.h === 'R' ? 'L' : 'R';
-    for (let k = note.g; k >= 1; k--) pad(t - 0.028 * k, other, 0.16);
+  if (schedEx.poly) {
+    const hit = (h) => { if (S.polyMute !== h) pad(t, h, h === 'R' ? 0.7 : 0.55); };
+    if (note.h === 'R' || note.h === 'B') hit('R');
+    if (note.h === 'L' || note.h === 'B') hit('L');
+  } else {
+    if (note.g) {
+      const other = note.h === 'R' ? 'L' : 'R';
+      for (let k = note.g; k >= 1; k--) pad(t - 0.028 * k, other, 0.16);
+    }
+    pad(t, note.h, amp);
   }
-  pad(t, note.h, amp);
   if (S.click && i % sub === 0) click(t, i === 0);
   queue.push({ t, i });
 }
@@ -479,6 +553,7 @@ function bind() {
   }));
   $('#rRun').addEventListener('change', (e) => { if (playing) stop(); S.rRun = +e.target.value; saveSettings(); renderAll(); });
   $('#btnReroll').addEventListener('click', () => { if (playing) stop(); makeRandomSheet(); renderAll(); flash('換了一組新的隨機手順'); });
+  $('#polyMute').addEventListener('change', (e) => { S.polyMute = e.target.value; saveSettings(); });
   $('#aBase').addEventListener('change', (e) => { if (playing) stop(); S.aBase = e.target.value; S.idx.acc = 0; saveSettings(); renderAll(); });
   document.querySelectorAll('input[name="aSub"]').forEach((el) => el.addEventListener('change', () => {
     if (playing) stop();
@@ -527,7 +602,7 @@ function bind() {
 }
 
 /* ---------- Boot ---------- */
-if (!['rud', 'rand', 'acc'].includes(S.mode)) S.mode = 'rud';
+if (!MODES.includes(S.mode)) S.mode = 'rud';
 if (!ACCENT_BASES[S.aBase]) S.aBase = 'single';
 syncControls();
 bind();

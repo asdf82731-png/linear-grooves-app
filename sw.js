@@ -1,5 +1,5 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'lg-v4';
+const VERSION = 'lg-v5';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 

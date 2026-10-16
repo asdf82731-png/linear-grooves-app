@@ -72,14 +72,33 @@
 
   <section class="panel" aria-labelledby="h-what">
     <h2 id="h-what">練什麼</h2>
-    <div class="seg" role="radiogroup" aria-label="練習類型">
+    <div class="modes" role="radiogroup" aria-label="練習類型">
       <label><input type="radio" name="mode" value="rud" id="mode-rud"><span>基本手法<small>Rudiments</small></span></label>
+      <label><input type="radio" name="mode" value="para" id="mode-para"><span>Paradiddle 系列<small>10 種變化</small></span></label>
+      <label><input type="radio" name="mode" value="poly" id="mode-poly"><span>複節奏<small>Polyrhythms</small></span></label>
       <label><input type="radio" name="mode" value="rand" id="mode-rand"><span>隨機手順<small>R/L 組合</small></span></label>
       <label><input type="radio" name="mode" value="acc" id="mode-acc"><span>重音移動<small>Accents</small></span></label>
     </div>
 
     <div class="mode-opts" data-mode="rud">
       <p class="hint">鼓手最常用的基本手法，由簡單到難排列。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="para" hidden>
+      <p class="hint">先練單 Paradiddle 的四種起點（標準、反轉、反向、延遲），再練雙、三 Paradiddle 和加了 Flam 的版本。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="poly" hidden>
+      <p class="hint">兩隻手在同一段時間裡平均打不同的次數，例如 3 對 2：右手打 3 下的時間，左手剛好打 2 下。
+        圖上方那排是右手、下方是左手，對齊的點兩手同時打（清單裡用 <b>✕</b> 表示）。先用「只聽…」分開聽清楚，再兩手一起。</p>
+      <div class="field">
+        <label class="lbl" for="polyMute">聲音</label>
+        <select id="polyMute">
+          <option value="none">兩隻手都出聲</option>
+          <option value="L">只聽右手</option>
+          <option value="R">只聽左手</option>
+        </select>
+      </div>
     </div>
 
     <div class="mode-opts" data-mode="rand" hidden>
@@ -135,7 +154,7 @@
       <label class="tg"><input type="checkbox" id="autoNext"><span>練完自動換下一個</span></label>
       <div class="trainer">每個練習重複
         <select id="repsSel" aria-label="每個練習重複幾次"><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option></select> 次</div>
-      <label class="tg"><input type="checkbox" id="leftLead"><span>左手開始（R、L 對調）</span></label>
+      <label class="tg"><input type="checkbox" id="leftLead"><span>左手開始（R、L 對調；複節奏則換成左手打多的那邊）</span></label>
       <label class="tg"><input type="checkbox" id="click"><span>節拍器：每拍響一聲</span></label>
       <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
       <label class="tg"><input type="checkbox" id="trainer"><span>自動加速：打熟了自動變快</span></label>

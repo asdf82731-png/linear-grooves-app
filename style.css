@@ -366,3 +366,26 @@ input[type="number"] { width: 5.5em; }
 .ex-st b.acc { text-decoration: underline; text-underline-offset: 3px; }
 .ex-best { flex: none; font: 600 12px var(--f-mono); color: var(--muted); }
 .ex-best.has { color: var(--k); }
+
+/* ---------- Sticking: modes, polyrhythm lanes ---------- */
+.modes { display: flex; flex-wrap: wrap; gap: 6px; }
+.modes label { position: relative; flex: 1 1 104px; }
+.modes input { position: absolute; opacity: 0; pointer-events: none; }
+.modes span {
+  display: flex; flex-direction: column; justify-content: center; height: 100%;
+  padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface);
+  font-size: 14px; font-weight: 600; cursor: pointer; line-height: 1.25;
+}
+.modes span small { font-size: 11px; font-weight: 500; color: var(--muted); }
+.modes input:checked + span { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.modes input:checked + span small { color: inherit; opacity: 0.75; }
+.modes input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.big .n.rest { color: var(--line); }
+.big .n b { font-weight: 600; font-size: 0.62em; display: block; line-height: 1.05; }
+.big .n b.R { color: var(--r); } .big .n b.L { color: var(--l); }
+.ex-st b.B { color: var(--accent); } .ex-st b.rest { color: var(--line); }
+.staff .beat { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
+.staff .hit.R { fill: var(--r); } .staff .hit.L { fill: var(--l); }
+.lanes .stk { font: 600 13px var(--f-mono); }
+.notation .lanes { padding-block: 8px; }

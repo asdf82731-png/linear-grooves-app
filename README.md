@@ -21,7 +21,9 @@
 - 收藏節奏（存在本機）
 
 ## 手順練習（sticking.html）
-- 基本手法：單擊、雙擊、三擊、Paradiddle 系列、六擊滾奏、Flam、Flam Tap、Flam Accent、Swiss Army Triplet、Drag
+- 基本手法：單擊、雙擊、三擊、單 Paradiddle、六擊滾奏、Flam、Flam Tap、Flam Accent、Swiss Army Triplet、Drag
+- Paradiddle 系列：四種起點（標準／反轉／反向／延遲）、雙、三 Paradiddle、Paradiddle-diddle、Paradiddle 打六連音、Flam Paradiddle、Flam Paradiddle-diddle
+- 複節奏：3:2、4:3、5:4、5:3、5:2、7:4、2:3、3:4，雙線位置圖，可只聽單手
 - 隨機手順：產生 8 個 R/L 組合（8 分或 16 分，可限制同手連打次數）
 - 重音移動：單擊／雙擊／Paradiddle，重音逐一往後移
 - 大字母手順＋單線譜（含重音、裝飾音），播放時標示目前的音
