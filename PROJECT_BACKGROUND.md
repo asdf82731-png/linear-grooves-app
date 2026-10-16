@@ -12,7 +12,7 @@
   | **Linear Grooves** | 手：線性節奏、手順、Paradiddle、複節奏 | https://asdf82731-png.github.io/linear-grooves-app/linear-grooves/ |
   | **Double Pedal 雙踏腳法** | 腳：雙踏、手腳組合、腳踩鈸、Swing | https://asdf82731-png.github.io/linear-grooves-app/double-pedal/ |
 - **Repo**：`asdf82731-png/linear-grooves-app`，GitHub Pages 從 `main` / `(root)` 發佈。
-  - 使用者曾打算改名為 `drum-practice`，但改名尚未成功。README 裡的網址已先寫成 `/drum-practice/`；如果最後沒改名，要把 README 改回 `/linear-grooves-app/`。
+  - 已決定**不改名**，repo 維持 `linear-grooves-app`，README 網址也已改回 `/linear-grooves-app/`。
 
 ## 2. 技術原則
 
@@ -162,13 +162,14 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 
 **目的**：練雙踏（兩腳都踩大鼓）和雙腳獨立（左腳踩 Hi-hat 踏板）。
 
-### 7.1 六種練習模式（共 45 個練習）
+### 7.1 七種練習模式（共 55 個練習）
+- **單腳連踩**（Heel-Toe、同一腳連續，10 個，只用右腳＋一個踏板，`swap: true` 讓「左腳開始」改成左腳）：Heel-Toe 分解（8 分雙擊）、Heel-Toe 雙擊（1 e）、Heel-Toe 雙擊（& a）、三連音雙擊、Heel-Toe＋搖滾節奏、單腳三擊、單腳連 4 下、8 分轉 16 分、單腳三連音連續、單腳 16 分連續。
 - **雙踏基本功**（只有腳，11 個）：4 分音符交替、8 分音符單擊、三連音單擊、16 分音符單擊、雙擊 RRLL、腳的 Paradiddle、Gallop（R L R –）、反 Gallop（– R L R）、4 音爆發、6 音爆發、六連音單擊。
 - **雙踏節奏**（腳＋手，7 個）：8 分雙踏＋搖滾節奏、16 分連續雙踏、Gallop 節奏、三連音雙踏、Half-time 雙踏、大鼓點綴（雙擊）、雙踏＋打點。
 - **手腳組合**（線性 Fill，7 個）：R＋腳腳（三連音）、R L＋腳腳、腳腳＋R L、R L R L＋腳腳（六連音）、R R L L＋腳腳（六連音）、5 音組 R L R＋腳腳（5 拍一循環）、R＋腳腳＋L。
 - **左腳腳踩鈸**（8 個，左腳改踩 Hi-hat，不做左右對調）：2、4 拍、每拍、反拍、大鼓／腳踩鈸交替、Swing（大鼓 Feathering 輕踩＋Hi-hat 2、4）、Swing＋左手 Comping、Samba、左腳 Son Clave 3-2（2 小節）。
 - **重音移動**：單擊或雙擊，三連音或 16 分。
-- **隨機腳法**：8 分、三連音或 16 分；可以限制同一隻腳最多連踩幾下；可以加入休止（約 25%）。一次產生 8 個。
+- **隨機腳法**：8 分、三連音或 16 分；可以限制同一隻腳最多連踩幾下（1～4 下）；可以加入休止（約 25%）。一次產生 8 個。
 
 ### 7.2 練習資料格式
 ```js
@@ -179,7 +180,7 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 ```
 - 每個字元是一格（slot）：`X` 重音、`x` 一般、`g` 很輕（ghost／feathering）、`.` 休止。空白會被忽略，只是為了好讀。
 - `sub` 是一拍幾格（1、2、3、4、6），長度除以 `sub` 就是幾拍一循環，必須整除，而且各軌長度要一樣。
-- 「左腳開始」只對 LF 是大鼓的練習有效，會把 RF 和 LF 對調。
+- 「左腳開始」只對 LF 是大鼓、或標了 `swap: true` 的練習有效，會把 RF 和 LF 對調。
 
 ### 7.3 畫面
 - **大字母腳順**：右腳 R 綠、左腳 L 紫；在「手腳組合」裡手的 R/L 用藍和紅；兩腳同時踩用 ✕。腳踩鈸模式不顯示大字母。
@@ -222,6 +223,5 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 
 ## 10. 待辦與可能的方向
 
-- repo 改名為 `drum-practice`（使用者端操作，尚未成功），改名後 README 網址已預先更新。
 - 使用者提過、可以考慮加入的內容：Blast Beat、更多爵士雙腳練法、聲音音量或音色調整。
 - `double-pedal/style.css` 是從 Linear Grooves 整份複製來的，裡面有用不到的樣式，之後可以精簡。

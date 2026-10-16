@@ -131,13 +131,48 @@ const HIHAT = [
     tip: '拉丁鼓常見：左腳踩出 Clave 節奏，手和右腳保持穩定。' },
 ];
 
+// Single-foot work: only the right foot on the bass drum. `swap: true` lets 「左腳開始」 move it to the left foot.
+const HEEL = [
+  { id: 'ht-split', name: 'Heel-Toe 分解（8 分雙擊）', en: 'Heel · Toe  —  慢慢分開兩個動作', sub: 2, swap: true,
+    RF: 'Xx .. Xx .. Xx .. Xx ..',
+    tip: '第一下（重音）腳跟往下踩，腳尖抬著；第二下腳跟留在原位，換腳尖往下踩。先慢到每個動作都看得清楚。' },
+  { id: 'ht-16', name: 'Heel-Toe 雙擊（1 e）', en: 'Doubles on the beat · R R – –', sub: 4, swap: true,
+    RF: 'Xx.. Xx.. Xx.. Xx..',
+    tip: '把分解的兩個動作連起來，變成一個「搖」的動作。兩下要一樣大聲，第二下最容易變小。' },
+  { id: 'ht-16-off', name: 'Heel-Toe 雙擊（& a）', en: 'Doubles off the beat · – – R R', sub: 4, swap: true,
+    RF: '..Xx ..Xx ..Xx ..Xx',
+    tip: '拍點上是空的，雙擊落在「& a」。心裡數 1 e & a，不要被拉回拍點。' },
+  { id: 'ht-trip', name: '三連音雙擊', en: 'Triplet Doubles · R R –', sub: 3, swap: true,
+    RF: 'Xx. Xx. Xx. Xx.',
+    tip: '比 16 分雙擊寬一點，適合剛連起來的 Heel-Toe。休息的那一格讓腳回到起始位置。' },
+  { id: 'ht-groove', name: 'Heel-Toe＋搖滾節奏', en: 'Single-pedal doubles in a groove', sub: 4, hand: 'hh', swap: true,
+    RH: 'x.x. x.x. x.x. x.x.', LH: '.... X... .... X...',
+    RF: 'X... ..xx X... ..xx',
+    tip: '單踏板最常見的雙擊位置：「& a」接下一拍。手先打到不用想，再專心聽腳的兩下。' },
+  { id: 'sf-3', name: '單腳三擊', en: 'Triples · R R R –', sub: 4, swap: true,
+    RF: 'Xxx. Xxx. Xxx. Xxx.',
+    tip: '可以用「腳跟、腳尖、腳跟」，或滑踩（Slide）加一下。三下要平均，不要越踩越小聲。' },
+  { id: 'sf-4', name: '單腳連 4 下', en: 'Four in a row · R R R R  – – – –', sub: 4, swap: true,
+    RF: 'Xxxx .... Xxxx ....',
+    tip: '一拍連踩、一拍休息。休息時腳完全放鬆，下一串才不會越來越緊。' },
+  { id: 'sf-8to16', name: '8 分轉 16 分', en: 'Eighths → Sixteenths · 同一腳不停', sub: 4, swap: true,
+    RF: 'X.x. x.x. Xxxx xxxx',
+    tip: '前兩拍 8 分、後兩拍 16 分，速度換檔時腳不要突然用力，靠腳踝和腳跟腳尖帶。' },
+  { id: 'sf-trip', name: '單腳三連音連續', en: 'Continuous Triplets · one foot', sub: 3, swap: true,
+    RF: 'Xxx xxx xxx xxx',
+    tip: '每拍第一下輕輕重音，幫你對拍。腿累了就降速，不要硬撐。' },
+  { id: 'sf-16', name: '單腳 16 分連續', en: 'Continuous 16ths · one foot', sub: 4, swap: true,
+    RF: 'Xxxx xxxx xxxx xxxx',
+    tip: '最難的一個。先在 60 BPM 以下踩穩，可以試 Swivel 轉腳或 Heel-Toe 輪流，讓大腿不用每下都出力。' },
+];
+
 const ACCENT_BASES = {
   single: { name: '單擊', p: 'RL' },
   double: { name: '雙擊', p: 'RRLL' },
 };
 const COUNTS = { 1: [''], 2: ['', '&'], 3: ['', '&', 'a'], 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
 const SUB_NAME = { 1: '4 分音符', 2: '8 分音符', 3: '三連音', 4: '16 分音符', 6: '六連音' };
-const MODES = ['basic', 'groove', 'combo', 'hh', 'acc', 'rand'];
+const MODES = ['basic', 'heel', 'groove', 'combo', 'hh', 'acc', 'rand'];
 const LANES = ['RH', 'LH', 'RF', 'LF'];
 const INST_NAME = { hh: 'Hi-hat', ride: 'Ride', sn: '小鼓', bd: '大鼓', hf: '腳踩鈸' };
 const LIMB_NAME = { RH: '右手', LH: '左手', RF: '右腳', LF: '左腳' };
@@ -148,7 +183,7 @@ const DEFAULTS = {
   mode: 'basic', rSub: 4, rRun: 2, rRest: false, aBase: 'single', aSub: 4,
   reps: 8, autoNext: true, leftLead: false, playPart: 'all', timer: 0,
   bpm: 70, click: true, countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false, idx: { basic: 0, groove: 0, combo: 0, hh: 0, acc: 0, rand: 0 },
+  seenGuide: false, idx: { basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, acc: 0, rand: 0 },
 };
 
 /* ---------- Storage (best effort) ---------- */
@@ -182,7 +217,7 @@ function build(def, mode) {
   lanes.forEach((l) => { while (l.hits.length < len) l.hits.push('.'); });
   return {
     key: `${mode}:${def.id}`, name: def.name, en: def.en, tip: def.tip, sub: def.sub, lanes, len,
-    doublePedal: lanes.some((l) => l.limb === 'LF' && l.inst === 'bd'),
+    doublePedal: !!def.swap || lanes.some((l) => l.limb === 'LF' && l.inst === 'bd'),
     linear: mode === 'combo',
   };
 }
@@ -226,7 +261,7 @@ function makeRandomSheet() {
 }
 
 function sheet() {
-  const lists = { basic: BASIC, groove: GROOVE, combo: COMBO, hh: HIHAT };
+  const lists = { basic: BASIC, heel: HEEL, groove: GROOVE, combo: COMBO, hh: HIHAT };
   if (lists[S.mode]) return lists[S.mode].map((d) => build(d, S.mode));
   if (S.mode === 'rand') {
     if (!randomSheet || randomSheet.sub !== S.rSub || randomSheet.run !== S.rRun || randomSheet.rest !== S.rRest) makeRandomSheet();

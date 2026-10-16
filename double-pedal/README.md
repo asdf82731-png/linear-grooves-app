@@ -3,6 +3,7 @@
 爵士鼓**雙踏與雙腳技巧**練習 App，獨立的 PWA，可以安裝到手機主畫面，離線也能用。
 
 ## 功能
+- 單腳連踩：Heel-Toe 分解、Heel-Toe 雙擊（1 e／& a）、三連音雙擊、Heel-Toe＋搖滾節奏、單腳三擊、單腳連 4 下、8 分轉 16 分、單腳三連音與 16 分連續（可用「左腳開始」改練左腳）
 - 雙踏基本功：4 分／8 分／三連音／16 分／六連音單擊、雙擊、腳的 Paradiddle、Gallop、反 Gallop、4 音與 6 音爆發
 - 雙踏節奏：8 分、16 分連續雙踏、Gallop、三連音、Half-time、大鼓點綴、雙踏＋打點（手打 Hi-hat／Ride＋小鼓）
 - 手腳組合（線性 Fill）：R＋腳腳、RL＋腳腳、腳腳＋RL、RLRL＋腳腳、RRLL＋腳腳、5 音組、R＋腳腳＋L
@@ -15,7 +16,7 @@
 - 合成大鼓、小鼓、Hi-hat、Ride、腳踩鈸音色；戴耳機時右腳在右聲道、左腳在左聲道
 
 ## 安裝到手機
-用 GitHub Pages 發佈這個 repo 後，網址是 `https://<你的帳號>.github.io/drum-practice/double-pedal/`。
+用 GitHub Pages 發佈這個 repo 後，網址是 `https://<你的帳號>.github.io/linear-grooves-app/double-pedal/`。
 - Android：用 Chrome 開啟 → 選單 →「安裝應用程式」或「加到主畫面」
 - iPhone：用 Safari 開啟 → 分享 →「加入主畫面」
 
