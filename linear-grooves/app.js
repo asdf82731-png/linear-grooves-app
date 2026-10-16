@@ -339,7 +339,7 @@ function setGroup(gi, stick) {
 }
 
 /* ---------- Audio (synthesised kit, no samples) ---------- */
-let ctx = null, master = null, noiseBuf = null;
+let ctx = null, master = null, clickBus = null, noiseBuf = null;
 
 function ensureAudio() {
   if (!ctx) {
@@ -366,6 +366,9 @@ function ensureAudio() {
     master = ctx.createGain();
     master.gain.value = 2;
     master.connect(comp).connect(half).connect(clip).connect(ctx.destination);
+    clickBus = ctx.createGain();
+    clickBus.gain.value = 0.9;
+    clickBus.connect(comp);
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -409,9 +412,23 @@ const KIT = {
   t1:   (t, a) => { tone(t, 230, 155, 0.28, 0.75 * a); noise(t, 0.02, 'bandpass', 1500, 0.15 * a); },
   ft:   (t, a) => { tone(t, 125, 82, 0.4, 0.85 * a); noise(t, 0.02, 'bandpass', 900, 0.15 * a); },
 };
-function click(t, downbeat) {
-  const f = downbeat ? 2000 : 1400;
-  tone(t, f, f, 0.03, 0.22, 'square');
+// Metronome: the same wood-block click on every beat — no louder or higher first beat.
+// Pitch sweep from Pro Metronome's 木魚 kit, but a filtered square wave held at full level for 25 ms,
+// so it stays clearly louder than the drums instead of hiding under them.
+function click(t) {
+  const o = ctx.createOscillator(), tone = ctx.createBiquadFilter(), g = ctx.createGain();
+  o.type = 'square';
+  o.frequency.setValueAtTime(1250, t);
+  o.frequency.exponentialRampToValueAtTime(875, t + 0.09);
+  tone.type = 'lowpass';
+  tone.frequency.value = 3500;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(1, t + 0.002);
+  g.gain.setValueAtTime(1, t + 0.025);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+  o.connect(tone).connect(g).connect(clickBus);
+  o.start(t);
+  o.stop(t + 0.11);
 }
 
 /* ---------- Transport ---------- */
@@ -425,7 +442,7 @@ function scheduleSlot(n, t) {
   if (n < 0) {
     const k = n + countSlots;
     if (k % sub === 0) {
-      click(t, k === 0);
+      click(t);
       queue.push({ t, i: -1, count: k / sub + 1 });
     }
     return;
@@ -441,7 +458,7 @@ function scheduleSlot(n, t) {
   }
   const s = SL[i];
   KIT[s.voice](t, s.acc ? 1 : 0.55);
-  if (S.click && i % sub === 0) click(t, i % (pattern.beats * sub) === 0);
+  if (S.click && i % sub === 0) click(t);
   queue.push({ t, i });
 }
 
