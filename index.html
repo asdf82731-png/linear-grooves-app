@@ -28,9 +28,19 @@
       <div class="status" id="status" aria-live="polite"></div>
     </div>
     <div class="notation" id="notation"></div>
-    <div class="strip-label">分組（點一下可重新產生該組）</div>
+    <div class="strip-label">分組（點一組可替換或輪轉）</div>
     <div class="strip" id="strip"></div>
+    <div class="picker" id="picker" hidden></div>
+    <div class="shift" role="group" aria-label="整體位移">
+      <span class="lbl">位移</span>
+      <button type="button" id="shiftL" class="step-l" aria-label="往前移一個音">◀</button>
+      <output id="shiftOut" class="shift-out">0</output>
+      <button type="button" id="shiftR" class="step-l" aria-label="往後移一個音">▶</button>
+      <button type="button" id="shift0" class="ghost sm">歸零</button>
+    </div>
     <div class="actions">
+      <button type="button" id="btnRotate" class="ghost">組內輪轉</button>
+      <button type="button" id="btnShuffle" class="ghost">重排組順序</button>
       <button type="button" id="btnRevoice" class="ghost">換配器</button>
       <button type="button" id="btnMirror" class="ghost">左右對調</button>
       <button type="button" id="btnCopy" class="ghost">複製手順</button>
@@ -68,6 +78,16 @@
     </div>
 
     <div class="field">
+      <span class="lbl">手順庫</span>
+      <div class="seg" role="radiogroup" aria-label="手順庫">
+        <label><input type="radio" name="lib" value="classic" id="lib-classic"><span>經典</span></label>
+        <label><input type="radio" name="lib" value="ext" id="lib-ext"><span>擴充</span></label>
+        <label><input type="radio" name="lib" value="all" id="lib-all"><span>全部</span></label>
+      </div>
+      <span class="hint">經典：常用組合。擴充：同一手最多連打 2 下的所有排列。全部：所有 R/L 排列。</span>
+    </div>
+
+    <div class="field">
       <span class="lbl">分組長度（音符數）</span>
       <div class="chips" id="sizes">
         <label><input type="checkbox" value="2" id="size2"><span>2</span></label>
@@ -75,6 +95,8 @@
         <label><input type="checkbox" value="4" id="size4"><span>4</span></label>
         <label><input type="checkbox" value="5" id="size5"><span>5</span></label>
         <label><input type="checkbox" value="6" id="size6"><span>6</span></label>
+        <label><input type="checkbox" value="7" id="size7"><span>7</span></label>
+        <label><input type="checkbox" value="8" id="size8"><span>8</span></label>
       </div>
     </div>
 

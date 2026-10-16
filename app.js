@@ -11,13 +11,20 @@ const LIB = {
   4: ['RLRK', 'RLLK', 'LRLK', 'RRLK', 'LRRK'],
   5: ['RLRLK', 'RLRRK', 'RLLRK', 'LRLLK', 'RRLLK'],
   6: ['RLRLRK', 'RLRLLK', 'RRLLRK', 'RLLRLK'],
+  7: ['RLRLRLK', 'RLRRLRK', 'RLLRLLK', 'RRLLRRK'],
+  8: ['RLRLRLRK', 'RLRRLRLK', 'RLLRLRRK', 'RRLLRRLK'],
 };
 const DOUBLE_KICK = {
   3: ['RKK', 'LKK'],
   4: ['RLKK', 'LRKK'],
   5: ['RLRKK', 'RLLKK'],
   6: ['RLRLKK', 'RLLRKK'],
+  7: ['RLRLRKK', 'RLRRLKK'],
+  8: ['RLRLRLKK', 'RLRRLRKK'],
 };
+// Max same-hand run per library; 'classic' uses the curated lists above.
+const LIB_RUN = { ext: 2, all: Infinity };
+const LIB_NAME = { classic: '經典', ext: '擴充', all: '全部' };
 
 // y = offset from the top staff line, in px (half a staff space = 4).
 const VOICES = {
@@ -32,7 +39,7 @@ const COUNTS = { 4: ['', 'e', '&', 'a'], 3: ['', '&', 'a'], 6: ['', 'la', 'li', 
 const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' };
 
 const DEFAULTS = {
-  sub: 4, beats: 4, bars: 1, sizes: [3, 4, 5], kickPos: 'end', doubleKick: false,
+  sub: 4, beats: 4, bars: 1, sizes: [3, 4, 5], kickPos: 'end', doubleKick: false, lib: 'classic',
   orch: 'hh', accents: true, bpm: 80, click: true, countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
@@ -57,10 +64,34 @@ const $ = (s) => document.querySelector(s);
 const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
 /* ---------- Generator ---------- */
+// Every R/L string of length n whose same-hand runs stay within maxRun.
+function handStrings(n, maxRun) {
+  const out = [];
+  (function walk(str, run) {
+    if (str.length === n) { out.push(str); return; }
+    for (const h of 'RL') {
+      const r = str && str[str.length - 1] === h ? run + 1 : 1;
+      if (r <= maxRun) walk(str + h, r);
+    }
+  })('', 0);
+  return out;
+}
+
+const poolCache = new Map();
 function pool(size) {
-  let list = LIB[size].slice();
-  if (S.doubleKick && DOUBLE_KICK[size]) list = list.concat(DOUBLE_KICK[size]);
+  const key = [size, S.lib, S.doubleKick, S.kickPos].join();
+  if (poolCache.has(key)) return poolCache.get(key);
+  let list;
+  if (S.lib === 'classic') {
+    list = LIB[size].slice();
+    if (S.doubleKick && DOUBLE_KICK[size]) list = list.concat(DOUBLE_KICK[size]);
+  } else {
+    const run = LIB_RUN[S.lib];
+    list = handStrings(size - 1, run).map((h) => h + 'K');
+    if (S.doubleKick && size >= 3) list = list.concat(handStrings(size - 2, run).map((h) => h + 'KK'));
+  }
   if (S.kickPos === 'start') list = list.map((s) => s.slice(-1) + s.slice(0, -1));
+  poolCache.set(key, list);
   return list;
 }
 
@@ -102,19 +133,27 @@ function generate() {
     flash(`選的分組長度湊不出 ${n} 個音，請多勾選幾種長度`);
     return false;
   }
-  pattern = { sub: S.sub, beats: S.beats, bars: S.bars, groups: parts.map((s) => makeGroup(s)) };
+  pattern = { sub: S.sub, beats: S.beats, bars: S.bars, shift: 0, groups: parts.map((s) => makeGroup(s)) };
+  closePicker();
   patternChanged(true);
   return true;
 }
 
+// Displacement: the whole groove is rotated right by p.shift slots,
+// so slot i plays base note (i - shift) and groups can wrap over the barline.
 function flatten(p) {
-  const out = [];
+  const base = [];
   p.groups.forEach((g, gi) => {
     [...g.stick].forEach((limb, k) => {
-      out.push({ limb, voice: g.voices[k], acc: S.accents && k === 0, g: gi });
+      base.push({ limb, voice: g.voices[k], acc: S.accents && k === 0, g: gi });
     });
   });
-  return out;
+  const n = base.length, sh = ((p.shift || 0) % n + n) % n;
+  return base.map((_, i) => base[(i - sh + n) % n]);
+}
+function displayIndex(baseIndex) {
+  const n = SL.length, sh = ((pattern.shift || 0) % n + n) % n;
+  return (baseIndex + sh) % n;
 }
 
 /* ---------- Rendering ---------- */
@@ -130,7 +169,7 @@ function renderNotation() {
 
   for (let b = 0; b < p.bars; b++) {
     const ph = [], body = [], beams = [];
-    let s = `<svg class="staff" viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * 0.74)}px" role="img" aria-label="第 ${b + 1} 小節譜例">`;
+    let s = `<svg class="staff" viewBox="0 0 ${W} ${H}" style="min-width:${Math.round(W * 0.66)}px" role="img" aria-label="第 ${b + 1} 小節譜例">`;
 
     for (let bt = 0; bt < p.beats; bt++) {
       const xs = [];
@@ -197,9 +236,10 @@ function renderStrip() {
   $('#strip').innerHTML = pattern.groups.map((g, gi) => {
     const chips = [...g.stick].map((limb, k) => {
       const acc = S.accents && k === 0 ? ' acc' : '';
-      return `<span class="chip ${limb}${acc}" data-i="${i++}">${limb}<small>${VOICES[g.voices[k]].label}</small></span>`;
+      return `<span class="chip ${limb}${acc}" data-i="${displayIndex(i++)}">${limb}<small>${VOICES[g.voices[k]].label}</small></span>`;
     }).join('');
-    return `<button type="button" class="grp" data-g="${gi}" aria-label="重新產生第 ${gi + 1} 組（${g.stick}）">${chips}</button>`;
+    const sel = picker === gi ? ' sel' : '';
+    return `<button type="button" class="grp${sel}" data-g="${gi}" aria-label="替換第 ${gi + 1} 組（${g.stick}）">${chips}</button>`;
   }).join('');
 }
 
@@ -214,6 +254,8 @@ function indexHighlights() {
 function patternChanged(fresh) {
   SL = flatten(pattern);
   $('#meta').textContent = `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`;
+  $('#shiftOut').textContent = shiftLabel();
+  renderPicker();
   renderNotation();
   renderStrip();
   indexHighlights();
@@ -223,7 +265,55 @@ function patternChanged(fresh) {
 }
 
 function stickingText(p) {
-  return p.groups.map((g) => [...g.stick].join(' ')).join(' | ');
+  const t = p.groups.map((g) => [...g.stick].join(' ')).join(' | ');
+  return p.shift ? `${t}（位移 +${p.shift}）` : t;
+}
+function shiftLabel() {
+  const sh = pattern.shift || 0;
+  if (!sh) return '0';
+  const beat = Math.floor(sh / pattern.sub), k = sh % pattern.sub;
+  return `+${sh}（從 ${beat + 1}${k ? ' ' + COUNTS[pattern.sub][k] : ''} 開始）`;
+}
+
+/* ---------- Group picker: substitute or permute one group ---------- */
+let picker = -1;
+function rotations(stick) {
+  const out = [];
+  for (let r = 1; r < stick.length; r++) out.push(stick.slice(r) + stick.slice(0, r));
+  return [...new Set(out)].filter((x) => x !== stick);
+}
+function renderPicker() {
+  const box = $('#picker');
+  if (picker < 0 || !pattern.groups[picker]) { box.hidden = true; return; }
+  const g = pattern.groups[picker];
+  const opts = (list) => list.map((s) =>
+    `<button type="button" class="opt${s === g.stick ? ' cur' : ''}" data-stick="${s}">${[...s].map((c) => `<b class="${c}">${c}</b>`).join('')}</button>`).join('');
+  const rot = rotations(g.stick);
+  const all = pool(g.stick.length);
+  box.hidden = false;
+  box.innerHTML = `
+    <div class="pk-head">
+      <strong>第 ${picker + 1} 組 · ${g.stick.length} 音</strong>
+      <button type="button" class="ghost" data-act="random">隨機</button>
+      <button type="button" class="ghost" data-act="close">完成</button>
+    </div>
+    ${rot.length ? `<div class="pk-lbl">輪轉（同樣的音，換起點）</div><div class="pk-opts">${opts(rot)}</div>` : ''}
+    <div class="pk-lbl">替換（${LIB_NAME[S.lib]}手順庫 · ${all.length} 種）</div>
+    <div class="pk-opts pk-scroll">${opts(all)}</div>`;
+}
+function closePicker() { picker = -1; }
+function setGroup(gi, stick) {
+  const g = pattern.groups[gi];
+  // Same notes in a new order: keep each hand on the drum it was on.
+  if ([...stick].sort().join('') === [...g.stick].sort().join('')) {
+    const on = { K: 'k' };
+    [...g.stick].forEach((c, k) => { on[c] = on[c] || g.voices[k]; });
+    g.voices = [...stick].map((c) => on[c]);
+  } else {
+    g.voices = voicesFor(stick);
+  }
+  g.stick = stick;
+  patternChanged(false);
 }
 
 /* ---------- Audio (synthesised kit, no samples) ---------- */
@@ -412,7 +502,8 @@ function syncControls() {
   $(`#sub${S.sub}`).checked = true;
   $('#beats').value = S.beats;
   $(`#bars${S.bars}`).checked = true;
-  [2, 3, 4, 5, 6].forEach((n) => { $(`#size${n}`).checked = S.sizes.includes(n); });
+  [2, 3, 4, 5, 6, 7, 8].forEach((n) => { $(`#size${n}`).checked = S.sizes.includes(n); });
+  ($(`#lib-${S.lib}`) || $('#lib-classic')).checked = true;
   $(S.kickPos === 'start' ? '#kpStart' : '#kpEnd').checked = true;
   $('#orch').value = S.orch;
   $('#doubleKick').checked = S.doubleKick;
@@ -441,7 +532,7 @@ function bind() {
   document.querySelectorAll('input[name="kickPos"]').forEach((el) => el.addEventListener('change', () => { S.kickPos = el.value; saveSettings(); generate(); }));
   $('#beats').addEventListener('change', (e) => { S.beats = +e.target.value; saveSettings(); generate(); });
   $('#sizes').addEventListener('change', () => {
-    S.sizes = [2, 3, 4, 5, 6].filter((n) => $(`#size${n}`).checked);
+    S.sizes = [2, 3, 4, 5, 6, 7, 8].filter((n) => $(`#size${n}`).checked);
     saveSettings();
     generate();
   });
@@ -466,10 +557,60 @@ function bind() {
     const btn = e.target.closest('.grp');
     if (!btn) return;
     const gi = +btn.dataset.g;
-    const old = pattern.groups[gi];
-    pattern.groups[gi] = makeGroup(old.stick.length, old.stick);
-    patternChanged(false);
+    picker = picker === gi ? -1 : gi;
+    renderStrip();
+    indexHighlights();
+    renderPicker();
   });
+  $('#picker').addEventListener('click', (e) => {
+    const opt = e.target.closest('[data-stick]');
+    const act = e.target.closest('[data-act]');
+    if (opt) setGroup(picker, opt.dataset.stick);
+    else if (act && act.dataset.act === 'random') {
+      const old = pattern.groups[picker];
+      pattern.groups[picker] = makeGroup(old.stick.length, old.stick);
+      patternChanged(false);
+    } else if (act && act.dataset.act === 'close') {
+      closePicker();
+      patternChanged(false);
+    }
+  });
+
+  // Displacement and permutation of the whole groove.
+  const shiftBy = (d) => {
+    const n = SL.length;
+    pattern.shift = (((pattern.shift || 0) + d) % n + n) % n;
+    patternChanged(false);
+  };
+  $('#shiftL').addEventListener('click', () => shiftBy(-1));
+  $('#shiftR').addEventListener('click', () => shiftBy(1));
+  $('#shift0').addEventListener('click', () => { pattern.shift = 0; patternChanged(false); });
+  $('#btnRotate').addEventListener('click', () => {
+    pattern.groups.forEach((g) => {
+      g.stick = g.stick.slice(1) + g.stick[0];
+      g.voices = g.voices.slice(1).concat(g.voices[0]);
+    });
+    patternChanged(false);
+    flash('每組起點往後移一個音');
+  });
+  $('#btnShuffle').addEventListener('click', () => {
+    const gs = pattern.groups;
+    if (gs.length < 2) return;
+    const before = gs.map((g) => g.stick).join();
+    for (let t = 0; t < 10 && gs.map((g) => g.stick).join() === before; t++) {
+      for (let i = gs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [gs[i], gs[j]] = [gs[j], gs[i]];
+      }
+    }
+    closePicker();
+    patternChanged(false);
+    flash('已重排各組順序');
+  });
+  document.querySelectorAll('input[name="lib"]').forEach((el) => el.addEventListener('change', () => {
+    S.lib = el.value; saveSettings(); generate();
+    flash(`${LIB_NAME[S.lib]}手順庫`);
+  }));
 
   $('#btnRevoice').addEventListener('click', revoice);
   $('#btnMirror').addEventListener('click', () => {
@@ -499,6 +640,7 @@ function bind() {
     if (l) {
       const f = favs[+l.dataset.load];
       pattern = JSON.parse(JSON.stringify(f.p));
+      closePicker();
       Object.assign(S, { sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
       syncControls();
       setBpm(f.bpm);
