@@ -33,7 +33,7 @@
 
 ## 安裝到 Android
 1. 把這個 repo 用 GitHub Pages 發佈：Settings → Pages → Source 選 `Deploy from a branch`，Branch 選 `main` / `(root)`。
-2. 用 Android 的 Chrome 開啟 `https://<你的帳號>.github.io/linear-grooves-app/linear-grooves/`。
+2. 用 Android 的 Chrome 開啟 `https://<你的帳號>.github.io/drum-practice/linear-grooves/`。
 3. 選單 →「安裝應用程式」或「加到主畫面」。
 
 之後就像一般 App 一樣從主畫面開啟，第一次開啟後可離線使用。

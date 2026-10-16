@@ -15,7 +15,7 @@
 - 合成大鼓、小鼓、Hi-hat、Ride、腳踩鈸音色；戴耳機時右腳在右聲道、左腳在左聲道
 
 ## 安裝到手機
-用 GitHub Pages 發佈這個 repo 後，網址是 `https://<你的帳號>.github.io/linear-grooves-app/double-pedal/`。
+用 GitHub Pages 發佈這個 repo 後，網址是 `https://<你的帳號>.github.io/drum-practice/double-pedal/`。
 - Android：用 Chrome 開啟 → 選單 →「安裝應用程式」或「加到主畫面」
 - iPhone：用 Safari 開啟 → 分享 →「加入主畫面」
 
