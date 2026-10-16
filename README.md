@@ -47,6 +47,9 @@ python3 -m http.server 8000
 ```
 純 HTML/CSS/JS，沒有建置步驟。修改後記得把 `sw.js` 的 `VERSION` 加一，已安裝的 App 才會更新快取。
 
+## 另一個 App：Double Pedal
+`double-pedal/` 是獨立的雙踏與雙腳技巧練習 App，有自己的圖示，可以另外安裝，說明見 [double-pedal/README.md](double-pedal/README.md)。
+
 ## 檔案
 - `index.html` — 版面
 - `style.css` — 樣式（自動深色模式）
