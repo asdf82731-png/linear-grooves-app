@@ -4,8 +4,8 @@
 
 | App | 練什麼 | 網址 |
 | --- | --- | --- |
-| [Linear Grooves](linear-grooves/) | 手：線性節奏、手順、Paradiddle、複節奏 | `https://asdf82731-png.github.io/linear-grooves-app/linear-grooves/` |
-| [Double Pedal 雙踏腳法](double-pedal/) | 腳：雙踏、手腳組合、腳踩鈸、Swing | `https://asdf82731-png.github.io/linear-grooves-app/double-pedal/` |
+| [Linear Grooves](linear-grooves/) | 手：線性節奏、手順、Paradiddle、複節奏 | `https://asdf82731-png.github.io/drum-practice/linear-grooves/` |
+| [Double Pedal 雙踏腳法](double-pedal/) | 腳：雙踏、手腳組合、腳踩鈸、Swing | `https://asdf82731-png.github.io/drum-practice/double-pedal/` |
 
 根目錄的 `index.html` 只是選擇頁（不能安裝）。兩個 App 的範圍（scope）不重疊，所以安裝其中一個不會影響另一個。
 
