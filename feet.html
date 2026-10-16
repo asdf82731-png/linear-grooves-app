@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Double Pedal 雙踏腳法</title>
+<meta name="description" content="爵士鼓雙踏與雙腳技巧練習：單擊、雙擊、Gallop、手腳組合、腳踩鈸獨立，跟著節拍器從慢練到快">
+<meta name="theme-color" content="#15191E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<!--APP-START-->
+<div class="app">
+  <nav class="tools-nav" aria-label="切換工具">
+    <a href="./">線性節奏</a>
+    <a href="sticking.html">手順練習</a>
+    <a href="feet.html" aria-current="page">雙腳練習</a>
+  </nav>
+
+  <header class="top">
+    <div class="top-row">
+      <h1 class="brand">Double Pedal</h1>
+      <button type="button" id="helpBtn" class="help-btn" aria-expanded="false" aria-controls="guide">? 使用說明</button>
+    </div>
+    <p class="tag">練雙踏與雙腳技巧：單擊、雙擊、Gallop、手腳組合、腳踩鈸獨立……跟著節拍器從慢練到快。</p>
+  </header>
+
+  <section class="guide" id="guide" hidden aria-label="使用說明">
+    <h2>三步開始練習</h2>
+    <ol class="steps">
+      <li><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</li>
+      <li><b>按 ▶</b>，跟著大字母踩：<span class="key fR">R</span> 右腳（主踏板）、<span class="key fL">L</span> 左腳（副踏板或腳踩鈸）。
+        下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</li>
+      <li><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</li>
+    </ol>
+    <details class="glossary">
+      <summary>小技巧</summary>
+      <dl>
+        <dt>只放手的部分</dt><dd>在「練習設定」把聲音改成「只播手的部分」，App 幫你打手，你專心踩腳。</dd>
+        <dt>左腳開始</dt><dd>雙踏練習的左右腳對調，用來加強比較弱的左腳。</dd>
+        <dt>聲音</dt><dd>戴耳機時，右腳的大鼓在右邊、左腳在左邊，聽得出哪一腳不平均。</dd>
+        <dt>計時</dt><dd>設定練習時間，時間到自動停，適合練耐力。</dd>
+      </dl>
+    </details>
+    <button type="button" id="guideOk" class="primary-sm">知道了</button>
+  </section>
+
+  <section class="sheet" id="practice" aria-label="目前的練習">
+    <div class="sheet-head">
+      <div class="ex-title">
+        <h2 id="exName">4 分音符交替</h2>
+        <span id="exEn" class="ex-en"></span>
+      </div>
+      <span id="exBest" class="best-pill">還沒記錄</span>
+    </div>
+    <div class="meta" id="exMeta"></div>
+    <div class="status" id="status" aria-live="polite"></div>
+    <div class="big" id="big" aria-label="腳順"></div>
+    <div class="legend" id="legend"></div>
+    <div class="kit" id="grid" role="img" aria-label="各肢體位置圖"></div>
+    <p class="tip" id="exTip"></p>
+    <div class="ex-nav">
+      <button type="button" id="btnPrev" class="ghost">◀ 上一個</button>
+      <span id="reps" class="reps"></span>
+      <button type="button" id="btnNext2" class="ghost">下一個 ▶</button>
+    </div>
+    <button type="button" id="btnDone" class="done">✓ 打順了，記錄 70 BPM</button>
+  </section>
+
+  <section class="panel" aria-labelledby="h-what">
+    <h2 id="h-what">練什麼</h2>
+    <div class="modes" role="radiogroup" aria-label="練習類型">
+      <label><input type="radio" name="mode" value="basic" id="mode-basic"><span>雙踏基本功<small>只有腳</small></span></label>
+      <label><input type="radio" name="mode" value="groove" id="mode-groove"><span>雙踏節奏<small>腳＋手的 Groove</small></span></label>
+      <label><input type="radio" name="mode" value="combo" id="mode-combo"><span>手腳組合<small>Hand-Foot Fills</small></span></label>
+      <label><input type="radio" name="mode" value="hh" id="mode-hh"><span>左腳腳踩鈸<small>獨立性・Swing</small></span></label>
+      <label><input type="radio" name="mode" value="acc" id="mode-acc"><span>重音移動<small>腳的高低控制</small></span></label>
+      <label><input type="radio" name="mode" value="rand" id="mode-rand"><span>隨機腳法<small>看譜反應</small></span></label>
+    </div>
+
+    <div class="mode-opts" data-mode="basic">
+      <p class="hint">兩腳都踩大鼓（雙踏板）。由簡單到難：先求左右腳音量、間隔一樣，再求快。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="groove" hidden>
+      <p class="hint">手打穩定的 Hi-hat／Ride 和小鼓，腳在下面踩雙踏。先把手打到不用想，再把注意力放在腳。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="combo" hidden>
+      <p class="hint">手和腳輪流發聲（同一時間只有一個肢體），常用在過門（Fill）。<span class="key R">R</span><span class="key L">L</span> 是手、<span class="key fR">R</span><span class="key fL">L</span> 是腳。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="hh" hidden>
+      <p class="hint">左腳改踩 Hi-hat 踏板（踩下去「嚓」一聲）。右手在 Ride，右腳踩大鼓。爵士的 Swing 練習裡，大鼓輕輕踩四分音符（Feathering），空心小點代表要踩得很輕。這一類不會左右腳對調。</p>
+    </div>
+
+    <div class="mode-opts" data-mode="acc" hidden>
+      <p class="hint">同一個腳順，重音一個一個往後移，練腳的大小聲控制。</p>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="aBase">基本腳順</label>
+          <select id="aBase">
+            <option value="single">單擊 R L</option>
+            <option value="double">雙擊 R R L L</option>
+          </select>
+        </div>
+        <div class="field">
+          <span class="lbl">一拍踩幾個音</span>
+          <div class="seg" role="radiogroup" aria-label="一拍踩幾個音">
+            <label><input type="radio" name="aSub" value="3" id="aSub3"><span>3 個<small>三連音</small></span></label>
+            <label><input type="radio" name="aSub" value="4" id="aSub4"><span>4 個<small>16 分</small></span></label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mode-opts" data-mode="rand" hidden>
+      <p class="hint">隨機產生 8 個腳順，一個接一個練，訓練看譜反應。</p>
+      <div class="row2">
+        <div class="field">
+          <span class="lbl">一拍踩幾個音</span>
+          <div class="seg" role="radiogroup" aria-label="一拍踩幾個音">
+            <label><input type="radio" name="rSub" value="2" id="rSub2"><span>2 個<small>8 分</small></span></label>
+            <label><input type="radio" name="rSub" value="3" id="rSub3"><span>3 個<small>三連音</small></span></label>
+            <label><input type="radio" name="rSub" value="4" id="rSub4"><span>4 個<small>16 分</small></span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label class="lbl" for="rRun">同一隻腳最多連踩</label>
+          <select id="rRun">
+            <option value="1">1 下（左右交替）</option>
+            <option value="2">2 下</option>
+            <option value="3">3 下</option>
+          </select>
+        </div>
+      </div>
+      <label class="tg"><input type="checkbox" id="rRest"><span>加入休止（空拍）</span></label>
+      <button type="button" id="btnReroll" class="ghost">換一組新的</button>
+    </div>
+
+    <ol class="ex-list" id="exList"></ol>
+  </section>
+
+  <details class="panel fold">
+    <summary><span class="fold-title">腳法技巧</span><span class="fold-sub">踩法、設定、常見問題</span></summary>
+    <div class="glossary">
+      <dl>
+        <dt>Heel Down 腳跟放下</dt><dd>腳跟貼著踏板，用腳踝發力。音量小、控制好，適合慢速、爵士的輕踩（Feathering）。</dd>
+        <dt>Heel Up 腳跟抬起</dt><dd>腳跟離開踏板，用整條腿的重量往下。音量大，是搖滾、雙踏最常用的踩法。</dd>
+        <dt>Slide 滑踩</dt><dd>腳從踏板中間往前滑，一個動作踩出兩下（雙擊）。先練慢的「一下、兩下」，再把兩下連起來。</dd>
+        <dt>Heel-Toe 腳跟腳尖</dt><dd>先用腳跟踩一下，再用腳尖踩一下，適合快速的連續雙踏。</dd>
+        <dt>Swivel 轉腳</dt><dd>腳尖左右轉動帶動每一下，速度很快時可以減少大腿負擔。</dd>
+        <dt>Hi-hat 踏法</dt><dd>2、4 拍「嚓」：腳尖踩下馬上放鬆。也可以腳跟上下帶出 Heel-Toe 的「1 & 2 &」。</dd>
+        <dt>彈簧與椅子</dt><dd>左右踏板的彈簧鬆緊、拍頭角度盡量調成一樣；椅子高度讓大腿約略和地面平行。</dd>
+        <dt>左腳比較弱</dt><dd>開「左腳開始」練一樣的內容；速度先降 10 BPM，讓兩腳聽起來一樣大聲、一樣平均。</dd>
+        <dt>不要壓著鼓皮</dt><dd>踩完讓拍頭彈回來，不要一直壓在鼓皮上，聲音才會乾淨、不悶。</dd>
+      </dl>
+    </div>
+  </details>
+
+  <details class="panel fold">
+    <summary><span class="fold-title">練習設定</span><span class="fold-sub">聲音、次數、左腳開始、計時、節拍器</span></summary>
+    <div class="field">
+      <label class="lbl" for="playPart">App 幫你打哪些聲部</label>
+      <select id="playPart">
+        <option value="all">全部（手和腳）</option>
+        <option value="hands">只播手的部分（你踩腳）</option>
+        <option value="feet">只播腳的部分（你打手）</option>
+        <option value="none">都不播（只有節拍器）</option>
+      </select>
+    </div>
+    <div class="toggles">
+      <label class="tg"><input type="checkbox" id="autoNext"><span>練完自動換下一個</span></label>
+      <div class="trainer">每個練習重複
+        <select id="repsSel" aria-label="每個練習重複幾次"><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option></select> 次</div>
+      <label class="tg"><input type="checkbox" id="leftLead"><span>左腳開始（雙踏的左右腳對調）</span></label>
+      <div class="trainer">練習計時
+        <select id="timerSel" aria-label="練習計時">
+          <option value="0">不計時</option><option value="1">1 分鐘</option><option value="2">2 分鐘</option>
+          <option value="5">5 分鐘</option><option value="10">10 分鐘</option>
+        </select>，時間到自動停止</div>
+      <label class="tg"><input type="checkbox" id="click"><span>節拍器：每拍響一聲</span></label>
+      <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
+      <label class="tg"><input type="checkbox" id="trainer"><span>自動加速：打熟了自動變快</span></label>
+    </div>
+    <div class="trainer" id="trainerOpts">
+      每重複 <select id="trainerEvery" aria-label="每重複幾次"><option>2</option><option>4</option><option>8</option></select> 次，
+      加快 <select id="trainerStep" aria-label="每次加快多少 BPM"><option>2</option><option>5</option><option>10</option></select> BPM，
+      最快到 <input type="number" id="trainerMax" min="30" max="260" step="1" inputmode="numeric"> BPM
+    </div>
+  </details>
+
+  <footer class="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「加到主畫面」就能像 App 一樣使用。</footer>
+</div>
+
+<nav class="transport" aria-label="播放控制">
+  <div class="transport-in">
+    <button type="button" id="btnPlay" class="play" aria-label="播放">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+    <div class="tempo">
+      <div class="tempo-top">
+        <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
+        <input type="text" id="bpmOut" class="bpm" value="70" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字">
+        <span class="bpm-unit">速度<br>BPM</span>
+        <button type="button" id="bpmUp" class="step" aria-label="快一點">+</button>
+      </div>
+      <input type="range" id="bpm" min="30" max="240" step="1" aria-label="速度">
+    </div>
+    <button type="button" id="btnNext" class="gen">下一個</button>
+  </div>
+</nav>
+<!--APP-END-->
+<script src="feet.js"></script>
+</body>
+</html>

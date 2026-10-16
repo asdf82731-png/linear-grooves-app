@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'lg-v6';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'manifest.webmanifest',
+const VERSION = 'lg-v7';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'feet.html', 'feet.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {
