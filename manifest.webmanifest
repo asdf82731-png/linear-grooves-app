@@ -1,7 +1,7 @@
 {
   "name": "Linear Grooves",
   "short_name": "Linear Grooves",
-  "description": "爵士鼓線性節奏、手順與雙踏腳法練習器",
+  "description": "爵士鼓線性節奏產生器與練習器",
   "lang": "zh-Hant",
   "start_url": "./",
   "scope": "./",
@@ -43,16 +43,6 @@
     {
       "name": "手順練習",
       "url": "sticking.html",
-      "icons": [
-        {
-          "src": "icons/icon-192.png",
-          "sizes": "192x192"
-        }
-      ]
-    },
-    {
-      "name": "雙腳練習",
-      "url": "feet.html",
       "icons": [
         {
           "src": "icons/icon-192.png",

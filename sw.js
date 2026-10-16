@@ -1,6 +1,7 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-const VERSION = 'lg-v7';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'feet.html', 'feet.js', 'manifest.webmanifest',
+// Only "lg-" caches are ours: the Double Pedal app in double-pedal/ shares this origin.
+const VERSION = 'lg-v8';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -9,7 +10,7 @@ self.addEventListener('install', (e) => {
 
 self.addEventListener('activate', (e) => {
   e.waitUntil(caches.keys()
-    .then((keys) => Promise.all(keys.filter((k) => k !== VERSION).map((k) => caches.delete(k))))
+    .then((keys) => Promise.all(keys.filter((k) => k.startsWith('lg-') && k !== VERSION).map((k) => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
