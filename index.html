@@ -3,233 +3,41 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Linear Grooves</title>
-<meta name="description" content="爵士鼓線性節奏（Linear Grooves）產生器與練習器">
+<title>鼓手練習 App</title>
+<meta name="description" content="兩個獨立的爵士鼓練習 App：Linear Grooves（手）與 Double Pedal（腳）">
 <meta name="theme-color" content="#15191E">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icons/icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="icon" href="linear-grooves/icons/icon-192.png" type="image/png">
+<style>
+  :root { --bg: #E9EDF0; --surface: #FFFFFF; --ink: #15191E; --muted: #5A6470; --line: #CDD4DA; --accent: #A9611B; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #0F1215; --surface: #181D22; --ink: #E6EAEE; --muted: #96A1AC; --line: #2B333B; --accent: #D8913F; color-scheme: dark; }
+  }
+  :root[data-theme="dark"] { --bg: #0F1215; --surface: #181D22; --ink: #E6EAEE; --muted: #96A1AC; --line: #2B333B; --accent: #D8913F; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, "Noto Sans TC", sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 32px 16px; display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-size: 26px; }
+  p { margin: 0; color: var(--muted); font-size: 14px; }
+  a.app { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 12px; text-decoration: none; color: inherit;
+    background: var(--surface); border: 1px solid var(--line); }
+  a.app:hover { border-color: var(--accent); }
+  a.app img { width: 56px; height: 56px; border-radius: 12px; flex: none; }
+  a.app b { display: block; font-size: 17px; }
+  a.app span { color: var(--muted); font-size: 13px; }
+</style>
 </head>
 <body>
-<!--APP-START-->
-<div class="app">
-  <nav class="tools-nav" aria-label="切換工具">
-    <a href="./" aria-current="page">線性節奏</a>
-    <a href="sticking.html">手順練習</a>
-  </nav>
-
-  <header class="top">
-    <div class="top-row">
-      <h1 class="brand">Linear Grooves</h1>
-      <button type="button" id="helpBtn" class="help-btn" aria-expanded="false" aria-controls="guide">? 使用說明</button>
-    </div>
-    <p class="tag">練習「線性」鼓組節奏：任何時刻只打一個鼓，手和腳輪流出現。</p>
-  </header>
-
-  <section class="guide" id="guide" hidden aria-label="使用說明">
-    <h2>三步開始練習</h2>
-    <ol class="steps">
-      <li><b>按下方的 ▶</b> 先聽一遍這個節奏。</li>
-      <li><b>看譜或看下面的色塊</b>跟著打：
-        <span class="key R">R</span> 右手打 Hi-hat、
-        <span class="key L">L</span> 左手打小鼓、
-        <span class="key K">K</span> 右腳踩大鼓。</li>
-      <li><b>按「換一個」</b>產生新的節奏；太難就把難度調成「入門」或把速度調慢。</li>
-    </ol>
-    <details class="glossary">
-      <summary>名詞解釋</summary>
-      <dl>
-        <dt>一組</dt><dd>幾個音連成的小片段，例如 R L K。整個節奏是由好幾組接起來的。</dd>
-        <dt>16 分音符 / 三連音 / 六連音</dt><dd>一拍裡打幾個音：4 個、3 個或 6 個。</dd>
-        <dt>重音</dt><dd>譜上有「&gt;」、色塊有底線的音要打大聲一點。</dd>
-        <dt>1 e &amp; a</dt><dd>數拍的念法，幫你知道每個音落在拍子的哪裡。</dd>
-      </dl>
-    </details>
-    <button type="button" id="guideOk" class="primary-sm">知道了</button>
-  </section>
-
-  <section class="sheet" aria-label="目前的節奏">
-    <div class="sheet-head">
-      <div class="meta" id="meta">16 分音符 · 4/4 · 1 小節</div>
-      <div class="sheet-tools">
-        <button type="button" id="btnFav" class="ghost sm">☆ 收藏</button>
-        <button type="button" id="btnCopy" class="ghost sm">複製</button>
-      </div>
-    </div>
-    <div class="status" id="status" aria-live="polite"></div>
-    <div class="notation" id="notation"></div>
-    <div class="legend" aria-hidden="true">
-      <span><i class="dot R"></i>R 右手</span><span><i class="dot L"></i>L 左手</span><span><i class="dot K"></i>K 大鼓（右腳）</span>
-    </div>
-    <div class="strip-head">
-      <span class="strip-title">節奏由這幾組組成</span>
-      <span class="hint">點一組可以換掉它</span>
-    </div>
-    <div class="strip" id="strip"></div>
-    <div class="picker" id="picker" hidden></div>
-  </section>
-
-  <section class="panel" aria-labelledby="h-level">
-    <h2 id="h-level">難度</h2>
-    <div class="seg" role="radiogroup" aria-label="難度">
-      <label><input type="radio" name="level" value="easy" id="level-easy"><span>入門</span></label>
-      <label><input type="radio" name="level" value="mid" id="level-mid"><span>中等</span></label>
-      <label><input type="radio" name="level" value="hard" id="level-hard"><span>進階</span></label>
-    </div>
-    <p class="hint" id="levelHint"></p>
-
-    <div class="field">
-      <span class="lbl">一拍打幾個音</span>
-      <div class="seg" role="radiogroup" aria-label="一拍打幾個音">
-        <label><input type="radio" name="sub" value="4" id="sub4"><span>4 個<small>16 分音符</small></span></label>
-        <label><input type="radio" name="sub" value="3" id="sub3"><span>3 個<small>三連音</small></span></label>
-        <label><input type="radio" name="sub" value="6" id="sub6"><span>6 個<small>六連音</small></span></label>
-      </div>
-    </div>
-  </section>
-
-  <details class="panel fold" id="foldEdit">
-    <summary><span class="fold-title">修改這個節奏</span><span class="fold-sub">挪動、換順序、左右對調</span></summary>
-    <div class="tools">
-      <div class="tool">
-        <div class="tool-txt"><b>整段往前／往後挪</b><span>每按一下挪一個音，練習從不同位置開始。</span></div>
-        <div class="tool-ctl">
-          <button type="button" id="shiftL" class="step-l" aria-label="往前挪一個音">◀</button>
-          <button type="button" id="shiftR" class="step-l" aria-label="往後挪一個音">▶</button>
-        </div>
-        <div class="tool-state"><output id="shiftOut">在原位</output> <button type="button" id="shift0" class="link">回到原位</button></div>
-      </div>
-      <div class="tool">
-        <div class="tool-txt"><b>每組換個起點</b><span>音不變，每一組改從下一個音開始，例如 RLK → LKR。</span></div>
-        <div class="tool-ctl"><button type="button" id="btnRotate" class="ghost">換起點</button></div>
-      </div>
-      <div class="tool">
-        <div class="tool-txt"><b>打亂各組順序</b><span>每組的打法不變，只換先後順序。</span></div>
-        <div class="tool-ctl"><button type="button" id="btnShuffle" class="ghost">打亂</button></div>
-      </div>
-      <div class="tool">
-        <div class="tool-txt"><b>左右手對調</b><span>R 和 L 互換，用來練不順的那隻手。</span></div>
-        <div class="tool-ctl"><button type="button" id="btnMirror" class="ghost">對調</button></div>
-      </div>
-      <div class="tool">
-        <div class="tool-txt"><b>換打的鼓</b><span>手順不變，重新分配要打的鼓（選「Fill」配器時最明顯）。</span></div>
-        <div class="tool-ctl"><button type="button" id="btnRevoice" class="ghost">換鼓</button></div>
-      </div>
-    </div>
-  </details>
-
-  <details class="panel fold" id="foldPractice">
-    <summary><span class="fold-title">練習設定</span><span class="fold-sub">節拍器、預備拍、自動加速</span></summary>
-    <div class="toggles">
-      <label class="tg"><input type="checkbox" id="click"><span>節拍器：每拍響一聲</span></label>
-      <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
-      <label class="tg"><input type="checkbox" id="trainer"><span>自動加速：打熟了自動變快</span></label>
-    </div>
-    <div class="trainer" id="trainerOpts">
-      每重複 <select id="trainerEvery" aria-label="每重複幾次"><option>2</option><option>4</option><option>8</option></select> 次，
-      加快 <select id="trainerStep" aria-label="每次加快多少 BPM"><option>2</option><option>5</option><option>10</option></select> BPM，
-      最快到 <input type="number" id="trainerMax" min="40" max="260" step="1" inputmode="numeric"> BPM
-    </div>
-  </details>
-
-  <details class="panel fold" id="foldAdv">
-    <summary><span class="fold-title">進階規則</span><span class="fold-sub">自己決定怎麼產生節奏</span></summary>
-    <div class="adv">
-      <div class="row2">
-        <div class="field">
-          <label class="lbl" for="beats">拍號（一小節幾拍）</label>
-          <select id="beats">
-            <option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option>
-            <option value="5">5/4</option><option value="6">6/4</option><option value="7">7/4</option>
-          </select>
-        </div>
-        <div class="field">
-          <span class="lbl">幾個小節</span>
-          <div class="seg" role="radiogroup" aria-label="幾個小節">
-            <label><input type="radio" name="bars" value="1" id="bars1"><span>1</span></label>
-            <label><input type="radio" name="bars" value="2" id="bars2"><span>2</span></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="lbl">每組長度（幾個音）</span>
-        <div class="chips" id="sizes">
-          <label><input type="checkbox" value="2" id="size2"><span>2</span></label>
-          <label><input type="checkbox" value="3" id="size3"><span>3</span></label>
-          <label><input type="checkbox" value="4" id="size4"><span>4</span></label>
-          <label><input type="checkbox" value="5" id="size5"><span>5</span></label>
-          <label><input type="checkbox" value="6" id="size6"><span>6</span></label>
-          <label><input type="checkbox" value="7" id="size7"><span>7</span></label>
-          <label><input type="checkbox" value="8" id="size8"><span>8</span></label>
-        </div>
-      </div>
-
-      <div class="field">
-        <span class="lbl">打法變化</span>
-        <div class="seg" role="radiogroup" aria-label="打法變化">
-          <label><input type="radio" name="lib" value="classic" id="lib-classic"><span>常見</span></label>
-          <label><input type="radio" name="lib" value="ext" id="lib-ext"><span>較多</span></label>
-          <label><input type="radio" name="lib" value="all" id="lib-all"><span>全部</span></label>
-        </div>
-        <span class="hint">常見：鼓手常用的打法。較多：同一隻手最多連打 2 下的所有打法。全部：沒有限制。</span>
-      </div>
-
-      <div class="row2">
-        <div class="field">
-          <span class="lbl">大鼓在每組的</span>
-          <div class="seg" role="radiogroup" aria-label="大鼓位置">
-            <label><input type="radio" name="kickPos" value="end" id="kpEnd"><span>最後</span></label>
-            <label><input type="radio" name="kickPos" value="start" id="kpStart"><span>最前</span></label>
-          </div>
-        </div>
-        <div class="field">
-          <label class="lbl" for="orch">手打哪些鼓</label>
-          <select id="orch">
-            <option value="hh">右手 Hi-hat、左手小鼓</option>
-            <option value="ride">右手 Ride、左手小鼓</option>
-            <option value="toms">Fill：加入中鼓、落地鼓</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="toggles">
-        <label class="tg"><input type="checkbox" id="doubleKick"><span>可以連踩兩下大鼓（K K）</span></label>
-        <label class="tg"><input type="checkbox" id="accents"><span>每組第一個音打重音</span></label>
-      </div>
-    </div>
-  </details>
-
-  <section class="panel" aria-labelledby="h-fav">
-    <h2 id="h-fav">我的收藏</h2>
-    <ul class="favs" id="favs"></ul>
-  </section>
-
-  <footer class="foot">在 Chrome 選單選「加到主畫面」就能像 App 一樣使用，沒網路也能練。</footer>
-</div>
-
-<nav class="transport" aria-label="播放控制">
-  <div class="transport-in">
-    <button type="button" id="btnPlay" class="play" aria-label="播放">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
-    </button>
-    <div class="tempo">
-      <div class="tempo-top">
-        <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
-        <input type="text" id="bpmOut" class="bpm" value="80" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字">
-        <span class="bpm-unit">速度<br>BPM</span>
-        <button type="button" id="bpmUp" class="step" aria-label="快一點">+</button>
-      </div>
-      <input type="range" id="bpm" min="40" max="240" step="1" aria-label="速度">
-    </div>
-    <button type="button" id="btnGen" class="gen">換一個</button>
-  </div>
-</nav>
-<!--APP-END-->
-<script src="app.js"></script>
+<main>
+  <h1>鼓手練習 App</h1>
+  <p>兩個獨立的 App，請打開後分別「加到主畫面」安裝。</p>
+  <a class="app" href="linear-grooves/">
+    <img src="linear-grooves/icons/icon-192.png" alt="">
+    <div><b>Linear Grooves</b><span>練手：線性節奏、手順、Paradiddle、複節奏</span></div>
+  </a>
+  <a class="app" href="double-pedal/">
+    <img src="double-pedal/icons/icon-192.png" alt="">
+    <div><b>Double Pedal 雙踏腳法</b><span>練腳：雙踏、手腳組合、腳踩鈸、Swing</span></div>
+  </a>
+</main>
 </body>
 </html>
