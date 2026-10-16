@@ -1,5 +1,7 @@
 # Linear Grooves
 
+鼓手練習工具，包含兩個工具（App 上方可切換）：**線性節奏**與**手順練習**。
+
 爵士鼓「線性節奏」（linear grooves / fills）產生器與練習器，做成可安裝到 Android 主畫面的 PWA，離線也能用。
 
 線性節奏的規則：任何時刻只有一個肢體發聲（右手 R、左手 L、大鼓 K 不重疊）。App 把小節切成數個短組（例如 `RLK`、`RLRK`、`RLRLK`），每組以大鼓結尾（或開頭），再串成整個小節。
@@ -17,6 +19,15 @@
 - 換配器、左右對調（練弱手）、複製手順
 - 合成鼓聲播放（不需音檔）、節拍器、預備拍、自動加速（每 N 次循環 +BPM）
 - 收藏節奏（存在本機）
+
+## 手順練習（sticking.html）
+- 基本手法：單擊、雙擊、三擊、Paradiddle 系列、六擊滾奏、Flam、Flam Tap、Flam Accent、Swiss Army Triplet、Drag
+- 隨機手順：產生 8 個 R/L 組合（8 分或 16 分，可限制同手連打次數）
+- 重音移動：單擊／雙擊／Paradiddle，重音逐一往後移
+- 大字母手順＋單線譜（含重音、裝飾音），播放時標示目前的音
+- 每個練習重複 N 次後自動換下一個；左手開始（R/L 對調）
+- 練習墊音色，戴耳機時右手在右聲道、左手在左聲道
+- 「打順了」記錄每個練習的最佳速度
 
 ## 安裝到 Android
 1. 把這個 repo 用 GitHub Pages 發佈：Settings → Pages → Source 選 `Deploy from a branch`，Branch 選 `main` / `(root)`。
