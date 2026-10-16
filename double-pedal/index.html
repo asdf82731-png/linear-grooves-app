@@ -197,9 +197,7 @@
 
 <nav class="transport" aria-label="播放控制">
   <div class="transport-in">
-    <button type="button" id="btnPlay" class="play" aria-label="播放">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
-    </button>
+    <button type="button" id="btnNext" class="gen">下一個</button>
     <div class="tempo">
       <div class="tempo-top">
         <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
@@ -209,7 +207,9 @@
       </div>
       <input type="range" id="bpm" min="30" max="240" step="1" aria-label="速度">
     </div>
-    <button type="button" id="btnNext" class="gen">下一個</button>
+    <button type="button" id="btnPlay" class="play" aria-label="播放">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
   </div>
 </nav>
 <!--APP-END-->
