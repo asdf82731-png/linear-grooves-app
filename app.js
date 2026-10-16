@@ -24,7 +24,26 @@ const DOUBLE_KICK = {
 };
 // Max same-hand run per library; 'classic' uses the curated lists above.
 const LIB_RUN = { ext: 2, all: Infinity };
-const LIB_NAME = { classic: '經典', ext: '擴充', all: '全部' };
+const LIB_NAME = { classic: '常見', ext: '較多', all: '全部' };
+
+// Difficulty presets: one tap instead of five advanced settings.
+const LEVELS = {
+  easy: { sizes: [3, 4], lib: 'classic', doubleKick: false, hint: '每組 3–4 個音，都是鼓手常用的打法。適合第一次練線性節奏。' },
+  mid:  { sizes: [3, 4, 5], lib: 'ext', doubleKick: false, hint: '每組 3–5 個音，打法變化更多。' },
+  hard: { sizes: [2, 3, 4, 5, 6, 7], lib: 'all', doubleKick: true, hint: '每組 2–7 個音，所有打法都可能出現，也會連踩大鼓。' },
+};
+function detectLevel() {
+  return Object.keys(LEVELS).find((k) => {
+    const L = LEVELS[k];
+    return L.lib === S.lib && L.doubleKick === S.doubleKick &&
+      L.sizes.join() === S.sizes.slice().sort((a, b) => a - b).join();
+  }) || 'custom';
+}
+function syncLevel() {
+  const lv = detectLevel();
+  document.querySelectorAll('input[name="level"]').forEach((el) => { el.checked = el.value === lv; });
+  $('#levelHint').textContent = lv === 'custom' ? '目前使用你在「進階規則」裡的自訂設定。選一個難度可以回到預設。' : LEVELS[lv].hint;
+}
 
 // y = offset from the top staff line, in px (half a staff space = 4).
 const VOICES = {
@@ -39,7 +58,7 @@ const COUNTS = { 4: ['', 'e', '&', 'a'], 3: ['', '&', 'a'], 6: ['', 'la', 'li', 
 const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' };
 
 const DEFAULTS = {
-  sub: 4, beats: 4, bars: 1, sizes: [3, 4, 5], kickPos: 'end', doubleKick: false, lib: 'classic',
+  sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
   orch: 'hh', accents: true, bpm: 80, click: true, countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
@@ -130,7 +149,7 @@ function generate() {
   const sizes = S.sizes.slice().sort((a, b) => a - b);
   const parts = sizes.length ? partition(n, sizes) : null;
   if (!parts) {
-    flash(`選的分組長度湊不出 ${n} 個音，請多勾選幾種長度`);
+    flash(`目前的「每組長度」湊不滿一小節（${n} 個音），請在進階規則多勾幾種長度`);
     return false;
   }
   pattern = { sub: S.sub, beats: S.beats, bars: S.bars, shift: 0, groups: parts.map((s) => makeGroup(s)) };
@@ -255,6 +274,7 @@ function patternChanged(fresh) {
   SL = flatten(pattern);
   $('#meta').textContent = `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`;
   $('#shiftOut').textContent = shiftLabel();
+  $('#shift0').hidden = !pattern.shift;
   renderPicker();
   renderNotation();
   renderStrip();
@@ -270,9 +290,9 @@ function stickingText(p) {
 }
 function shiftLabel() {
   const sh = pattern.shift || 0;
-  if (!sh) return '0';
+  if (!sh) return '在原位';
   const beat = Math.floor(sh / pattern.sub), k = sh % pattern.sub;
-  return `+${sh}（從 ${beat + 1}${k ? ' ' + COUNTS[pattern.sub][k] : ''} 開始）`;
+  return `往後挪了 ${sh} 個音（第一組從「${beat + 1}${k ? ' ' + COUNTS[pattern.sub][k] : ''}」開始）`;
 }
 
 /* ---------- Group picker: substitute or permute one group ---------- */
@@ -293,12 +313,13 @@ function renderPicker() {
   box.hidden = false;
   box.innerHTML = `
     <div class="pk-head">
-      <strong>第 ${picker + 1} 組 · ${g.stick.length} 音</strong>
-      <button type="button" class="ghost" data-act="random">隨機</button>
-      <button type="button" class="ghost" data-act="close">完成</button>
+      <strong>換掉第 ${picker + 1} 組</strong>
+      <button type="button" class="ghost sm" data-act="random">隨便換一個</button>
+      <button type="button" class="primary-sm" data-act="close">完成</button>
     </div>
-    ${rot.length ? `<div class="pk-lbl">輪轉（同樣的音，換起點）</div><div class="pk-opts">${opts(rot)}</div>` : ''}
-    <div class="pk-lbl">替換（${LIB_NAME[S.lib]}手順庫 · ${all.length} 種）</div>
+    <div class="pk-lbl">點下面任一個打法，就會換上去，可以邊播放邊試。</div>
+    ${rot.length ? `<div class="pk-sub">同樣的音，換個起點</div><div class="pk-opts">${opts(rot)}</div>` : ''}
+    <div class="pk-sub">其他 ${g.stick.length} 個音的打法（${all.length} 種）</div>
     <div class="pk-opts pk-scroll">${opts(all)}</div>`;
 }
 function closePicker() { picker = -1; }
@@ -479,12 +500,12 @@ function flash(msg) {
   clearTimeout(flashTimer);
   flashTimer = setTimeout(() => { if ($('#status').textContent === msg) $('#status').textContent = ''; }, 2600);
 }
-function saveSettings() { save('lg.settings', S); }
+function saveSettings() { save('lg.settings', S); if (document.getElementById('levelHint')) syncLevel(); }
 
 function renderFavs() {
   const ul = $('#favs');
   if (!favs.length) {
-    ul.innerHTML = '<li class="empty">按「收藏」把喜歡的節奏存在這台裝置上。</li>';
+    ul.innerHTML = '<li class="empty">還沒有收藏。遇到喜歡的節奏，按樂譜右上角的「☆ 收藏」。</li>';
     return;
   }
   ul.innerHTML = favs.map((f, i) => `
@@ -515,12 +536,29 @@ function syncControls() {
   $('#trainerStep').value = S.trainerStep;
   $('#trainerMax').value = S.trainerMax;
   $('#trainerOpts').hidden = !S.trainer;
+  $('#guide').hidden = !!S.seenGuide;
+  $('#helpBtn').setAttribute('aria-expanded', String(!S.seenGuide));
   setBpm(S.bpm);
+  syncLevel();
 }
 
 /* ---------- Events ---------- */
 function bind() {
   $('#btnPlay').addEventListener('click', () => (playing ? stop() : play()));
+  document.querySelectorAll('input[name="level"]').forEach((el) => el.addEventListener('change', () => {
+    const L = LEVELS[el.value];
+    Object.assign(S, { sizes: L.sizes.slice(), lib: L.lib, doubleKick: L.doubleKick });
+    syncControls();
+    saveSettings();
+    generate();
+  }));
+  const showGuide = (show) => {
+    $('#guide').hidden = !show;
+    $('#helpBtn').setAttribute('aria-expanded', String(show));
+    if (show) $('#guide').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+  $('#helpBtn').addEventListener('click', () => showGuide($('#guide').hidden));
+  $('#guideOk').addEventListener('click', () => { S.seenGuide = true; saveSettings(); showGuide(false); });
   $('#btnGen').addEventListener('click', generate);
   $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
   $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
@@ -591,7 +629,7 @@ function bind() {
       g.voices = g.voices.slice(1).concat(g.voices[0]);
     });
     patternChanged(false);
-    flash('每組起點往後移一個音');
+    flash('每組都改從下一個音開始');
   });
   $('#btnShuffle').addEventListener('click', () => {
     const gs = pattern.groups;
@@ -605,11 +643,11 @@ function bind() {
     }
     closePicker();
     patternChanged(false);
-    flash('已重排各組順序');
+    flash('已打亂各組順序');
   });
   document.querySelectorAll('input[name="lib"]').forEach((el) => el.addEventListener('change', () => {
     S.lib = el.value; saveSettings(); generate();
-    flash(`${LIB_NAME[S.lib]}手順庫`);
+    flash(`打法變化：${LIB_NAME[S.lib]}`);
   }));
 
   $('#btnRevoice').addEventListener('click', revoice);
@@ -620,11 +658,11 @@ function bind() {
       g.voices = voicesFor(g.stick);
     });
     patternChanged(false);
-    flash('已左右對調');
+    flash('左右手已對調');
   });
   $('#btnCopy').addEventListener('click', async () => {
     const text = `${stickingText(pattern)}  (${SUB_NAME[pattern.sub]}, ${pattern.beats}/4, ${S.bpm} BPM)`;
-    try { await navigator.clipboard.writeText(text); flash('已複製手順'); }
+    try { await navigator.clipboard.writeText(text); flash('已複製，可以貼到筆記或傳給別人'); }
     catch { flash(text); }
   });
   $('#btnFav').addEventListener('click', () => {
@@ -632,7 +670,7 @@ function bind() {
     favs = favs.slice(0, 50);
     save('lg.favs', favs);
     renderFavs();
-    flash('已收藏');
+    flash('已加入「我的收藏」');
   });
   $('#favs').addEventListener('click', (e) => {
     const l = e.target.closest('[data-load]');
