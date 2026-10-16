@@ -220,7 +220,7 @@
     <div class="tempo">
       <div class="tempo-top">
         <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
-        <output id="bpmOut" for="bpm" class="bpm">80</output>
+        <input type="text" id="bpmOut" class="bpm" value="80" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字">
         <span class="bpm-unit">速度<br>BPM</span>
         <button type="button" id="bpmUp" class="step" aria-label="快一點">+</button>
       </div>

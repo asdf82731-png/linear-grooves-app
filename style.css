@@ -222,7 +222,13 @@ input[type="number"] { width: 5.5em; }
 .play svg { width: 26px; height: 26px; fill: var(--dock); }
 .tempo { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .tempo-top { display: flex; align-items: baseline; gap: 6px; }
-.bpm { font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; min-width: 2.2ch; text-align: right; }
+.bpm {
+  font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; text-align: center;
+  width: 2.6ch; padding: 0 2px 1px; margin: 0;
+  color: var(--dock-ink); background: transparent;
+  border: 0; border-bottom: 2px dashed var(--dock-muted); border-radius: 0;
+}
+.bpm:focus { outline: none; border-bottom: 2px solid var(--accent); background: rgba(255, 255, 255, 0.08); }
 .bpm-unit { font: 500 11px var(--f-mono); color: var(--dock-muted); letter-spacing: 0.08em; margin-right: auto; }
 .step {
   width: 34px; height: 30px; border-radius: 6px; border: 1px solid var(--dock-muted);

@@ -57,6 +57,7 @@ const VOICES = {
 const COUNTS = { 4: ['', 'e', '&', 'a'], 3: ['', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
 const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' };
 
+const MIN_BPM = 40;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
   orch: 'hh', accents: true, bpm: 80, click: true, countIn: false,
@@ -487,9 +488,9 @@ function setPlayIcon() {
 }
 
 function setBpm(v) {
-  S.bpm = Math.max(40, Math.min(240, Math.round(v)));
+  S.bpm = Math.max(MIN_BPM, Math.min(240, Math.round(v)));
   $('#bpm').value = S.bpm;
-  $('#bpmOut').textContent = S.bpm;
+  if (document.activeElement !== $('#bpmOut')) $('#bpmOut').value = S.bpm;
   saveSettings();
 }
 
@@ -563,6 +564,20 @@ function bind() {
   $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
   $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
   $('#bpmUp').addEventListener('click', () => setBpm(S.bpm + 5));
+  // Tap the number to type a tempo directly.
+  const bpmIn = $('#bpmOut');
+  bpmIn.addEventListener('focus', () => { bpmIn.select(); setTimeout(() => bpmIn.select(), 0); });
+  bpmIn.addEventListener('input', () => { bpmIn.value = bpmIn.value.replace(/\D/g, '').slice(0, 3); });
+  bpmIn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') bpmIn.blur();
+    else if (e.key === 'Escape') { bpmIn.value = S.bpm; bpmIn.blur(); }
+  });
+  bpmIn.addEventListener('blur', () => {
+    const v = parseInt(bpmIn.value, 10);
+    if (!v) { bpmIn.value = S.bpm; return; }
+    setBpm(v);
+    if (S.bpm !== v) flash(`速度可以設定 ${MIN_BPM}–240，已改成 ${S.bpm}`);
+  });
 
   // Structural rules → regenerate.
   document.querySelectorAll('input[name="sub"]').forEach((el) => el.addEventListener('change', () => { S.sub = +el.value; saveSettings(); generate(); }));

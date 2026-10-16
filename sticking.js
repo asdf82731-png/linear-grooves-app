@@ -45,6 +45,7 @@ const COUNTS = { 1: [''], 2: ['', '&'], 3: ['', '&', 'a'], 4: ['', 'e', '&', 'a'
 const SUB_NAME = { 1: '4 分音符', 2: '8 分音符', 3: '三連音', 4: '16 分音符', 6: '六連音' };
 const MODES = ['rud', 'para', 'rand', 'acc', 'poly'];
 
+const MIN_BPM = 30;
 const DEFAULTS = {
   mode: 'rud', rSub: 4, rRun: 2, aBase: 'single', aSub: 4,
   reps: 8, autoNext: true, leftLead: false,
@@ -483,9 +484,9 @@ function setPlayIcon() {
   $('#btnPlay').setAttribute('aria-label', playing ? '停止' : '播放');
 }
 function setBpm(v) {
-  S.bpm = Math.max(30, Math.min(240, Math.round(v)));
+  S.bpm = Math.max(MIN_BPM, Math.min(240, Math.round(v)));
   $('#bpm').value = S.bpm;
-  $('#bpmOut').textContent = S.bpm;
+  if (document.activeElement !== $('#bpmOut')) $('#bpmOut').value = S.bpm;
   if (cur) $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
   saveSettings();
 }
@@ -522,6 +523,20 @@ function bind() {
   $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
   $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
   $('#bpmUp').addEventListener('click', () => setBpm(S.bpm + 5));
+  // Tap the number to type a tempo directly.
+  const bpmIn = $('#bpmOut');
+  bpmIn.addEventListener('focus', () => { bpmIn.select(); setTimeout(() => bpmIn.select(), 0); });
+  bpmIn.addEventListener('input', () => { bpmIn.value = bpmIn.value.replace(/\D/g, '').slice(0, 3); });
+  bpmIn.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') bpmIn.blur();
+    else if (e.key === 'Escape') { bpmIn.value = S.bpm; bpmIn.blur(); }
+  });
+  bpmIn.addEventListener('blur', () => {
+    const v = parseInt(bpmIn.value, 10);
+    if (!v) { bpmIn.value = S.bpm; return; }
+    setBpm(v);
+    if (S.bpm !== v) flash(`速度可以設定 ${MIN_BPM}–240，已改成 ${S.bpm}`);
+  });
 
   const showGuide = (show) => {
     $('#guide').hidden = !show;
