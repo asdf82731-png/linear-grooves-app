@@ -233,7 +233,7 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 **目的**：練 Djent 的核心能力：奇數分組跨過小節線，上層鈸一直維持 4/4，不迷失拍子。需求訪談的決定都記在這裡。
 
 ### 結構
-- **上層**：右手鈸（`pulse`：4 分 q、2 分 h、8 分 e、16 分 s；`cym`：china、crash、ride、hh），左手小鼓（`snare`：`3` 第 3 拍、`24` 2 和 4 拍、`riff` 跟著 riff）。
+- **上層**：右手鈸（`pulse`：4 分 q、2 分 h、8 分 e、16 分 s；`cym`：預設 ride，另有 crash、china、hh。原本預設 China，使用者覺得合成的 China 太突兀，改成 Ride；「小鼓跟 riff」類預設 Crash），左手小鼓（`snare`：`3` 第 3 拍、`24` 2 和 4 拍、`riff` 跟著 riff）。
 - **下層**：riff cell（`riff: ['KK.', 'KK.', 'K.']`，`K` 大鼓、`S` 小鼓、`g` 小鼓 Ghost note、`.` 休止）從第 1 拍開始一直重複，在 Fill 開始處（或樂句結尾）截斷。下層一定線性：小鼓固定在拍點時，那一格的大鼓讓開；`snare` 不是 `riff` 時 riff 裡的 `S` 改成大鼓。
 - **大鼓**：`pedal` 雙踏或單踏；雙踏**每組從右腳開始、組內左右交替**；**沒有左腳開始選項**（使用者要求）。大鼓沒有輕重音。
 - 拍號固定 4/4；`sub` 16 分（4）或 16 分六連音（6），每個練習有預設，可以用「音符」改。

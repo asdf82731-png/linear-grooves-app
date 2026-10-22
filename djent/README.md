@@ -8,7 +8,7 @@
 ## 功能
 - 曲庫 38 個原創練習，分 6 類：基本 Chug（6）、奇數分組跨小節（8）、小鼓跟 riff（6）、六連音爆發（4）、Ghost note 律動（8）、Gospel chops 線性 Fill（6）
 - **Ghost note 律動**：Half-time，第 3 拍小鼓打重音（>），中間夾很輕的 Ghost note（五線譜寫在括號裡，格子圖是小而淡的點）；Hi-hat 拍點之間稍輕。只有小鼓有輕重，大鼓永遠一樣大聲
-- **基本練習**開關：每個 groove 都能切換，只用 Hi-hat、小鼓、大鼓，Fill 也一樣；關掉時鈸可以選 China／Crash／Ride／Hi-hat，Fill 用筒鼓，Fill 後的第 1 拍打 Crash
+- **基本練習**開關：每個 groove 都能切換，只用 Hi-hat、小鼓、大鼓，Fill 也一樣；關掉時鈸可以選 Ride（預設）／Crash／China／Hi-hat，Fill 用筒鼓，Fill 後的第 1 拍打 Crash
 - 樂句 2／4／8 小節；結尾「截斷」（預設）或「跑完整個循環」（自動延長到分組接回第 1 拍）
 - Fill：最後 1 拍、2 拍、1 小節或不要；隨機抽或指定；Fill 一定結束在完整的一組，接回下一輪的第 1 拍
 - 上層打法可以改：鈸打 4 分、2 分、8 分或 16 分；小鼓第 3 拍、2 和 4 拍，或跟著 riff 走

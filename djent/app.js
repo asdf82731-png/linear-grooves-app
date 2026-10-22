@@ -5,7 +5,7 @@
  * Bottom: the riff — a cell of groups that repeats across the barline, like a djent guitar part.
  * A group is a string, one character per slot: K kick, S snare, g ghost note on the snare, . rest.
  * Defaults per exercise: sub (slots per beat), snare ('3' half-time, '24' backbeat, 'riff' snare comes from the riff),
- * pulse ('q' quarters, 'h' halves, 'e' eighths), cym ('china', 'crash', 'ride', 'hh').
+ * pulse ('q' quarters, 'h' halves, 'e' eighths), cym ('ride' by default, 'crash', 'china', 'hh').
  * The kick has no dynamics: every hit is the same level. Only the ghost-note grooves use snare dynamics
  * (ghost / normal / accented backbeat) and a lighter hi-hat between the beats.
  */
@@ -186,7 +186,8 @@ function build(def, cat) {
   const fillFrom = len - fillSlots;
   const snare = S.snare === 'auto' ? (def.snare || '3') : S.snare;
   const pulse = S.pulse === 'auto' ? (def.pulse || 'q') : S.pulse;
-  const cym = S.basic ? 'hh' : S.cym === 'auto' ? (def.cym || 'china') : S.cym;
+  // Ride by default: the synthesized china was too harsh to play along with on every beat.
+  const cym = S.basic ? 'hh' : S.cym === 'auto' ? (def.cym || 'ride') : S.cym;
   const single = S.pedal === 'single';
 
   const slots = Array.from({ length: len }, () => []);
