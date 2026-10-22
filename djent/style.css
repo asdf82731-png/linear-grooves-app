@@ -554,3 +554,13 @@ select:disabled { opacity: 0.5; }
 .kr.bd .kl small em { font-style: normal; font-weight: 600; }
 .kr.bd .kl .fR { color: var(--k); } .kr.bd .kl .fL { color: var(--lf); }
 .kr.bd .kl { color: var(--ink); }
+
+/* ---------- Ghost notes and accents ---------- */
+.hit.lv-g { width: 6px; height: 6px; opacity: 0.6; }
+.hit.lv-a { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--l); }
+.hit.lv-s { opacity: 0.55; }
+.kc.on .hit.lv-a { box-shadow: 0 0 0 2px var(--hl), 0 0 0 3.5px var(--l); }
+.staff .gp { fill: var(--ink); font: 400 13px var(--f-body); }
+.staff .ac { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
+.staff .stk.gh { opacity: 0.55; font-weight: 500; }
+.ex-st b.g { color: var(--l); opacity: 0.65; font-weight: 500; }

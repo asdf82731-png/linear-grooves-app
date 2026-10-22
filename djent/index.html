@@ -42,6 +42,7 @@
           <dt>↺ 接回第 1 拍</dt><dd>奇數分組繞了幾小節以後，剛好又從第 1 拍開始。</dd>
           <dt>✂ 截斷</dt><dd>樂句結束（或 Fill 開始）時，這一組還沒打完就切掉，下一輪從頭開始。</dd>
           <dt>基本練習</dt><dd>只用 Hi-hat、小鼓、大鼓，Fill 也一樣。先用它把手腳配合打穩，再關掉練完整的音色和筒鼓 Fill。</dd>
+          <dt>Ghost note</dt><dd>小鼓上很輕的音，譜上寫在括號裡 (S)，格子圖是比較小、比較淡的點。棒子離鼓皮 1～2 公分輕輕落下。</dd>
           <dt>Gospel chops</dt><dd>手、手、腳輪流的快速線性 Fill，例如 R L K。</dd>
         </dl>
       </details>
@@ -86,12 +87,14 @@
         <label><input type="radio" name="cat" value="odd" id="cat-odd"><span>奇數分組<small>跨過小節線</small></span></label>
         <label><input type="radio" name="cat" value="snare" id="cat-snare"><span>小鼓跟 riff<small>下層手腳線性</small></span></label>
         <label><input type="radio" name="cat" value="sext" id="cat-sext"><span>六連音爆發<small>三連音感覺</small></span></label>
+        <label><input type="radio" name="cat" value="ghost" id="cat-ghost"><span>Ghost note 律動<small>Half-time・小鼓輕重</small></span></label>
         <label><input type="radio" name="cat" value="fill" id="cat-fill"><span>Gospel chops<small>線性 Fill</small></span></label>
       </div>
       <div class="mode-opts" data-cat="chug"><p class="hint">大鼓的分組加起來剛好一小節，每小節都從第 1 拍重新開始。先習慣「鈸固定、大鼓跟 riff」。</p></div>
       <div class="mode-opts" data-cat="odd" hidden><p class="hint">一組 3、5、7……個音一直重複，會繞過小節線。上面的鈸永遠是 4/4，跟著鈸數拍就不會迷路。</p></div>
       <div class="mode-opts" data-cat="snare" hidden><p class="hint">小鼓不固定在第 3 拍，而是跟大鼓一起組成 riff（同一時間只有一個鼓）。</p></div>
       <div class="mode-opts" data-cat="sext" hidden><p class="hint">一拍 6 個音的六連音。三連踩、三連音 Chug，再加上奇數分組。</p></div>
+      <div class="mode-opts" data-cat="ghost" hidden><p class="hint">Half-time 律動：第 3 拍小鼓打重音（&gt;），中間夾很輕的 Ghost note（譜上括號裡的音）。只有小鼓有輕重，大鼓永遠一樣大聲。</p></div>
       <div class="mode-opts" data-cat="fill" hidden><p class="hint">前面是簡單的 Djent 節奏，最後是這個 Fill。每個 Fill 都會剛好結束在下一輪的第 1 拍。</p></div>
       <ol class="ex-list" id="exList"></ol>
     </section>
@@ -137,7 +140,7 @@
       <div class="row2">
         <div class="field">
           <label class="lbl" for="pulse">鈸的拍點</label>
-          <select id="pulse"><option value="auto">照練習預設</option><option value="q">4 分音符（每拍）</option><option value="h">2 分音符（1、3 拍）</option><option value="e">8 分音符</option></select>
+          <select id="pulse"><option value="auto">照練習預設</option><option value="q">4 分音符（每拍）</option><option value="h">2 分音符（1、3 拍）</option><option value="e">8 分音符</option><option value="s">16 分音符（每一格）</option></select>
         </div>
         <div class="field">
           <label class="lbl" for="snare">小鼓位置</label>

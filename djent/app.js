@@ -3,10 +3,11 @@
 /* ---------- Library ----------
  * Two layers. Top: the cymbal keeps a steady 4/4 pulse (right hand) and the snare sits on a backbeat (left hand).
  * Bottom: the riff — a cell of groups that repeats across the barline, like a djent guitar part.
- * A group is a string, one character per slot: K kick, S snare, . rest.
+ * A group is a string, one character per slot: K kick, S snare, g ghost note on the snare, . rest.
  * Defaults per exercise: sub (slots per beat), snare ('3' half-time, '24' backbeat, 'riff' snare comes from the riff),
  * pulse ('q' quarters, 'h' halves, 'e' eighths), cym ('china', 'crash', 'ride', 'hh').
- * The kick has no dynamics: every hit is the same level.
+ * The kick has no dynamics: every hit is the same level. Only the ghost-note grooves use snare dynamics
+ * (ghost / normal / accented backbeat) and a lighter hi-hat between the beats.
  */
 const LIB = {
   chug: [
@@ -67,6 +68,26 @@ const LIB = {
   ],
 };
 
+// Ghost-note grooves: half-time, accented snare on 3, quiet snare notes in between (Sleep Token verses, R&B).
+LIB.ghost = [
+  { id: 'g-1', name: 'Ghost note 入門', en: '第 3 拍前後各一個 Ghost', riff: ['K......g.....g..'],
+    tip: 'Ghost note 很輕，棒子離鼓皮只有 1～2 公分；第 3 拍的重音要打出來。兩種音量差越多，律動越有層次。' },
+  { id: 'g-2', name: 'Ghost 夾在大鼓之間', en: 'K – g K  · – – g –', riff: ['K.gK..g.....g.K.'],
+    tip: '大鼓和 Ghost note 輪流，同一時間只有一個鼓。手放鬆，讓 Ghost 自然地落下去就好。' },
+  { id: 'g-3', name: '16 分 Hi-hat＋Ghost', en: 'Hi-hat 16 分 · Ghost 在 e 和 a', riff: ['K..g.gK......g.g'], pulse: 's',
+    tip: '右手 Hi-hat 打 16 分，拍點稍微重一點。左手的 Ghost 和右手錯開，不要被右手帶著一起變大聲。' },
+  { id: 'g-4', name: 'Ghost 串', en: '連續兩個 Ghost note', riff: ['K.gg.gK...g.gg.K'],
+    tip: '兩個 Ghost 連在一起像「嘟嚕」，用手指和手腕的回彈，不要用手臂出力。' },
+  { id: 'g-5', name: 'R&B Half-time', en: '大鼓在 a · Ghost 在 &', riff: ['K..K..g...gK.g..'],
+    tip: '慢一點更有感覺（70～90 BPM）。大鼓落在「a」，要準，不要搶拍。' },
+  { id: 'g-6', name: '雙踏＋Ghost', en: '大鼓兩連下 · Ghost 補空', riff: ['KK.gKK.g...gKKg.'],
+    tip: '腳兩連下（右左），手只補一個很輕的 Ghost。先關掉 Ghost 只練腳，再加回來。' },
+  { id: 'g-7', name: '5 個一組 Ghost riff', en: 'K g K – g · 跨小節', riff: ['KgK.g'],
+    tip: '把 Ghost note 放進 Djent 的奇數分組裡。每組的第一下是大鼓，跟著鈸數拍就不會迷路。' },
+  { id: 'g-8', name: '7 個一組 Ghost riff', en: 'K K – g K – g · 跨小節', riff: ['KK.gK.g'],
+    tip: '7 個一組，Ghost note 也跟著每小節換位置。小鼓第 3 拍的重音永遠不動。' },
+].map((d) => Object.assign(d, { cym: 'hh', pulse: d.pulse || 'e', dyn: true }));
+
 // Gospel-chops fills: linear hand/foot cells (R right hand, L left hand, K kick). A fill repeats its cells
 // and is right-aligned so it always ends on a complete cell and lands on the next downbeat.
 const FILLS = [
@@ -87,7 +108,7 @@ LIB.fill = FILLS.map((f) => ({
   id: f.id, name: f.name, en: f.en, sub: f.sub || 4, riff: f.sub === 6 ? ['KK.KK.'] : ['K.KK'], fill: f.id, tip: f.tip,
 }));
 
-const CATS = ['chug', 'odd', 'snare', 'sext', 'fill'];
+const CATS = ['chug', 'odd', 'snare', 'sext', 'ghost', 'fill'];
 const COUNTS = { 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
 const SUB_NAME = { 4: '16 分音符', 6: '16 分六連音' };
 const INST_NAME = { china: 'China', crash: 'Crash', ride: 'Ride', hh: 'Hi-hat', t1: '中鼓', t2: '中鼓 2', ft: '落地鼓', sn: '小鼓', bd: '大鼓' };
@@ -98,10 +119,12 @@ const ROWS = ['cy', 'tm', 'gp', 'sn', 'bd'];
 const ROW_NAME = { cy: '鈸', tm: '筒鼓', gp: '分組', sn: '小鼓', bd: '大鼓' };
 const PAN = { RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35 };
 const AMP = 0.62;
+// Levels for the ghost-note grooves: g ghost, a accented backbeat, s hi-hat between the beats.
+const LEVEL = { g: 0.28, a: 1.45, s: 0.7 };
 
 const MIN_BPM = 30;
 const DEFAULTS = {
-  cat: 'chug', idx: { chug: 0, odd: 0, snare: 0, sext: 0, fill: 0 },
+  cat: 'chug', idx: { chug: 0, odd: 0, snare: 0, sext: 0, ghost: 0, fill: 0 },
   basic: false, view: 'staff', phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
   sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
   reps: 8, autoNext: false, playPart: 'all', timer: 0,
@@ -170,11 +193,11 @@ function build(def, cat) {
   const grp = Array.from({ length: len }, () => null);
 
   // Top layer: cymbal pulse (stops for the fill), crash on beat 1 when a fill leads back into the phrase.
-  const every = pulse === 'h' ? 2 * sub : pulse === 'e' ? sub / 2 : sub;
+  const every = pulse === 'h' ? 2 * sub : pulse === 'e' ? sub / 2 : pulse === 's' ? 1 : sub;
   for (let i = 0; i < fillFrom; i++) {
     if (i % every) continue;
     const inst = i === 0 && fillSlots && !S.basic ? 'crash' : cym;
-    slots[i].push({ row: 'cy', inst, limb: 'RH' });
+    slots[i].push({ row: 'cy', inst, limb: 'RH', lvl: def.dyn && i % sub ? 's' : undefined });
   }
 
   // Bottom layer: the riff cell repeats from beat 1 and is cut where the fill starts (or at the end of the phrase).
@@ -193,8 +216,10 @@ function build(def, cat) {
     }
     let ch = cell[p];
     if (snare !== 'riff' && ch === 'S') ch = 'K';
-    if (backbeat(i)) ch = 'S';
-    if (ch === 'S') slots[i].push({ row: 'sn', inst: 'sn', limb: 'LH' });
+    const bb = backbeat(i);
+    if (bb) ch = 'S';
+    if (ch === 'S') slots[i].push({ row: 'sn', inst: 'sn', limb: 'LH', lvl: def.dyn && bb ? 'a' : undefined });
+    else if (ch === 'g') slots[i].push({ row: 'sn', inst: 'sn', limb: 'LH', lvl: 'g' });
     else if (ch === 'K') {
       const f = single ? 'R' : foot;
       slots[i].push({ row: 'bd', inst: 'bd', limb: f + 'F' });
@@ -261,7 +286,7 @@ function exAt(i) { return SHEET[((i % SHEET.length) + SHEET.length) % SHEET.leng
 
 /* ---------- Rendering ---------- */
 function riffText(riff) {
-  return riff.map((g) => [...g].map((c) => `<b class="${c === '.' ? 'rest' : c}">${c === '.' ? '·' : c}</b>`).join('')).join('<i>|</i>');
+  return riff.map((g) => [...g].map((c) => `<b class="${c === '.' ? 'rest' : c}">${c === '.' ? '·' : c === 'g' ? '(S)' : c}</b>`).join('')).join('<i>|</i>');
 }
 
 function renderAll() {
@@ -360,7 +385,7 @@ function renderGrid() {
             html += `<span class="kc${fill}" data-i="${i}"><span class="${cls}"${title}>${txt}</span></span>`;
           } else {
             const h = ex.slots[i].find((x) => x.row === r);
-            html += `<span class="kc${fill}" data-i="${i}">${h ? `<i class="hit ${h.inst} ${h.limb}"></i>` : ''}</span>`;
+            html += `<span class="kc${fill}" data-i="${i}">${h ? `<i class="hit ${h.inst} ${h.limb}${h.lvl ? ' lv-' + h.lvl : ''}"></i>` : ''}</span>`;
           }
         }
         html += '</span>';
@@ -419,6 +444,9 @@ function renderStaff() {
               if (h.inst === 'china') body.push(`<circle class="xo" cx="${x}" cy="${y}" r="5.4"/>`);
             } else {
               body.push(`<ellipse class="nh" cx="${x}" cy="${y}" rx="4.7" ry="3.4" transform="rotate(-22 ${x} ${y})"/>`);
+              // Ghost notes in parentheses; an accent mark above the beam for the accented backbeat.
+              if (h.lvl === 'g') body.push(`<text class="gp" x="${x - 9.5}" y="${y + 4}">(</text><text class="gp" x="${x + 6}" y="${y + 4}">)</text>`);
+              if (h.lvl === 'a') body.push(`<path class="ac" d="M${x} ${beamY - 14}L${x + 8} ${beamY - 11}L${x} ${beamY - 8}"/>`);
             }
           }
           body.push(`<line class="st" x1="${x + 4.2}" y1="${low - 1}" x2="${x + 4.2}" y2="${beamY}"/>`);
@@ -426,7 +454,10 @@ function renderStaff() {
           const low1 = hits.find((h) => h.row === 'bd');
           const hand = hits.find((h) => h.row === 'tm' || (h.row === 'sn') || (h.row === 'cy' && i >= ex.fillFrom));
           if (low1) body.push(`<text class="stk ${low1.limb}" x="${x}" y="104" text-anchor="middle">${low1.limb[0]}</text>`);
-          else if (hand) body.push(`<text class="stk ${hand.limb}" x="${x}" y="104" text-anchor="middle">${hand.row === 'sn' && i < ex.fillFrom ? 'S' : hand.limb[0]}</text>`);
+          else if (hand) {
+            const letter = hand.row === 'sn' && i < ex.fillFrom ? (hand.lvl === 'g' ? 'g' : 'S') : hand.limb[0];
+            body.push(`<text class="stk ${hand.limb}${hand.lvl === 'g' ? ' gh' : ''}" x="${x}" y="104" text-anchor="middle">${letter}</text>`);
+          }
         }
         body.push(`<text class="cnt" x="${x}" y="134" text-anchor="middle">${k === 0 ? bt + 1 : ex.sub === 6 ? (k === 3 ? '&' : '') : COUNTS[4][k]}</text>`);
       }
@@ -469,8 +500,10 @@ function renderLegend() {
   const used = new Set();
   cur.slots.forEach((s) => s.forEach((h) => used.add(h.limb)));
   const names = { RH: '右手', LH: '左手', RF: '右腳', LF: '左腳' };
+  const ghost = cur.slots.some((s) => s.some((h) => h.lvl === 'g'));
   $('#legend').innerHTML = ['RH', 'LH', 'RF', 'LF'].filter((l) => used.has(l))
     .map((l) => `<span><i class="dot ${l}"></i>${names[l]}</span>`).join('') +
+    (ghost ? '<span class="lg-note">(S) Ghost note 很輕　&gt; 重音</span>' : '') +
     '<span class="lg-note">↺ 接回第 1 拍　✂ 截斷</span>';
 }
 
@@ -668,7 +701,7 @@ function scheduleSlot(n, t) {
     }
     queue.push({ t, reps });
   }
-  for (const h of schedEx.slots[i]) if (audible(h.limb)) hit(h.inst, t, AMP, PAN[h.limb]);
+  for (const h of schedEx.slots[i]) if (audible(h.limb)) hit(h.inst, t, AMP * (LEVEL[h.lvl] || 1), PAN[h.limb]);
   if (S.click && i % sub === 0) click(t);
   else if (S.click && S.clickSub !== 'off') click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
   queue.push({ t, i });
