@@ -1,0 +1,18 @@
+{
+  "id": "timekeeper",
+  "name": "Time Keeper",
+  "short_name": "Time Keeper",
+  "description": "鼓手的時間感訓練：Gap click 與麥克風準度偵測",
+  "lang": "zh-Hant",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#15191E",
+  "theme_color": "#15191E",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

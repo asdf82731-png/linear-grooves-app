@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Time Keeper</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Time Keeper">
+<meta name="description" content="鼓手的時間感訓練：Gap click、位移節拍器、漸進速度，用麥克風聽你打得準不準">
+<meta name="theme-color" content="#15191E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <div class="col-main">
+    <header class="top">
+      <div class="top-row">
+        <h1 class="brand">Time Keeper</h1>
+        <button type="button" id="helpBtn" class="help-btn" aria-expanded="false" aria-controls="guide">? 使用說明</button>
+      </div>
+      <p class="tag">練時間感：節拍器消失幾小節再回來，你還對得上嗎？開麥克風就知道你快了還是慢了幾毫秒。</p>
+    </header>
+
+    <section class="guide" id="guide" hidden aria-label="使用說明">
+      <h2>三步開始練習</h2>
+      <ol class="steps">
+        <li><b>在「練什麼」選一種練法</b>，第一次建議選「Gap click」，響 2 小節、安靜 2 小節。</li>
+        <li><b>按 ▶</b>，跟著 click 打 4 分音符；安靜的時候繼續打，心裡數拍。</li>
+        <li><b>想知道準不準，按左下角「開始聽」</b>打開麥克風。第一次要先做「延遲校正」：跟著 click 打 8 下。</li>
+      </ol>
+      <details class="glossary">
+        <summary>名詞解釋</summary>
+        <dl>
+          <dt>Gap click</dt><dd>節拍器響幾小節、安靜幾小節，一直循環。安靜時靠自己維持速度。</dd>
+          <dt>偏差</dt><dd>你打的時間點和拍點差幾毫秒。負數＝太早（搶拍），正數＝太晚（拖拍）。</dd>
+          <dt>穩定度</dt><dd>每一下偏差的分散程度（標準差），數字越小越穩。</dd>
+          <dt>延遲校正</dt><dd>平板的聲音要經過 Xenyx 才到耳機，麥克風也有延遲。校正後 App 會自動扣掉。</dd>
+        </dl>
+      </details>
+      <button type="button" id="guideOk" class="primary-sm">知道了</button>
+    </section>
+
+    <section class="sheet" id="practice" aria-label="目前的練習">
+      <div class="sheet-head">
+        <div class="ex-title">
+          <h2 id="modeName">Gap click</h2>
+          <span id="modeSub" class="ex-en"></span>
+        </div>
+        <button type="button" id="btnTap" class="ghost sm tap">點按測速</button>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+      <div class="beats" id="beats" aria-label="拍子"></div>
+      <div class="info" id="info"></div>
+      <div class="meter" id="meter" hidden>
+        <div class="meter-track" aria-hidden="true">
+          <span class="meter-zone"></span>
+          <span class="meter-mid"></span>
+          <span class="meter-dots" id="meterDots"></span>
+        </div>
+        <div class="meter-scale" aria-hidden="true"><span>早 50 ms</span><span>準（±10）</span><span>晚 50 ms</span></div>
+        <div class="meter-last" id="meterLast" aria-live="polite">還沒有聽到打擊</div>
+      </div>
+    </section>
+
+    <section class="result" id="result" hidden aria-labelledby="h-result">
+      <h2 id="h-result">這次的結果</h2>
+      <div class="stats" id="stats"></div>
+      <div class="chart" id="chart"></div>
+      <p class="hint" id="resultNote"></p>
+    </section>
+  </div>
+
+  <div class="col-side">
+    <section class="panel" aria-labelledby="h-what">
+      <h2 id="h-what">練什麼</h2>
+      <div class="modes" role="radiogroup" aria-label="練習模式">
+        <label><input type="radio" name="mode" value="metro" id="mode-metro"><span>節拍器<small>一般的 click</small></span></label>
+        <label><input type="radio" name="mode" value="gap" id="mode-gap"><span>Gap click<small>響幾小節、安靜幾小節</small></span></label>
+        <label><input type="radio" name="mode" value="shift" id="mode-shift"><span>位移節拍器<small>click 只在 2、4 或反拍</small></span></label>
+        <label><input type="radio" name="mode" value="ramp" id="mode-ramp"><span>漸進速度<small>自動加速或減速</small></span></label>
+      </div>
+
+      <div class="mode-opts" data-mode="metro">
+        <p class="hint">最基本的節拍器。細分音、拍號在下面的「節拍器」設定。</p>
+      </div>
+
+      <div class="mode-opts" data-mode="gap" hidden>
+        <div class="row2">
+          <div class="field">
+            <label class="lbl" for="gapPlay">響幾小節</label>
+            <select id="gapPlay"><option value="1">1 小節</option><option value="2">2 小節</option><option value="4">4 小節</option></select>
+          </div>
+          <div class="field">
+            <label class="lbl" for="gapMute">安靜幾小節</label>
+            <select id="gapMute"><option value="1">1 小節</option><option value="2">2 小節</option><option value="4">4 小節</option><option value="8">8 小節</option></select>
+          </div>
+        </div>
+        <label class="tg"><input type="checkbox" id="gapShow"><span>安靜時畫面繼續標示拍子（關掉才是真的在練內在時間）</span></label>
+        <label class="tg"><input type="checkbox" id="gapGrow"><span>漸進：每成功一輪，安靜就多 1 小節</span></label>
+        <div class="trainer" id="gapGrowOpts">最多安靜
+          <select id="gapMax" aria-label="最多安靜幾小節"><option value="4">4</option><option value="8">8</option><option value="16">16</option></select> 小節。
+          開麥克風時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</div>
+      </div>
+
+      <div class="mode-opts" data-mode="shift" hidden>
+        <div class="field">
+          <label class="lbl" for="shiftPos">click 響在哪裡</label>
+          <select id="shiftPos">
+            <option value="24">2、4 拍（偶數拍）</option>
+            <option value="and">每拍的 &amp;（反拍）</option>
+            <option value="e">每拍的 e</option>
+            <option value="a">每拍的 a</option>
+            <option value="bar">每小節只有第 1 拍</option>
+            <option value="2bar">每 2 小節只有第 1 拍</option>
+          </select>
+        </div>
+        <p class="hint">你還是照拍點打，click 落在別的位置。畫面上方的小格子標出 click 在一拍裡的哪裡。</p>
+      </div>
+
+      <div class="mode-opts" data-mode="ramp" hidden>
+        <div class="field">
+          <span class="lbl">怎麼變</span>
+          <div class="seg" role="radiogroup" aria-label="怎麼變速">
+            <label><input type="radio" name="rampKind" value="linear" id="rampLinear"><span>一路變到終點<small>到了就維持</small></span></label>
+            <label><input type="radio" name="rampKind" value="ladder" id="rampLadder"><span>速度梯<small>到頂再回到起點</small></span></label>
+          </div>
+        </div>
+        <div class="trainer">從目前速度變到
+          <input type="number" id="rampEnd" min="30" max="300" step="1" inputmode="numeric" aria-label="終點 BPM"> BPM，每
+          <select id="rampEvery" aria-label="每幾小節變一次"><option>1</option><option>2</option><option>4</option><option>8</option></select> 小節變
+          <select id="rampStep" aria-label="每次變多少 BPM"><option>1</option><option>2</option><option>5</option><option>10</option></select> BPM</div>
+        <p class="hint">起點就是下方播放列的速度。終點比起點快就是加速，比較慢就是減速。</p>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-click">
+      <h2 id="h-click">節拍器</h2>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="meterSel">拍號</label>
+          <select id="meterSel"><option value="2">2/4</option><option value="3">3/4</option><option value="4">4/4</option><option value="5">5/4</option><option value="6">6/4</option><option value="7">7/4</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl" for="subGrid">細分音</label>
+          <select id="subGrid"><option value="2">8 分音符</option><option value="3">8 分三連音</option><option value="4">16 分音符</option><option value="6">16 分六連音</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="subLevel">細分音的音量</label>
+        <select id="subLevel"><option value="off">不打，只有拍點</option><option value="soft">比拍點小聲</option><option value="same">跟拍點一樣大聲</option></select>
+      </div>
+      <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
+    </section>
+
+    <section class="panel" aria-labelledby="h-mic">
+      <h2 id="h-mic">麥克風偵測 <small class="beta">Beta</small></h2>
+      <p class="hint">用平板的麥克風聽鼓棒打在 pad 上的聲音。只在這台裝置上即時處理，不錄音、不上傳。平板請放在鼓架上，靠近小鼓。</p>
+      <div class="field">
+        <span class="lbl">你打的音符</span>
+        <div class="seg" role="radiogroup" aria-label="你打的音符">
+          <label><input type="radio" name="detNote" value="q" id="detQ"><span>4 分音符<small>每拍一下</small></span></label>
+          <label><input type="radio" name="detNote" value="e" id="detE"><span>8 分音符<small>每拍兩下</small></span></label>
+        </div>
+      </div>
+      <div class="field">
+        <label class="lbl" for="sens">靈敏度：<output id="sensOut">6</output>（抓不到就調高，雜音也被算進去就調低）</label>
+        <input type="range" id="sens" min="1" max="10" step="1">
+        <div class="level" aria-hidden="true"><span class="level-bar" id="levelBar"></span><span class="level-thr" id="levelThr"></span></div>
+        <span class="hint" id="levelNote">按「開始聽」後，這裡會顯示麥克風收到的音量；直線是門檻，打擊要超過它才算。</span>
+      </div>
+      <div class="calib">
+        <button type="button" id="btnCalib" class="ghost">延遲校正</button>
+        <span class="hint" id="calibOut">還沒校正</span>
+      </div>
+    </section>
+
+    <section class="panel" aria-labelledby="h-log">
+      <h2 id="h-log">練習紀錄</h2>
+      <div class="chart" id="logChart"></div>
+      <ol class="log" id="log"></ol>
+      <button type="button" id="btnClearLog" class="ghost sm">清除紀錄</button>
+    </section>
+
+    <footer class="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「安裝應用程式」就能像 App 一樣使用，沒網路也能練。</footer>
+  </div>
+</div>
+
+<nav class="transport" aria-label="播放控制">
+  <div class="transport-in">
+    <button type="button" id="btnMic" class="gen mic" aria-pressed="false">開始聽</button>
+    <div class="tempo">
+      <div class="tempo-top">
+        <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
+        <input type="text" id="bpmOut" class="bpm" value="80" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字">
+        <span class="bpm-unit">速度<br>BPM</span>
+        <button type="button" id="bpmUp" class="step" aria-label="快一點">+</button>
+      </div>
+      <input type="range" id="bpm" min="30" max="300" step="1" aria-label="速度">
+    </div>
+    <button type="button" id="btnPlay" class="play" aria-label="播放">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+  </div>
+</nav>
+<script src="app.js"></script>
+</body>
+</html>
