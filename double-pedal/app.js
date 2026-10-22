@@ -3,7 +3,7 @@
 /* ---------- Exercises ----------
  * Each exercise is a set of lanes, one per limb: RH right hand, LH left hand, RF right foot, LF left foot.
  * A lane is a string with one character per slot (spaces are ignored):
- *   x hit, g ghost (very soft, e.g. feathered bass drum), . rest. No accents: every hit is played at the same level.
+ *   x hit, . rest. No accents or soft notes: every hit is played at the same level.
  * `sub` = slots per beat; the pattern loops after (slots / sub) beats.
  * Instruments: RH plays `hand` ('hh' closed hi-hat, 'ride', 'sn' snare), LH snare,
  * RF bass drum, LF bass drum (double pedal) or 'hf' hi-hat foot.
@@ -115,11 +115,11 @@ const HIHAT = [
   { id: 'h-alt', name: '大鼓／腳踩鈸 交替', en: 'Bass & Hi-hat Foot Alternating', sub: 4, hand: 'ride', lf: 'hf',
     RH: 'x... x... x... x...', RF: 'x.x. x.x. x.x. x.x.', LF: '.x.x .x.x .x.x .x.x',
     tip: '兩腳像雙踏一樣交替，只是左腳在 Hi-hat。' },
-  { id: 'h-swing', name: 'Swing：Feathering＋2、4', en: 'Jazz Ride · feathered bass · hi-hat 2 & 4', sub: 3, hand: 'ride', lf: 'hf',
-    RH: 'x.. x.x x.. x.x', RF: 'g.. g.. g.. g..', LF: '... x.. ... x..',
-    tip: '爵士最基本的雙腳：大鼓每拍輕輕踩（幾乎聽不到，用腳跟放下），Hi-hat 清楚地在 2、4。' },
+  { id: 'h-swing', name: 'Swing：大鼓四分音符＋2、4', en: 'Jazz Ride · bass on every beat · hi-hat 2 & 4', sub: 3, hand: 'ride', lf: 'hf',
+    RH: 'x.. x.x x.. x.x', RF: 'x.. x.. x.. x..', LF: '... x.. ... x..',
+    tip: '爵士最基本的雙腳：大鼓每拍踩一下，Hi-hat 清楚地在 2、4。' },
   { id: 'h-swing-comp', name: 'Swing＋左手 Comping', en: 'Swing with snare comping on the "let"', sub: 3, hand: 'ride', lf: 'hf',
-    RH: 'x.. x.x x.. x.x', LH: '... ..x ... ..x', RF: 'g.. g.. g.. g..', LF: '... x.. ... x..',
+    RH: 'x.. x.x x.. x.x', LH: '... ..x ... ..x', RF: 'x.. x.. x.. x..', LF: '... x.. ... x..',
     tip: '左手在三連音的最後一個音補一下，雙腳保持不變。' },
   { id: 'h-samba', name: 'Samba 雙腳', en: 'Samba · bass 1 . . a  · hi-hat on &', sub: 4, hand: 'ride', lf: 'hf',
     RH: 'x.xx x.xx x.xx x.xx', RF: 'x..x x..x x..x x..x', LF: '..x. ..x. ..x. ..x.',
@@ -172,7 +172,7 @@ const MODES = ['basic', 'heel', 'groove', 'combo', 'hh', 'rand'];
 const LANES = ['RH', 'LH', 'RF', 'LF'];
 const INST_NAME = { hh: 'Hi-hat', ride: 'Ride', sn: '小鼓', bd: '大鼓', hf: '腳踩鈸' };
 const LIMB_NAME = { RH: '右手', LH: '左手', RF: '右腳', LF: '左腳' };
-const AMP = { x: 0.62, g: 0.22 };
+const AMP = { x: 0.62 };
 
 const MIN_BPM = 30;
 const DEFAULTS = {
@@ -200,7 +200,7 @@ const pick = (a) => a[Math.floor(Math.random() * a.length)];
 function saveSettings() { save('ft.settings', S); }
 
 /* ---------- Building exercise sheets ---------- */
-// Turns a definition into { lanes: [{ limb, inst, hits: ['x'|'g'|'.'] }], len }.
+// Turns a definition into { lanes: [{ limb, inst, hits: ['x'|'.'] }], len }.
 function build(def, mode) {
   const lanes = [];
   for (const limb of LANES) {
@@ -351,7 +351,7 @@ function gridSystem(b0, b1) {
     const label = `${LIMB_NAME[l.limb]}<small>${INST_NAME[l.inst]}</small>`;
     html += row(label, l.limb, (i) => {
       const h = l.hits[i];
-      const mark = h === '.' ? '' : `<i class="hit ${l.inst}${h === 'g' ? ' gh' : ''}"></i>`;
+      const mark = h === '.' ? '' : `<i class="hit ${l.inst}"></i>`;
       return `<span class="kc" data-i="${i}">${mark}</span>`;
     });
   }
@@ -371,8 +371,7 @@ function renderGrid() {
   grid.classList.toggle('dense', cur.sub >= 6);
   grid.innerHTML = html;
   grid.setAttribute('aria-label', `${cur.name}：` + CL.map((l) => `${LIMB_NAME[l.limb]}${INST_NAME[l.inst]}`).join('、'));
-  $('#legend').innerHTML = CL.map((l) => `<span><i class="dot ${l.limb}"></i>${LIMB_NAME[l.limb]}・${INST_NAME[l.inst]}</span>`).join('') +
-    (CL.some((l) => l.hits.includes('g')) ? '<span><i class="dot gh"></i>很輕</span>' : '');
+  $('#legend').innerHTML = CL.map((l) => `<span><i class="dot ${l.limb}"></i>${LIMB_NAME[l.limb]}・${INST_NAME[l.inst]}</span>`).join('');
 }
 
 function renderList() {
@@ -429,7 +428,7 @@ function ensureAudio() {
     comp.attack.value = 0;
     comp.release.value = 0.05;
     // The shaper's input range is ±1, so feed it half the signal and let its curve cover ±2:
-    // straight line up to 0.7 (soft and accented notes keep their difference), then bends smoothly toward 0.98.
+    // straight line up to 0.7 (normal hits are untouched), then bends smoothly toward 0.98.
     const half = ctx.createGain();
     half.gain.value = 0.5;
     const clip = ctx.createWaveShaper();
