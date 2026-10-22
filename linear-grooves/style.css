@@ -395,3 +395,8 @@ input[type="number"] { width: 5.5em; }
 .staff .hit.R { fill: var(--r); } .staff .hit.L { fill: var(--l); }
 .lanes .stk { font: 600 13px var(--f-mono); }
 .notation .lanes { padding-block: 8px; }
+
+/* ---------- Djent linear ---------- */
+.djent-opts { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.cycle { margin: 0; font-size: 13px; }
+.staff .mk { fill: var(--accent); font: 600 12px var(--f-mono); }

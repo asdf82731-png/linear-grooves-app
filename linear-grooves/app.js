@@ -45,8 +45,16 @@ function syncLevel() {
   $('#levelHint').textContent = lv === 'custom' ? '目前使用你在「進階規則」裡的自訂設定。選一個難度可以回到預設。' : LEVELS[lv].hint;
 }
 
+// Djent linear: one cell of groups repeats across the barline instead of filling the bar exactly.
+const DJENT_CELLS = {
+  '3': [3], '5': [5], '7': [7], '4+5': [4, 5], '5+6': [5, 6], '5+7': [5, 7], '6+7': [6, 7], '3+3+5': [3, 3, 5],
+};
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+
 // y = offset from the top staff line, in px (half a staff space = 4).
 const VOICES = {
+  china: { label: 'CH', y: -12, cym: true }, // B5
+  crash: { label: 'CR', y: -8, cym: true },  // A5
   hh:   { label: 'HH', y: -4, cym: true },  // G5, above the staff
   ride: { label: 'RD', y: 0,  cym: true },  // F5, top line
   t1:   { label: 'T1', y: 4 },              // E5
@@ -60,7 +68,7 @@ const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' 
 const MIN_BPM = 40;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
-  orch: 'hh', accents: true, bpm: 80, click: true, clickSub: 'soft', countIn: false,
+  orch: 'hh', accents: true, bpm: 80, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut', click: true, clickSub: 'soft', countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
 
@@ -117,7 +125,7 @@ function pool(size) {
 
 function voicesFor(stick) {
   let rv = 'hh', lv = 'sn';
-  if (S.orch === 'ride') rv = 'ride';
+  if (S.orch === 'ride' || S.orch === 'china' || S.orch === 'crash') rv = S.orch;
   else if (S.orch === 'toms') { rv = pick(['hh', 't1', 'ft', 'ft']); lv = pick(['sn', 'sn', 't1']); }
   return [...stick].map((c) => (c === 'K' ? 'k' : c === 'R' ? rv : lv));
 }
@@ -145,7 +153,38 @@ function partition(n, sizes) {
   return out;
 }
 
+// Bars of a Djent phrase: the chosen length, or (「跑完整個循環」) at least that long and
+// stretched until the cell lands back on beat 1.
+function djentBars(cellLen) {
+  const per = S.beats * S.sub;
+  if (S.dEnd !== 'full') return S.dPhrase;
+  const cycle = cellLen / gcd(cellLen, per);
+  return Math.ceil(S.dPhrase / cycle) * cycle;
+}
+
+// Lays the cell end to end over the whole phrase; the last group is cut where the phrase ends.
+function expand(p) {
+  const n = p.beats * p.sub * p.bars, out = [];
+  for (let at = 0, k = 0; at < n; k++) {
+    const ci = k % p.cell.length, g = p.cell[ci], take = Math.min(g.stick.length, n - at);
+    out.push({ stick: g.stick.slice(0, take), voices: g.voices.slice(0, take), ci, cut: take < g.stick.length });
+    at += take;
+  }
+  return out;
+}
+
+function generateDjent() {
+  const sizes = DJENT_CELLS[S.dCell] || DJENT_CELLS['5'];
+  const cell = sizes.map((s) => makeGroup(s));
+  const len = sizes.reduce((a, b) => a + b, 0);
+  pattern = { sub: S.sub, beats: S.beats, bars: djentBars(len), shift: 0, cell };
+  closePicker();
+  patternChanged(true);
+  return true;
+}
+
 function generate() {
+  if (S.type === 'djent') return generateDjent();
   const n = S.beats * S.sub * S.bars;
   const sizes = S.sizes.slice().sort((a, b) => a - b);
   const parts = sizes.length ? partition(n, sizes) : null;
@@ -166,7 +205,7 @@ function flatten(p) {
   p.groups.forEach((g, gi) => {
     [...g.stick].forEach((limb, k) => {
       // The bass drum is never accented, even when it opens a group.
-      base.push({ limb, voice: g.voices[k], acc: S.accents && k === 0 && limb !== 'K', g: gi });
+      base.push({ limb, voice: g.voices[k], acc: S.accents && k === 0 && limb !== 'K', g: gi, ci: g.ci, cut: !!g.cut });
     });
   });
   const n = base.length, sh = ((p.shift || 0) % n + n) % n;
@@ -202,6 +241,7 @@ function renderNotation() {
         ph.push(`<rect class="ph" data-i="${idx}" x="${x - slotW / 2}" y="4" width="${slotW}" height="${H - 8}" rx="3"/>`);
         const v = VOICES[sl.voice];
         const y = top + v.y;
+        if (y <= top - 8) body.push(`<line class="sl" x1="${x - 7}" x2="${x + 7}" y1="${top - 8}" y2="${top - 8}"/>`);
         if (v.cym) {
           body.push(`<path class="xh" d="M${x - 3.6} ${y - 3.6}L${x + 3.6} ${y + 3.6}M${x - 3.6} ${y + 3.6}L${x + 3.6} ${y - 3.6}"/>`);
         } else {
@@ -227,6 +267,15 @@ function renderNotation() {
       if (k === per || SL[idx].g !== SL[idx - 1].g) {
         const a = slotX(runStart), z = slotX(k - 1);
         body.push(`<line class="gb" x1="${a - 6}" y1="113" x2="${z + 6}" y2="113"/>`);
+        // Djent linear: ↺ where the cell lands back on beat 1, ✂ where the last group is cut.
+        if (p.cell) {
+          const s0 = SL[b * per + runStart];
+          const groupStart = b * per + runStart === 0 || SL[b * per + runStart - 1].g !== s0.g;
+          const cellLen = p.cell.reduce((t, g) => t + g.stick.length, 0);
+          const ret = groupStart && s0.ci === 0 && runStart === 0 && b > 0 && per % cellLen !== 0;
+          const mark = (ret ? '↺' : '') + (s0.cut && groupStart ? '✂' : '');
+          if (mark) body.push(`<text class="mk" x="${a - 6}" y="50">${mark}</text>`);
+        }
         runStart = k;
       }
     }
@@ -253,6 +302,21 @@ function renderNotation() {
 }
 
 function renderStrip() {
+  $('.strip-title').textContent = pattern.cell ? 'Riff 由這幾組組成（一直重複）' : '節奏由這幾組組成';
+  if (pattern.cell) {
+    // One button per cell group; data-g points at its first repeat, data-c is the slot within the cell.
+    let c = 0;
+    $('#strip').innerHTML = pattern.cell.map((g, ci) => {
+      const gi = pattern.groups.findIndex((x) => x.ci === ci);
+      const chips = [...g.stick].map((limb, k) => {
+        const acc = S.accents && k === 0 && limb !== 'K' ? ' acc' : '';
+        return `<span class="chip ${limb}${acc}" data-c="${c++}">${limb}<small>${VOICES[g.voices[k]].label}</small></span>`;
+      }).join('');
+      const sel = picker >= 0 && pattern.groups[picker] && pattern.groups[picker].ci === ci ? ' sel' : '';
+      return `<button type="button" class="grp${sel}" data-g="${gi}" aria-label="替換 riff 的第 ${ci + 1} 組（${g.stick}）">${chips}</button>`;
+    }).join('');
+    return;
+  }
   let i = 0;
   $('#strip').innerHTML = pattern.groups.map((g, gi) => {
     const chips = [...g.stick].map((limb, k) => {
@@ -270,11 +334,21 @@ function indexHighlights() {
   document.querySelectorAll('.ph[data-i], .chip[data-i]').forEach((el) => {
     hlMap[+el.dataset.i].push(el);
   });
+  if (pattern.cell) {
+    const n = SL.length, sh = ((pattern.shift || 0) % n + n) % n;
+    const len = pattern.cell.reduce((t, g) => t + g.stick.length, 0);
+    const chips = [...document.querySelectorAll('.chip[data-c]')];
+    hlMap.forEach((list, i) => list.push(chips[((i - sh + n) % n) % len]));
+  }
 }
 
 function patternChanged(fresh) {
+  if (pattern.cell) pattern.groups = expand(pattern);
   SL = flatten(pattern);
-  $('#meta').textContent = `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`;
+  $('#meta').textContent = pattern.cell
+    ? `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · Djent：${pattern.cell.map((g) => g.stick.length).join('+')} 個一組`
+    : `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`;
+  renderCycle();
   $('#shiftOut').textContent = shiftLabel();
   $('#shift0').hidden = !pattern.shift;
   renderPicker();
@@ -286,7 +360,25 @@ function patternChanged(fresh) {
   if (fresh && playing) cur = 0;   // restart the new groove on the next slot
 }
 
+// What the Djent cell does over the phrase, in words.
+function renderCycle() {
+  const el = $('#cycle');
+  if (!pattern.cell) { el.hidden = true; return; }
+  const per = pattern.beats * pattern.sub, len = pattern.cell.reduce((t, g) => t + g.stick.length, 0);
+  const cycle = len / gcd(len, per);
+  let t = `${len} 個音一循環`;
+  if (per % len === 0) t += '，每小節都從第 1 拍重新開始。';
+  else if (pattern.bars % cycle === 0) t += `，要 ${cycle} 小節才接回第 1 拍。這個樂句跑完整個循環，結尾剛好接回第 1 拍。`;
+  else t += `，要 ${cycle} 小節才接回第 1 拍。這個樂句在第 ${pattern.bars} 小節結尾截斷（✂），下一輪從頭開始。`;
+  el.textContent = t;
+  el.hidden = false;
+}
+
 function stickingText(p) {
+  if (p.cell) {
+    const c = p.cell.map((g) => [...g.stick].join(' ')).join(' | ');
+    return `${c} 重複 ${p.bars} 小節${p.shift ? `（位移 +${p.shift}）` : ''}`;
+  }
   const t = p.groups.map((g) => [...g.stick].join(' ')).join(' | ');
   return p.shift ? `${t}（位移 +${p.shift}）` : t;
 }
@@ -299,6 +391,11 @@ function shiftLabel() {
 
 /* ---------- Group picker: substitute or permute one group ---------- */
 let picker = -1;
+// The group a strip button edits: in Djent linear every repeat of a cell group is the same group.
+function editGroup(gi) {
+  const g = pattern.groups[gi];
+  return pattern.cell && g ? pattern.cell[g.ci] : g;
+}
 function rotations(stick) {
   const out = [];
   for (let r = 1; r < stick.length; r++) out.push(stick.slice(r) + stick.slice(0, r));
@@ -307,7 +404,7 @@ function rotations(stick) {
 function renderPicker() {
   const box = $('#picker');
   if (picker < 0 || !pattern.groups[picker]) { box.hidden = true; return; }
-  const g = pattern.groups[picker];
+  const g = editGroup(picker);
   const opts = (list) => list.map((s) =>
     `<button type="button" class="opt${s === g.stick ? ' cur' : ''}" data-stick="${s}">${[...s].map((c) => `<b class="${c}">${c}</b>`).join('')}</button>`).join('');
   const rot = rotations(g.stick);
@@ -315,7 +412,7 @@ function renderPicker() {
   box.hidden = false;
   box.innerHTML = `
     <div class="pk-head">
-      <strong>換掉第 ${picker + 1} 組</strong>
+      <strong>${pattern.cell ? `換掉 riff 的第 ${pattern.groups[picker].ci + 1} 組（每次重複都會換）` : `換掉第 ${picker + 1} 組`}</strong>
       <button type="button" class="ghost sm" data-act="random">隨便換一個</button>
       <button type="button" class="primary-sm" data-act="close">完成</button>
     </div>
@@ -326,7 +423,7 @@ function renderPicker() {
 }
 function closePicker() { picker = -1; }
 function setGroup(gi, stick) {
-  const g = pattern.groups[gi];
+  const g = editGroup(gi);
   // Same notes in a new order: keep each hand on the drum it was on.
   if ([...stick].sort().join('') === [...g.stick].sort().join('')) {
     const on = { K: 'k' };
@@ -406,6 +503,12 @@ function tone(t, f0, f1, dec, peak, type) {
   o.stop(t + dec + 0.02);
 }
 const KIT = {
+  // Djent cymbals: a bright crash wash, and a shorter, trashier china.
+  crash: (t, a) => { noise(t, 1.1, 'highpass', 4200, 0.3 * a); noise(t, 0.5, 'bandpass', 3000, 0.16 * a, 0.6); },
+  china: (t, a) => {
+    noise(t, 0.55, 'bandpass', 2600, 0.38 * a, 0.9); noise(t, 0.35, 'highpass', 6000, 0.14 * a);
+    tone(t, 523, 520, 0.4, 0.03 * a, 'square'); tone(t, 787, 783, 0.4, 0.025 * a, 'square');
+  },
   k:    (t, a) => { tone(t, 150, 44, 0.36, 1.0 * a); noise(t, 0.012, 'lowpass', 3000, 0.25 * a); },
   sn:   (t, a) => { noise(t, 0.16, 'highpass', 1400, 0.6 * a); tone(t, 230, 170, 0.08, 0.35 * a, 'triangle'); },
   hh:   (t, a) => { noise(t, 0.045, 'highpass', 7800, 0.38 * a); },
@@ -567,6 +670,12 @@ function syncControls() {
   ($(`#lib-${S.lib}`) || $('#lib-classic')).checked = true;
   $(S.kickPos === 'start' ? '#kpStart' : '#kpEnd').checked = true;
   $('#orch').value = S.orch;
+  $(S.type === 'djent' ? '#type-djent' : '#type-normal').checked = true;
+  $('#djentOpts').hidden = S.type !== 'djent';
+  $('#barsField').hidden = S.type === 'djent';
+  $('#dCell').value = S.dCell;
+  $(`#dPhrase${S.dPhrase}`).checked = true;
+  $('#dEnd').value = S.dEnd;
   $('#doubleKick').checked = S.doubleKick;
   $('#accents').checked = S.accents;
   $('#click').checked = S.click;
@@ -629,6 +738,10 @@ function bind() {
     saveSettings();
     generate();
   });
+  document.querySelectorAll('input[name="type"]').forEach((el) => el.addEventListener('change', () => { S.type = el.value; syncControls(); saveSettings(); generate(); }));
+  document.querySelectorAll('input[name="dPhrase"]').forEach((el) => el.addEventListener('change', () => { S.dPhrase = +el.value; saveSettings(); generate(); }));
+  $('#dCell').addEventListener('change', (e) => { S.dCell = e.target.value; saveSettings(); generate(); });
+  $('#dEnd').addEventListener('change', (e) => { S.dEnd = e.target.value; saveSettings(); generate(); });
   $('#doubleKick').addEventListener('change', (e) => { S.doubleKick = e.target.checked; saveSettings(); generate(); });
 
   // Cosmetic rules → keep the sticking.
@@ -661,8 +774,8 @@ function bind() {
     const act = e.target.closest('[data-act]');
     if (opt) setGroup(picker, opt.dataset.stick);
     else if (act && act.dataset.act === 'random') {
-      const old = pattern.groups[picker];
-      pattern.groups[picker] = makeGroup(old.stick.length, old.stick);
+      const old = editGroup(picker);
+      Object.assign(old, makeGroup(old.stick.length, old.stick));
       patternChanged(false);
     } else if (act && act.dataset.act === 'close') {
       closePicker();
@@ -680,7 +793,7 @@ function bind() {
   $('#shiftR').addEventListener('click', () => shiftBy(1));
   $('#shift0').addEventListener('click', () => { pattern.shift = 0; patternChanged(false); });
   $('#btnRotate').addEventListener('click', () => {
-    pattern.groups.forEach((g) => {
+    (pattern.cell || pattern.groups).forEach((g) => {
       g.stick = g.stick.slice(1) + g.stick[0];
       g.voices = g.voices.slice(1).concat(g.voices[0]);
     });
@@ -688,7 +801,7 @@ function bind() {
     flash('每組都改從下一個音開始');
   });
   $('#btnShuffle').addEventListener('click', () => {
-    const gs = pattern.groups;
+    const gs = pattern.cell || pattern.groups;
     if (gs.length < 2) return;
     const before = gs.map((g) => g.stick).join();
     for (let t = 0; t < 10 && gs.map((g) => g.stick).join() === before; t++) {
@@ -709,7 +822,7 @@ function bind() {
   $('#btnRevoice').addEventListener('click', revoice);
   $('#btnMirror').addEventListener('click', () => {
     const swap = { R: 'L', L: 'R', K: 'K' };
-    pattern.groups.forEach((g) => {
+    (pattern.cell || pattern.groups).forEach((g) => {
       g.stick = [...g.stick].map((c) => swap[c]).join('');
       g.voices = voicesFor(g.stick);
     });
@@ -735,7 +848,7 @@ function bind() {
       const f = favs[+l.dataset.load];
       pattern = JSON.parse(JSON.stringify(f.p));
       closePicker();
-      Object.assign(S, { sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
+      adoptPattern();
       syncControls();
       setBpm(f.bpm);
       patternChanged(true);
@@ -767,13 +880,23 @@ function bind() {
 }
 
 function revoice() {
-  pattern.groups.forEach((g) => { g.voices = voicesFor(g.stick); });
+  (pattern.cell || pattern.groups).forEach((g) => { g.voices = voicesFor(g.stick); });
   patternChanged(false);
 }
 
 /* ---------- Boot ---------- */
 if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
+if (!DJENT_CELLS[S.dCell]) S.dCell = '5';
+if (![2, 4, 8].includes(S.dPhrase)) S.dPhrase = 4;
+// Settings follow a loaded pattern (favourite or last session).
+function adoptPattern() {
+  if (pattern.cell) Object.assign(S, { type: 'djent', sub: pattern.sub, beats: pattern.beats });
+  else Object.assign(S, { type: 'normal', sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
+}
 function validPattern(p) {
+  if (p && p.cell) {
+    return Array.isArray(p.cell) && p.cell.length && [3, 4, 6].includes(p.sub) && p.bars >= 1 && p.cell.every((g) => g.stick && g.voices);
+  }
   return p && Array.isArray(p.groups) && p.groups.length && [3, 4, 6].includes(p.sub) &&
     p.groups.reduce((n, g) => n + g.stick.length, 0) === p.beats * p.sub * p.bars;
 }
@@ -782,7 +905,7 @@ syncControls();
 bind();
 renderFavs();
 if (validPattern(pattern)) {
-  Object.assign(S, { sub: pattern.sub, beats: pattern.beats, bars: pattern.bars });
+  adoptPattern();
   syncControls();
   patternChanged(false);
 } else if (!generate()) {

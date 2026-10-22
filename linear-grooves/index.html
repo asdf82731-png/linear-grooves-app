@@ -61,6 +61,7 @@
       </div>
     </div>
     <div class="status" id="status" aria-live="polite"></div>
+    <p class="cycle" id="cycle" hidden></p>
     <div class="notation" id="notation"></div>
     <div class="legend" aria-hidden="true">
       <span><i class="dot R"></i>R 右手</span><span><i class="dot L"></i>L 左手</span><span><i class="dot K"></i>K 大鼓（右腳）</span>
@@ -75,6 +76,40 @@
 
   <section class="panel" aria-labelledby="h-level">
     <h2 id="h-level">難度</h2>
+    <div class="field">
+      <span class="lbl">節奏類型</span>
+      <div class="seg" role="radiogroup" aria-label="節奏類型">
+        <label><input type="radio" name="type" value="normal" id="type-normal"><span>一般<small>剛好湊滿小節</small></span></label>
+        <label><input type="radio" name="type" value="djent" id="type-djent"><span>Djent 線性<small>分組跨過小節線</small></span></label>
+      </div>
+    </div>
+    <div class="djent-opts" id="djentOpts" hidden>
+      <p class="hint">固定的一組（或幾組）一直重複，像 Djent 的吉他 riff 一樣繞過小節線。點節奏裡任一組可以換掉它，每次重複都會一起換。</p>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="dCell">每組長度</label>
+          <select id="dCell">
+            <option value="3">3 個一組</option><option value="5">5 個一組</option><option value="7">7 個一組</option>
+            <option value="4+5">4 + 5（9 個一循環）</option><option value="5+6">5 + 6（11 個）</option>
+            <option value="5+7">5 + 7（12 個）</option><option value="6+7">6 + 7（13 個）</option>
+            <option value="3+3+5">3 + 3 + 5（11 個）</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl" for="dEnd">樂句結尾</label>
+          <select id="dEnd"><option value="cut">截斷（預設）</option><option value="full">跑完整個循環</option></select>
+        </div>
+      </div>
+      <div class="field">
+        <span class="lbl">樂句長度</span>
+        <div class="seg" role="radiogroup" aria-label="樂句長度">
+          <label><input type="radio" name="dPhrase" value="2" id="dPhrase2"><span>2 小節</span></label>
+          <label><input type="radio" name="dPhrase" value="4" id="dPhrase4"><span>4 小節</span></label>
+          <label><input type="radio" name="dPhrase" value="8" id="dPhrase8"><span>8 小節</span></label>
+        </div>
+        <span class="hint">選「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</span>
+      </div>
+    </div>
     <div class="seg" role="radiogroup" aria-label="難度">
       <label><input type="radio" name="level" value="easy" id="level-easy"><span>入門</span></label>
       <label><input type="radio" name="level" value="mid" id="level-mid"><span>中等</span></label>
@@ -149,7 +184,7 @@
             <option value="5">5/4</option><option value="6">6/4</option><option value="7">7/4</option>
           </select>
         </div>
-        <div class="field">
+        <div class="field" id="barsField">
           <span class="lbl">幾個小節</span>
           <div class="seg" role="radiogroup" aria-label="幾個小節">
             <label><input type="radio" name="bars" value="1" id="bars1"><span>1</span></label>
@@ -194,6 +229,8 @@
           <select id="orch">
             <option value="hh">右手 Hi-hat、左手小鼓</option>
             <option value="ride">右手 Ride、左手小鼓</option>
+            <option value="china">右手 China、左手小鼓</option>
+            <option value="crash">右手 Crash、左手小鼓</option>
             <option value="toms">Fill：加入中鼓、落地鼓</option>
           </select>
         </div>

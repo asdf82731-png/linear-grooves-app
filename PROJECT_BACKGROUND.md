@@ -1,16 +1,17 @@
-# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal）
+# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal ＋ Djent Grooves）
 
-> 這份文件給 AI 助手或新協作者當背景資料，說明兩個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
+> 這份文件給 AI 助手或新協作者當背景資料，說明三個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
 
 ## 1. 專案概要
 
-- **使用者**：學爵士鼓（台灣說的「爵士鼓」＝整組套鼓 drum kit）的鼓手，主要用 **Android 手機的 Chrome**，在練習室跟著 App 練。
+- **使用者**：學爵士鼓（台灣說的「爵士鼓」＝整組套鼓 drum kit）的鼓手，主要用 **Android 手機的 Chrome**，在練習室跟著 App 練。Djent Grooves 主要在 **Android 平板橫放**使用。
 - **語言**：介面全部是**繁體中文（zh-Hant）**，用白話口語，避免艱深術語；專有名詞保留英文（Paradiddle、Gallop、Heel-Toe…）。
-- **形式**：兩個**獨立的 PWA**，各自安裝到手機主畫面、各自離線使用。
+- **形式**：三個**獨立的 PWA**，各自安裝到主畫面、各自離線使用。
   | App | 練什麼 | 網址 |
   | --- | --- | --- |
   | **Linear Grooves** | 手：線性節奏、手順、Paradiddle、複節奏 | https://asdf82731-png.github.io/linear-grooves-app/linear-grooves/ |
   | **Double Pedal 雙踏腳法** | 腳：雙踏、手腳組合、腳踩鈸、Swing | https://asdf82731-png.github.io/linear-grooves-app/double-pedal/ |
+  | **Djent Grooves** | Djent 節奏庫：鈸固定 4/4、大鼓奇數分組跨小節、Gospel chops Fill | https://asdf82731-png.github.io/linear-grooves-app/djent/ |
 - **Repo**：`asdf82731-png/linear-grooves-app`，GitHub Pages 從 `main` / `(root)` 發佈。
   - 已決定**不改名**，repo 維持 `linear-grooves-app`，README 網址也已改回 `/linear-grooves-app/`。
 
@@ -26,7 +27,7 @@
 
 ```
 /                      根目錄
-├─ index.html          選擇頁：兩個 App 的連結，本身「不能安裝」（沒有 manifest）
+├─ index.html          選擇頁：三個 App 的連結，本身「不能安裝」（沒有 manifest）
 ├─ sw.js               只用來移除舊版的 service worker（見 §5）
 ├─ README.md           總覽
 ├─ .nojekyll           讓 GitHub Pages 原樣提供檔案
@@ -46,26 +47,33 @@
    ├─ manifest.webmanifest   id: "double-pedal"
    ├─ sw.js            快取前綴 dp-
    └─ icons/           橘色大鼓圓框＋綠點（右腳）紫點（左腳）
+└─ djent/              App 3
+   ├─ index.html       .col-main（譜）＋ .col-side（設定），寬度 ≥ 900px 變兩欄
+   ├─ app.js
+   ├─ style.css        從 Double Pedal 複製後加上 Djent 與平板樣式
+   ├─ manifest.webmanifest   id: "djent"
+   ├─ sw.js            快取前綴 dj-
+   └─ icons/           深灰底、銅色 China 鈸＋綠點紫點
 ```
 
-## 4. 兩個 App 必須獨立：規則與原因（重要）
+## 4. 三個 App 必須獨立：規則與原因（重要）
 
-兩個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把兩個 App 當成同一個，「裝一個蓋掉另一個」：
+三個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把它們當成同一個，「裝一個蓋掉另一個」：
 
-1. **範圍（scope）不可重疊**：每個 App 的 `start_url` 和 `scope` 都是 `"./"`，也就是各自的資料夾。根目錄**不能**放有 manifest 的 App，否則根目錄的 scope 會包含兩個子資料夾。
-2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，兩個 App 的 `appId` 必須不同。
-3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`），不能刪「所有不等於目前版本」的快取。
-4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`。
+1. **範圍（scope）不可重疊**：每個 App 的 `start_url` 和 `scope` 都是 `"./"`，也就是各自的資料夾。根目錄**不能**放有 manifest 的 App，否則根目錄的 scope 會包含所有子資料夾。
+2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`、`"djent"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，三個 App 的 `appId` 必須不同。
+3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`、`dj-`），不能刪「所有不等於目前版本」的快取。
+4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`，Djent Grooves 用 `dj.`。
 
 ### 根目錄 `sw.js` 的用途
 Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個網站。現在根目錄的 `sw.js` 是用來移除舊版：已裝過舊版的手機下次造訪時會抓到它，它會刪掉舊的 `lg-` 快取、取消註冊自己，再重新載入頁面。新版頁面不會再註冊它。
 
 ### 發佈新版的步驟
-- 修改任何會被快取的檔案後，要把該 App 的 `sw.js` 裡的 `VERSION` 加一，並保留前綴，例如 `grooves-v3 → grooves-v4`、`dp-v4 → dp-v5`。
+- 修改任何會被快取的檔案後，要把該 App 的 `sw.js` 裡的 `VERSION` 加一，並保留前綴，例如 `grooves-v3 → grooves-v4`、`dp-v4 → dp-v5`、`dj-v1 → dj-v2`。
 - service worker 用 stale-while-revalidate：先回快取、背景更新，所以使用者通常要**關掉 App 再開一次**才看到新版。
 - GitHub Pages 的 HTTP 快取大約 10 分鐘。
 
-## 5. 設計規範（兩個 App 共用）
+## 5. 設計規範（三個 App 共用）
 
 ### 版面
 - **單欄「練習譜」**：最大寬度 720px，左右留白至少 16px（含 safe-area），手機 375px 寬度下不能出現整頁橫向捲動。
@@ -95,7 +103,7 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 - 內文：**IBM Plex Sans**，中文退回 Noto Sans TC 或系統字型
 
 ### 共通互動規則
-- 色彩語意固定：手 R 藍、L 紅；腳 R 綠、L 紫；重音用底線或外圈（只有 Linear Grooves 的手有重音）。**大鼓沒有輕重音**：兩個 App 的大鼓永遠同一個音量、沒有重音或輕音標記。
+- 色彩語意固定：手 R 藍、L 紅；腳 R 綠、L 紫；重音用底線或外圈（只有 Linear Grooves 的手有重音）。**大鼓沒有輕重音**：三個 App 的大鼓永遠同一個音量、沒有重音或輕音標記。
 - 播放時，大字母、譜面、格子圖**同步標示目前的音**。
 - 「練習卡」一定有：練習名稱＋英文或手順副標、「最佳 N BPM」膠囊、meta 行（音符種類、幾拍一循環、第幾個）、◀ 上一個／第幾次／下一個 ▶、「✓ 打順了，記錄 N BPM」按鈕。
 - 練習選項用 `.modes`（大格子單選）和 `.seg`（分段控制）；練習清單用 `.ex-list`，每列顯示手順和最佳速度。
@@ -134,7 +142,14 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 
 **音符與配器**
 - 音符：16 分音符、8 分三連音、16 分六連音；拍號 2/4～7/4；長度 1 或 2 小節。
-- 配器：右手 Hi-hat、右手 Ride、Fill（混合筒鼓）；每組第一音可以加重音。
+- 配器：右手 Hi-hat、Ride、China、Crash，或 Fill（混合筒鼓）；每組第一音可以加重音。
+
+**Djent 線性**（節奏類型「Djent 線性」，`S.type = 'djent'`）
+- 不湊滿小節：一個 cell（一組或幾組，`DJENT_CELLS`：3、5、7、4+5、5+6、5+7、6+7、3+3+5）一直重複，跨過小節線。
+- 樂句 `S.dPhrase` 2／4／8 小節；`S.dEnd` = `cut`（在樂句結尾截斷）或 `full`（延長到 cell 接回第 1 拍：至少 dPhrase 小節、而且是循環長度的倍數）。
+- `pattern.cell` 存 cell，`pattern.groups` 由 `expand()` 展開（每組帶 `ci` cell 序號，最後一組 `cut: true`）。換組、輪轉、打亂、對調、換鼓都改 cell，再重新展開，所以每次重複都一起換。
+- 下方色塊只列 cell 的幾組；鼓譜標 ↺（cell 在小節第 1 拍重新開始）和 ✂（截斷）。
+- 不分右腳左腳、不加 Fill（Fill 在 Djent Grooves）。
 
 **資料格式**
 ```js
@@ -213,6 +228,37 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
   - 音量：每一下都是 0.62（沒有重音、也沒有輕音）。
 - localStorage：`ft.settings`、`ft.best`、`ft.random`。
 
+## 7b. App 3：Djent Grooves（Djent 節奏庫）
+
+**目的**：練 Djent 的核心能力：奇數分組跨過小節線，上層鈸一直維持 4/4，不迷失拍子。需求訪談的決定都記在這裡。
+
+### 結構
+- **上層**：右手鈸（`pulse`：4 分 q、2 分 h、8 分 e；`cym`：china、crash、ride、hh），左手小鼓（`snare`：`3` 第 3 拍、`24` 2 和 4 拍、`riff` 跟著 riff）。
+- **下層**：riff cell（`riff: ['KK.', 'KK.', 'K.']`，`K` 大鼓、`S` 小鼓、`.` 休止）從第 1 拍開始一直重複，在 Fill 開始處（或樂句結尾）截斷。下層一定線性：小鼓固定在拍點時，那一格的大鼓讓開；`snare` 不是 `riff` 時 riff 裡的 `S` 改成大鼓。
+- **大鼓**：`pedal` 雙踏或單踏；雙踏**每組從右腳開始、組內左右交替**；**沒有左腳開始選項**（使用者要求）。大鼓沒有輕重音。
+- 拍號固定 4/4；`sub` 16 分（4）或 16 分六連音（6），每個練習有預設，可以用「音符」改。
+
+### 樂句與 Fill
+- `phrase` 2／4／8 小節；`end` = `cut`（預設）或 `full`（延長到 cell 接回第 1 拍，至少 phrase 小節）。`full` 時 Fill 蓋掉最後一段。
+- Fill 長度 `fillLen`：auto（Fill 類用它自己的長度，其他 1 小節）、b1、b2、bar、none。`fillPick`：隨機（每個練習抽一個，可按「換一個 Fill」）或指定。
+- Fill 是 Gospel chops 線性 cell（`FILLS`，例如 `RLK`、`RLRKK`），重複後**靠右對齊**：最後一組完整，剛好接回下一輪第 1 拍。Fill 期間鈸停。
+- 完整練習：Fill 右手由高到低打 t1 → t2 → ft，左手小鼓；有 Fill 時樂句第 1 拍的鈸改成 Crash。
+
+### 基本練習（`basic`）
+每個 groove 都可以切換的開關，不是另一個分類。開啟時**只用 Hi-hat、小鼓、大鼓**（鈸強制 hh，Fill 的右手也打 hh、左手小鼓），仍然跨小節線、照截斷或跑完整個循環。
+
+### 曲庫（30 個，全部是模仿風格的原創練習，不抄寫特定歌曲）
+基本 Chug 6、奇數分組跨小節 8（3、5、7、9、11、13、5+7、3+3+5）、小鼓跟 riff 6、六連音爆發 4、Gospel chops Fill 6。
+
+### 畫面
+- 下拉選單切換**格子圖／五線譜**。格子圖一小節一行：鈸、筒鼓（只在用到的小節）、分組、小鼓、大鼓（兩腳同一排，右腳綠、左腳紫）、數拍。分組排顯示每組長度、↺、✂；Fill 區域有淡淡的底色。
+- 五線譜：China B5（外加圓圈）、Crash A5、HH G5、Ride F5、t1 E5、t2 D5、小鼓 C5、落地鼓 A4、大鼓 F4；下面一排是下層的字母和分組括號。
+- 播放時自動捲到目前這一小節。
+- **平板**：寬度 ≥ 900px 兩欄（左譜 sticky、右設定 360px），高度 ≤ 860px 時再壓縮，1280×800 可以一次看到 4 小節；760–899px 單欄加寬到 860px。播放列按鈕放大。
+
+### 聲音
+同樣的音量處理鏈，放大倍數 2.6。新增 China（中頻噪音＋不和諧方波）、Crash（明亮長尾）、t1／t2／ft。localStorage：`dj.settings`、`dj.best`。
+
 ## 8. 安裝與疑難排解（給使用者的說明要點）
 
 - **Android Chrome**：開網址 → ⋮ →「安裝應用程式」。iPhone 要用 Safari → 分享 →「加入主畫面」。
@@ -230,10 +276,11 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
   - 每個練習的各軌長度一致，而且能被 `sub` 整除
   - console 沒有錯誤
   - 深色模式正常
-  - 兩個 App 的 `Page.getAppId` 不同
+  - 三個 App 的 `Page.getAppId` 不同
 - **尚未做過的驗證**：真實手機上的安裝流程和音效聽感。
 
 ## 10. 待辦與可能的方向
 
 - 使用者提過、可以考慮加入的內容：Blast Beat、更多爵士雙腳練法、聲音音量或音色調整。
+- Djent Grooves 第二版候選：「自己組」產生器、Ghost note 律動（小鼓三級力度）、奇數拍號（7/8 等）、32 分音符。
 - `double-pedal/style.css` 是從 Linear Grooves 整份複製來的，裡面有用不到的樣式，之後可以精簡。
