@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Djent Grooves</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Djent">
+<meta name="description" content="Djent 節奏庫：鈸固定 4/4、大鼓跟著 riff 的奇數分組跨過小節線，加上 Gospel chops 線性 Fill">
+<meta name="theme-color" content="#15191E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <div class="col-main">
+    <header class="top">
+      <div class="top-row">
+        <h1 class="brand">Djent Grooves</h1>
+        <button type="button" id="helpBtn" class="help-btn" aria-expanded="false" aria-controls="guide">? 使用說明</button>
+      </div>
+      <p class="tag">上面的鈸一直打 4/4，下面的大鼓跟著 riff 用奇數分組繞過小節線。</p>
+    </header>
+
+    <section class="guide" id="guide" hidden aria-label="使用說明">
+      <h2>三步開始練習</h2>
+      <ol class="steps">
+        <li><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</li>
+        <li><b>按 ▶</b>，跟著格子圖打：一行是一小節，亮起來的那一欄就是現在要打的音。
+          <span class="key RH">R</span><span class="key LH">L</span> 是手，<span class="key RF">R</span><span class="key LF">L</span> 是腳。</li>
+        <li><b>打順了就按「✓ 打順了」</b>，再把速度調快 5 BPM。</li>
+      </ol>
+      <details class="glossary">
+        <summary>名詞解釋</summary>
+        <dl>
+          <dt>分組</dt><dd>格子圖的「分組」那一排，一段色條是一組，數字是這組有幾個音。</dd>
+          <dt>↺ 接回第 1 拍</dt><dd>奇數分組繞了幾小節以後，剛好又從第 1 拍開始。</dd>
+          <dt>✂ 截斷</dt><dd>樂句結束（或 Fill 開始）時，這一組還沒打完就切掉，下一輪從頭開始。</dd>
+          <dt>基本練習</dt><dd>只用 Hi-hat、小鼓、大鼓，Fill 也一樣。先用它把手腳配合打穩，再關掉練完整的音色和筒鼓 Fill。</dd>
+          <dt>Gospel chops</dt><dd>手、手、腳輪流的快速線性 Fill，例如 R L K。</dd>
+        </dl>
+      </details>
+      <button type="button" id="guideOk" class="primary-sm">知道了</button>
+    </section>
+
+    <section class="sheet" id="practice" aria-label="目前的練習">
+      <div class="sheet-head">
+        <div class="ex-title">
+          <h2 id="exName">3-3-2 Chug</h2>
+          <span id="exEn" class="ex-en"></span>
+        </div>
+        <span id="exBest" class="best-pill">還沒記錄</span>
+      </div>
+      <div class="meta" id="exMeta"></div>
+      <div class="sheet-bar">
+        <label class="tg basic-tg"><input type="checkbox" id="basic"><span>基本練習<small>只有 Hi-hat、小鼓、大鼓</small></span></label>
+        <label class="view-sel"><span class="lbl">顯示</span>
+          <select id="view" aria-label="顯示方式"><option value="grid">格子圖</option><option value="staff">五線譜</option></select></label>
+      </div>
+      <div class="status" id="status" aria-live="polite"></div>
+      <p class="cycle" id="exCycle"></p>
+      <div class="legend" id="legend"></div>
+      <div class="kit" id="grid" role="img" aria-label="各聲部位置圖"></div>
+      <div class="notation" id="staff" hidden></div>
+      <div class="fill-row"><span id="exFill" class="fill-name"></span><button type="button" id="btnFill" class="ghost sm">換一個 Fill</button></div>
+      <p class="tip" id="exTip"></p>
+      <div class="ex-nav">
+        <button type="button" id="btnPrev" class="ghost">◀ 上一個</button>
+        <span id="reps" class="reps"></span>
+        <button type="button" id="btnNext2" class="ghost">下一個 ▶</button>
+      </div>
+      <button type="button" id="btnDone" class="done">✓ 打順了，記錄 80 BPM</button>
+    </section>
+  </div>
+
+  <div class="col-side">
+    <section class="panel" aria-labelledby="h-what">
+      <h2 id="h-what">練什麼</h2>
+      <div class="modes" role="radiogroup" aria-label="練習類型">
+        <label><input type="radio" name="cat" value="chug" id="cat-chug"><span>基本 Chug<small>一小節剛好湊滿</small></span></label>
+        <label><input type="radio" name="cat" value="odd" id="cat-odd"><span>奇數分組<small>跨過小節線</small></span></label>
+        <label><input type="radio" name="cat" value="snare" id="cat-snare"><span>小鼓跟 riff<small>下層手腳線性</small></span></label>
+        <label><input type="radio" name="cat" value="sext" id="cat-sext"><span>六連音爆發<small>三連音感覺</small></span></label>
+        <label><input type="radio" name="cat" value="fill" id="cat-fill"><span>Gospel chops<small>線性 Fill</small></span></label>
+      </div>
+      <div class="mode-opts" data-cat="chug"><p class="hint">大鼓的分組加起來剛好一小節，每小節都從第 1 拍重新開始。先習慣「鈸固定、大鼓跟 riff」。</p></div>
+      <div class="mode-opts" data-cat="odd" hidden><p class="hint">一組 3、5、7……個音一直重複，會繞過小節線。上面的鈸永遠是 4/4，跟著鈸數拍就不會迷路。</p></div>
+      <div class="mode-opts" data-cat="snare" hidden><p class="hint">小鼓不固定在第 3 拍，而是跟大鼓一起組成 riff（同一時間只有一個鼓）。</p></div>
+      <div class="mode-opts" data-cat="sext" hidden><p class="hint">一拍 6 個音的六連音。三連踩、三連音 Chug，再加上奇數分組。</p></div>
+      <div class="mode-opts" data-cat="fill" hidden><p class="hint">前面是簡單的 Djent 節奏，最後是這個 Fill。每個 Fill 都會剛好結束在下一輪的第 1 拍。</p></div>
+      <ol class="ex-list" id="exList"></ol>
+    </section>
+
+    <section class="panel" aria-labelledby="h-how">
+      <h2 id="h-how">怎麼打</h2>
+      <div class="field">
+        <span class="lbl">樂句長度</span>
+        <div class="seg" role="radiogroup" aria-label="樂句長度">
+          <label><input type="radio" name="phrase" value="2" id="phrase2"><span>2 小節</span></label>
+          <label><input type="radio" name="phrase" value="4" id="phrase4"><span>4 小節</span></label>
+          <label><input type="radio" name="phrase" value="8" id="phrase8"><span>8 小節</span></label>
+        </div>
+        <span class="hint" id="phraseNote">「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</span>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="end">樂句結尾</label>
+          <select id="end"><option value="cut">截斷（預設）</option><option value="full">跑完整個循環</option></select>
+        </div>
+        <div class="field">
+          <span class="lbl">大鼓</span>
+          <div class="seg" role="radiogroup" aria-label="大鼓">
+            <label><input type="radio" name="pedal" value="double" id="pedalDouble"><span>雙踏</span></label>
+            <label><input type="radio" name="pedal" value="single" id="pedalSingle"><span>單踏</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="fillLen">Fill 長度</label>
+          <select id="fillLen">
+            <option value="auto">自動（1 小節；Fill 練習照它的長度）</option>
+            <option value="b1">最後 1 拍</option><option value="b2">最後 2 拍</option><option value="bar">最後 1 小節</option>
+            <option value="none">不要 Fill</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="lbl" for="fillPick">用哪一個 Fill</label>
+          <select id="fillPick"><option value="rand">隨機（每個練習抽一個）</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="pulse">鈸的拍點</label>
+          <select id="pulse"><option value="auto">照練習預設</option><option value="q">4 分音符（每拍）</option><option value="h">2 分音符（1、3 拍）</option><option value="e">8 分音符</option></select>
+        </div>
+        <div class="field">
+          <label class="lbl" for="snare">小鼓位置</label>
+          <select id="snare"><option value="auto">照練習預設</option><option value="3">第 3 拍（Half-time）</option><option value="24">2、4 拍</option><option value="riff">跟著 riff 走</option></select>
+        </div>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label class="lbl" for="cym">鈸的音色</label>
+          <select id="cym"><option value="auto">照練習預設</option><option value="china">China</option><option value="crash">Crash</option><option value="ride">Ride</option><option value="hh">Hi-hat</option></select>
+          <span class="hint" id="cymNote">基本練習固定用 Hi-hat。</span>
+        </div>
+        <div class="field">
+          <label class="lbl" for="sub">音符</label>
+          <select id="sub"><option value="auto">照練習預設</option><option value="4">16 分音符</option><option value="6">16 分六連音</option></select>
+        </div>
+      </div>
+      <button type="button" id="btnReset" class="ghost">上層打法回到練習預設</button>
+    </section>
+
+    <details class="panel fold">
+      <summary><span class="fold-title">練習設定</span><span class="fold-sub">聲音、次數、計時、節拍器</span></summary>
+      <div class="field">
+        <label class="lbl" for="playPart">App 幫你打哪些聲部</label>
+        <select id="playPart">
+          <option value="all">全部（手和腳）</option>
+          <option value="hands">只播手的部分（你踩腳）</option>
+          <option value="feet">只播腳的部分（你打手）</option>
+          <option value="none">都不播（只有節拍器）</option>
+        </select>
+      </div>
+      <div class="toggles">
+        <label class="tg"><input type="checkbox" id="autoNext"><span>練完自動換下一個</span></label>
+        <div class="trainer">每個練習重複
+          <select id="repsSel" aria-label="每個練習重複幾次"><option value="4">4</option><option value="8">8</option><option value="16">16</option><option value="32">32</option></select> 次（一次＝一整個樂句）</div>
+        <div class="trainer">練習計時
+          <select id="timerSel" aria-label="練習計時">
+            <option value="0">不計時</option><option value="1">1 分鐘</option><option value="2">2 分鐘</option>
+            <option value="5">5 分鐘</option><option value="10">10 分鐘</option>
+          </select>，時間到自動停止</div>
+        <label class="tg"><input type="checkbox" id="click"><span>節拍器：每拍響一聲</span></label>
+        <div class="trainer">節拍器的細分音（例如 16 分音符的 e &amp; a）
+          <select id="clickSub" aria-label="節拍器的細分音"><option value="soft">比拍點小聲</option><option value="same">跟拍點一樣大聲</option><option value="off">不打，只有拍點</option></select></div>
+        <label class="tg"><input type="checkbox" id="countIn"><span>預備拍：開始前先數一小節</span></label>
+        <label class="tg"><input type="checkbox" id="trainer"><span>自動加速：打熟了自動變快</span></label>
+      </div>
+      <div class="trainer" id="trainerOpts">
+        每重複 <select id="trainerEvery" aria-label="每重複幾次"><option>2</option><option>4</option><option>8</option></select> 次，
+        加快 <select id="trainerStep" aria-label="每次加快多少 BPM"><option>2</option><option>5</option><option>10</option></select> BPM，
+        最快到 <input type="number" id="trainerMax" min="30" max="260" step="1" inputmode="numeric"> BPM
+      </div>
+    </details>
+
+    <details class="panel fold">
+      <summary><span class="fold-title">Djent 小技巧</span><span class="fold-sub">怎麼不迷路、怎麼練快</span></summary>
+      <div class="glossary">
+        <dl>
+          <dt>跟著鈸數拍</dt><dd>大鼓的分組會一直跑掉，但鈸永遠在拍點上。嘴巴數「1 2 3 4」對著鈸，不要對著大鼓數。</dd>
+          <dt>記形狀，不要數</dt><dd>長的分組（9、11、13）把它當成一句 riff 記，像唱吉他的旋律一樣。</dd>
+          <dt>先截斷，再跑完</dt><dd>先用「截斷」練 4 小節的樂句，熟了再改「跑完整個循環」，聽分組怎麼接回第 1 拍。</dd>
+          <dt>雙踏右腳開始</dt><dd>每一組的第一下都是右腳，組內左右交替，重拍永遠落在右腳。</dd>
+          <dt>手腳一樣大聲</dt><dd>線性 Fill 最常見的問題是腳比手小聲。先慢速，聽每一下是不是一樣大。</dd>
+          <dt>放鬆</dt><dd>速度上不去時先降 10 BPM，肩膀和腳踝放鬆，比硬撐更快進步。</dd>
+        </dl>
+      </div>
+    </details>
+
+    <footer class="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「安裝應用程式」就能像 App 一樣使用，沒網路也能練。</footer>
+  </div>
+</div>
+
+<nav class="transport" aria-label="播放控制">
+  <div class="transport-in">
+    <button type="button" id="btnNext" class="gen">下一個</button>
+    <div class="tempo">
+      <div class="tempo-top">
+        <button type="button" id="bpmDown" class="step" aria-label="慢一點">−</button>
+        <input type="text" id="bpmOut" class="bpm" value="80" inputmode="numeric" pattern="[0-9]*" maxlength="3" enterkeyhint="done" autocomplete="off" aria-label="速度 BPM，點一下可以直接輸入數字">
+        <span class="bpm-unit">速度<br>BPM</span>
+        <button type="button" id="bpmUp" class="step" aria-label="快一點">+</button>
+      </div>
+      <input type="range" id="bpm" min="30" max="240" step="1" aria-label="速度">
+    </div>
+    <button type="button" id="btnPlay" class="play" aria-label="播放">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path id="playIcon" d="M7 4.5v15l13-7.5z"/></svg>
+    </button>
+  </div>
+</nav>
+<script src="app.js"></script>
+</body>
+</html>

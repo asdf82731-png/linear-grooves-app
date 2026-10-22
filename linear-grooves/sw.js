@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Only "grooves-" caches are ours: the Double Pedal app in ../double-pedal/ shares this origin.
-const VERSION = 'grooves-v8';
+const VERSION = 'grooves-v9';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
