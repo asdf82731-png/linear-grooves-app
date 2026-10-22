@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "dj-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'dj-v1';
+const VERSION = 'dj-v2';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 

@@ -31,7 +31,7 @@
       <h2>三步開始練習</h2>
       <ol class="steps">
         <li><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</li>
-        <li><b>按 ▶</b>，跟著格子圖打：一行是一小節，亮起來的那一欄就是現在要打的音。
+        <li><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音；看不習慣可以在「顯示」改成格子圖（一行一小節）。
           <span class="key RH">R</span><span class="key LH">L</span> 是手，<span class="key RF">R</span><span class="key LF">L</span> 是腳。</li>
         <li><b>打順了就按「✓ 打順了」</b>，再把速度調快 5 BPM。</li>
       </ol>
@@ -60,13 +60,13 @@
       <div class="sheet-bar">
         <label class="tg basic-tg"><input type="checkbox" id="basic"><span>基本練習<small>只有 Hi-hat、小鼓、大鼓</small></span></label>
         <label class="view-sel"><span class="lbl">顯示</span>
-          <select id="view" aria-label="顯示方式"><option value="grid">格子圖</option><option value="staff">五線譜</option></select></label>
+          <select id="view" aria-label="顯示方式"><option value="staff">五線譜</option><option value="grid">格子圖</option></select></label>
       </div>
       <div class="status" id="status" aria-live="polite"></div>
       <p class="cycle" id="exCycle"></p>
       <div class="legend" id="legend"></div>
-      <div class="kit" id="grid" role="img" aria-label="各聲部位置圖"></div>
-      <div class="notation" id="staff" hidden></div>
+      <div class="notation" id="staff"></div>
+      <div class="kit" id="grid" role="img" aria-label="各聲部位置圖" hidden></div>
       <div class="fill-row"><span id="exFill" class="fill-name"></span><button type="button" id="btnFill" class="ghost sm">換一個 Fill</button></div>
       <p class="tip" id="exTip"></p>
       <div class="ex-nav">
