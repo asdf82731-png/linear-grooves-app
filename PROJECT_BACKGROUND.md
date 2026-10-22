@@ -1,17 +1,18 @@
-# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal ＋ Djent Grooves）
+# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal ＋ Djent Grooves ＋ Time Keeper）
 
-> 這份文件給 AI 助手或新協作者當背景資料，說明三個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
+> 這份文件給 AI 助手或新協作者當背景資料，說明四個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
 
 ## 1. 專案概要
 
 - **使用者**：學爵士鼓（台灣說的「爵士鼓」＝整組套鼓 drum kit）的鼓手，主要用 **Android 手機的 Chrome**，在練習室跟著 App 練。Djent Grooves 主要在 **Android 平板橫放**使用。
 - **語言**：介面全部是**繁體中文（zh-Hant）**，用白話口語，避免艱深術語；專有名詞保留英文（Paradiddle、Gallop、Heel-Toe…）。
-- **形式**：三個**獨立的 PWA**，各自安裝到主畫面、各自離線使用。
+- **形式**：四個**獨立的 PWA**，各自安裝到主畫面、各自離線使用。
   | App | 練什麼 | 網址 |
   | --- | --- | --- |
   | **Linear Grooves** | 手：線性節奏、手順、Paradiddle、複節奏 | https://asdf82731-png.github.io/linear-grooves-app/linear-grooves/ |
   | **Double Pedal 雙踏腳法** | 腳：雙踏、手腳組合、腳踩鈸、Swing | https://asdf82731-png.github.io/linear-grooves-app/double-pedal/ |
   | **Djent Grooves** | Djent 節奏庫：鈸固定 4/4、大鼓奇數分組跨小節、Gospel chops Fill | https://asdf82731-png.github.io/linear-grooves-app/djent/ |
+  | **Time Keeper** | 時間感：Gap click、位移節拍器、漸進速度、麥克風偵測準度 | https://asdf82731-png.github.io/linear-grooves-app/timekeeper/ |
 - **Repo**：`asdf82731-png/linear-grooves-app`，GitHub Pages 從 `main` / `(root)` 發佈。
   - 已決定**不改名**，repo 維持 `linear-grooves-app`，README 網址也已改回 `/linear-grooves-app/`。
 
@@ -54,26 +55,34 @@
    ├─ manifest.webmanifest   id: "djent"
    ├─ sw.js            快取前綴 dj-
    └─ icons/           深灰底、銅色 China 鈸＋綠點紫點
+└─ timekeeper/         App 4
+   ├─ index.html       .col-main（拍子、結果）＋ .col-side（設定、紀錄）
+   ├─ app.js
+   ├─ onset-worklet.js 麥克風打擊偵測（AudioWorklet，也用在離線測試）
+   ├─ style.css        從 Double Pedal 複製後加上 Time Keeper 與平板樣式
+   ├─ manifest.webmanifest   id: "timekeeper"
+   ├─ sw.js            快取前綴 tk-
+   └─ icons/           深灰底、銅色節拍器、綠色擺錘
 ```
 
-## 4. 三個 App 必須獨立：規則與原因（重要）
+## 4. 四個 App 必須獨立：規則與原因（重要）
 
-三個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把它們當成同一個，「裝一個蓋掉另一個」：
+四個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把它們當成同一個，「裝一個蓋掉另一個」：
 
 1. **範圍（scope）不可重疊**：每個 App 的 `start_url` 和 `scope` 都是 `"./"`，也就是各自的資料夾。根目錄**不能**放有 manifest 的 App，否則根目錄的 scope 會包含所有子資料夾。
-2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`、`"djent"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，三個 App 的 `appId` 必須不同。
-3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`、`dj-`），不能刪「所有不等於目前版本」的快取。
-4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`，Djent Grooves 用 `dj.`。
+2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`、`"djent"`、`"timekeeper"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，四個 App 的 `appId` 必須不同。
+3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`、`dj-`、`tk-`），不能刪「所有不等於目前版本」的快取。
+4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`，Djent Grooves 用 `dj.`，Time Keeper 用 `tk.`。
 
 ### 根目錄 `sw.js` 的用途
 Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個網站。現在根目錄的 `sw.js` 是用來移除舊版：已裝過舊版的手機下次造訪時會抓到它，它會刪掉舊的 `lg-` 快取、取消註冊自己，再重新載入頁面。新版頁面不會再註冊它。
 
 ### 發佈新版的步驟
-- 修改任何會被快取的檔案後，要把該 App 的 `sw.js` 裡的 `VERSION` 加一，並保留前綴，例如 `grooves-v3 → grooves-v4`、`dp-v4 → dp-v5`、`dj-v1 → dj-v2`。
+- 修改任何會被快取的檔案後，要把該 App 的 `sw.js` 裡的 `VERSION` 加一，並保留前綴，例如 `grooves-v3 → grooves-v4`、`dp-v4 → dp-v5`、`dj-v1 → dj-v2`、`tk-v1 → tk-v2`。
 - service worker 用 stale-while-revalidate：先回快取、背景更新，所以使用者通常要**關掉 App 再開一次**才看到新版。
 - GitHub Pages 的 HTTP 快取大約 10 分鐘。
 
-## 5. 設計規範（三個 App 共用）
+## 5. 設計規範（四個 App 共用）
 
 ### 版面
 - **單欄「練習譜」**：最大寬度 720px，左右留白至少 16px（含 safe-area），手機 375px 寬度下不能出現整頁橫向捲動。
@@ -103,7 +112,7 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 - 內文：**IBM Plex Sans**，中文退回 Noto Sans TC 或系統字型
 
 ### 共通互動規則
-- 色彩語意固定：手 R 藍、L 紅；腳 R 綠、L 紫；重音用底線或外圈（只有 Linear Grooves 的手有重音）。**大鼓沒有輕重音**：三個 App 的大鼓永遠同一個音量、沒有重音或輕音標記。
+- 色彩語意固定：手 R 藍、L 紅；腳 R 綠、L 紫；重音用底線或外圈（只有 Linear Grooves 的手有重音）。**大鼓沒有輕重音**：所有 App 的大鼓永遠同一個音量、沒有重音或輕音標記。
 - 播放時，大字母、譜面、格子圖**同步標示目前的音**。
 - 「練習卡」一定有：練習名稱＋英文或手順副標、「最佳 N BPM」膠囊、meta 行（音符種類、幾拍一循環、第幾個）、◀ 上一個／第幾次／下一個 ▶、「✓ 打順了，記錄 N BPM」按鈕。
 - 練習選項用 `.modes`（大格子單選）和 `.seg`（分段控制）；練習清單用 `.ex-list`，每列顯示手順和最佳速度。
@@ -265,6 +274,38 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 ### 聲音
 同樣的音量處理鏈，放大倍數 2.6。新增 China（中頻噪音＋不和諧方波）、Crash（明亮長尾）、t1／t2／ft。localStorage：`dj.settings`、`dj.best`。
 
+## 7c. App 4：Time Keeper（時間感訓練）
+
+**目的**：練「打得準不準」。規格寫在 Claude Docs「Time Keeper 規格」，以下是需求訪談的決定。
+
+### 使用情境（使用者提供的《21 練習接線規劃》方案 B）
+- 鼓是**電子鼓**：Roland pad → eDRUMin 12 → 筆電 SD3。平板聽不到鼓聲。
+- 平板只有**一個 USB-C 孔**，用轉 3.5mm 轉接頭接 Xenyx 502 CH1（單聲道），和筆電鼓聲混音後進耳機。click 不會被麥克風收進去。
+- Time Keeper 只用在**模式 1「快速練」**；模式 2、3 用 Studio Pro 的節拍器。
+- 偵測只能用**平板內建麥克風**聽鼓棒打在 pad 上的聲音（Xenyx 502 沒有 USB）。
+- **電子鼓 MIDI 留到第二版**：要先有能同時接 eDRUMin 和耳機、支援 Android USB 音訊的 USB-C 擴充器。
+
+### 四種模式（`S.mode`）
+- `metro` 節拍器：30–300 BPM、點按測速、拍號 2/4–7/4、細分 `subGrid`（2、3、4、6）＋ `subLevel`（off、soft、same）、預備拍。
+- `gap` Gap click：`gapPlay` 小節響、`muteBars` 小節安靜；`gapShow` 安靜時是否標示拍子（預設不標示）；`gapGrow` 漸進，在每輪第一個安靜小節開始時決定，開麥克風要「回來那一拍 ±30 ms」才加。
+- `shift` 位移節拍器：`shiftPos` = 24、and、e、a、bar、2bar。預備拍仍是一般 click。
+- `ramp` 漸進速度：起點 = 播放列的 BPM，`rampEnd`、每 `rampEvery` 小節 ±`rampStep`；`rampKind` linear（到了就維持）或 ladder（到頂再回起點，一直循環）。60→120、每 4 小節 +5 在第 49 小節到 120。
+
+### 排程
+一次排一拍（`scheduleBeat`），往前看 150 ms，每 25 ms 補一次。每個 click 存進 `nodes`，停止時把還沒響的停掉。每拍同時把「應該打的時間點」放進 `expected`（4 分或 8 分，`w` = 半個間隔，Gap 的回來拍帶 `ret`）。
+
+### 麥克風偵測（Beta，只偵測 4 分和 8 分音符）
+- `getUserMedia` 關掉回音消除、降噪、自動增益；`onset-worklet.js` 在同一個 AudioContext 裡跑，所以打擊時間和 click 同一個時鐘。
+- 偵測：80 Hz 高通 → 包絡（瞬間上升、4 ms 釋放）→ 超過靈敏度門檻（1–10 對應 −10～−55 dBFS）而且大於 2–15 ms 前最大值的 3 倍才算一下，之後 50 ms 不再算。原本用「慢速包絡 × 3」，160 BPM 以上的 8 分音符遇到重拍後的輕拍會漏，所以改成這樣。
+- 計分：打擊時間扣掉校正延遲後，對到最近的 `expected`（超過半個間隔不算，同一拍只算第一下）。±10 ms 算準。安靜小節的打擊用回歸算出你的速度（BPM）。
+- 延遲校正：80 BPM 先聽 4 下，再跟著打 8 下，取中位數（偶數取中間兩個的平均），存在 `tk.latency`。
+- 結果：平均偏差、穩定度（標準差）、速度飄移（只有 Gap click 開麥克風才有）、每一下的偏差圖（依容器寬度畫，手機上字不會縮小）。抓到的少於應打的 90% 會提示數字不準。
+- localStorage：`tk.settings`、`tk.log`（練超過 10 秒才存，最多 500 筆）、`tk.latency`。
+
+### 測試
+- 離線：用模擬 pad 打擊（短促噪音 6 ms ＋ 180 Hz 35 ms，−6～−40 dB，背景噪音 −45～−65 dB）測偵測器，40–200 BPM 的 4 分和 8 分音符誤差都在 1 ms 內、漏抓多抓 0。
+- Playwright：click 時間與理論值差距、Gap 安靜小節沒有 click、速度變化、漸進邏輯、計分、校正；加上 Chromium 假麥克風（`--use-file-for-fake-audio-capture`）從頭到尾跑一次 AudioWorklet。
+
 ## 8. 安裝與疑難排解（給使用者的說明要點）
 
 - **Android Chrome**：開網址 → ⋮ →「安裝應用程式」。iPhone 要用 Safari → 分享 →「加入主畫面」。
@@ -282,11 +323,12 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
   - 每個練習的各軌長度一致，而且能被 `sub` 整除
   - console 沒有錯誤
   - 深色模式正常
-  - 三個 App 的 `Page.getAppId` 不同
+  - 四個 App 的 `Page.getAppId` 不同
 - **尚未做過的驗證**：真實手機上的安裝流程和音效聽感。
 
 ## 10. 待辦與可能的方向
 
 - 使用者提過、可以考慮加入的內容：Blast Beat、更多爵士雙腳練法、聲音音量或音色調整。
 - Djent Grooves 之後的候選：「自己組」產生器、奇數拍號（7/8 等）、32 分音符。
+- Time Keeper 第二版候選：電子鼓 MIDI 輸入、16 分以上密集連打的偵測、奇數拍號 5/8、7/8。
 - `double-pedal/style.css` 是從 Linear Grooves 整份複製來的，裡面有用不到的樣式，之後可以精簡。
