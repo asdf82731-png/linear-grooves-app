@@ -165,7 +165,8 @@ function flatten(p) {
   const base = [];
   p.groups.forEach((g, gi) => {
     [...g.stick].forEach((limb, k) => {
-      base.push({ limb, voice: g.voices[k], acc: S.accents && k === 0, g: gi });
+      // The bass drum is never accented, even when it opens a group.
+      base.push({ limb, voice: g.voices[k], acc: S.accents && k === 0 && limb !== 'K', g: gi });
     });
   });
   const n = base.length, sh = ((p.shift || 0) % n + n) % n;
@@ -255,7 +256,7 @@ function renderStrip() {
   let i = 0;
   $('#strip').innerHTML = pattern.groups.map((g, gi) => {
     const chips = [...g.stick].map((limb, k) => {
-      const acc = S.accents && k === 0 ? ' acc' : '';
+      const acc = S.accents && k === 0 && limb !== 'K' ? ' acc' : '';
       return `<span class="chip ${limb}${acc}" data-i="${displayIndex(i++)}">${limb}<small>${VOICES[g.voices[k]].label}</small></span>`;
     }).join('');
     const sel = picker === gi ? ' sel' : '';
