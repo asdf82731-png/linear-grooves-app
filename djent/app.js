@@ -102,7 +102,7 @@ const AMP = 0.62;
 const MIN_BPM = 30;
 const DEFAULTS = {
   cat: 'chug', idx: { chug: 0, odd: 0, snare: 0, sext: 0, fill: 0 },
-  basic: false, view: 'grid', phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
+  basic: false, view: 'staff', phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
   sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
   reps: 8, autoNext: false, playPart: 'all', timer: 0,
   bpm: 80, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
@@ -117,7 +117,8 @@ function save(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
 }
 
-const S = Object.assign({}, DEFAULTS, load('dj.settings', {}));
+const saved = load('dj.settings', {});
+const S = Object.assign({}, DEFAULTS, saved);
 S.idx = Object.assign({}, DEFAULTS.idx, S.idx);
 let best = load('dj.best', {});
 
@@ -895,6 +896,8 @@ function bind() {
 }
 
 /* ---------- Boot ---------- */
+// v2: the staff became the default view; switch settings saved before that over once.
+if (saved.v !== 2) { S.view = 'staff'; S.v = 2; }
 if (!CATS.includes(S.cat)) S.cat = 'chug';
 if (![2, 4, 8].includes(S.phrase)) S.phrase = 4;
 if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = 'soft';

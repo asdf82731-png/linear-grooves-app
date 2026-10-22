@@ -526,6 +526,9 @@ select:disabled { opacity: 0.5; }
   .kr { min-width: 0; }
   .ex-title h2 { font-size: 30px; }
   .transport-in { max-width: 1400px; gap: 22px; }
+  /* Staff: two bars per line, so a 4-bar phrase fits on one screen. */
+  .notation { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+  .notation svg { min-width: 0 !important; }
   .play { width: 72px; height: 72px; }
   .play svg { width: 32px; height: 32px; }
   .gen { height: 60px; padding: 0 28px; font-size: 24px; }
