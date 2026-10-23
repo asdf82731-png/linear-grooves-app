@@ -177,7 +177,7 @@ const AMP = { x: 0.62 };
 const MIN_BPM = 30;
 const DEFAULTS = {
   mode: 'basic', rSub: 4, rRun: 2, rRest: false,
-  reps: 8, autoNext: true, leftLead: false, playPart: 'all', timer: 0,
+  reps: 8, autoNext: false, leftLead: false, playPart: 'all', timer: 0,
   bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
   seenGuide: false, idx: { basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, rand: 0 },
 };
@@ -767,6 +767,8 @@ function bind() {
 }
 
 /* ---------- Boot ---------- */
+// Exercises loop by default. Earlier versions saved auto-advance as on, so turn it off once.
+if (!S.loopByDefault) { S.autoNext = false; S.loopByDefault = true; }
 if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
 if (!MODES.includes(S.mode)) S.mode = 'basic';
 if (![2, 3, 4].includes(S.rSub)) S.rSub = 4;

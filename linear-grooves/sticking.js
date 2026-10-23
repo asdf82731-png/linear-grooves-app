@@ -48,7 +48,7 @@ const MODES = ['rud', 'para', 'rand', 'acc', 'poly'];
 const MIN_BPM = 30;
 const DEFAULTS = {
   mode: 'rud', rSub: 4, rRun: 2, aBase: 'single', aSub: 4,
-  reps: 8, autoNext: true, leftLead: false,
+  reps: 8, autoNext: false, leftLead: false,
   bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
   seenGuide: false, polyMute: 'none', idx: { rud: 0, para: 0, rand: 0, acc: 0, poly: 0 },
 };
@@ -650,6 +650,8 @@ function bind() {
 }
 
 /* ---------- Boot ---------- */
+// Exercises loop by default. Earlier versions saved auto-advance as on, so turn it off once.
+if (!S.loopByDefault) { S.autoNext = false; S.loopByDefault = true; }
 if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
 if (!MODES.includes(S.mode)) S.mode = 'rud';
 if (!ACCENT_BASES[S.aBase]) S.aBase = 'single';
