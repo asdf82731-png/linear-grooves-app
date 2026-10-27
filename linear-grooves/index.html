@@ -38,7 +38,7 @@
         <span class="key R">R</span> 右手打 Hi-hat、
         <span class="key L">L</span> 左手打小鼓、
         <span class="key K">K</span> 右腳踩大鼓。</li>
-      <li><b>按「換一個」</b>產生新的節奏；太難就把難度調成「入門」或把速度調慢。</li>
+      <li><b>選「精選節奏」從清單挑一個</b>，或選「隨機產生」按「換一個」產生新的節奏；太難就把速度調慢。</li>
     </ol>
     <details class="glossary">
       <summary>名詞解釋</summary>
@@ -52,7 +52,19 @@
     <button type="button" id="guideOk" class="primary-sm">知道了</button>
   </section>
 
-  <section class="sheet" aria-label="目前的節奏">
+  <div class="seg src" role="radiogroup" aria-label="節奏從哪裡來">
+    <label><input type="radio" name="src" value="lib" id="src-lib"><span>精選節奏<small>固定清單・記錄最佳速度</small></span></label>
+    <label><input type="radio" name="src" value="gen" id="src-gen"><span>隨機產生<small>每次都不一樣</small></span></label>
+  </div>
+
+  <section class="sheet" id="practice" aria-label="目前的節奏">
+    <div class="sheet-head lib-head" id="libHead" hidden>
+      <div class="ex-title">
+        <h2 id="libName">R L R K ×4</h2>
+        <span id="libEn" class="ex-en"></span>
+      </div>
+      <span id="libBest" class="best-pill">還沒記錄</span>
+    </div>
     <div class="sheet-head">
       <div class="meta" id="meta">16 分音符 · 4/4 · 1 小節</div>
       <div class="sheet-tools">
@@ -72,9 +84,16 @@
     </div>
     <div class="strip" id="strip"></div>
     <div class="picker" id="picker" hidden></div>
+    <button type="button" id="btnDone" class="done" hidden>✓ 打順了，記錄 80 BPM</button>
   </section>
 
-  <section class="panel" aria-labelledby="h-level">
+  <section class="panel" id="libPanel" aria-labelledby="h-lib" hidden>
+    <h2 id="h-lib">精選節奏</h2>
+    <p class="hint">點一個開始練，右邊是前 2 拍的譜。練熟了按「✓ 打順了」記下速度，清單上就看得到哪些練過、練到多快。</p>
+    <ol class="ex-list" id="libList"></ol>
+  </section>
+
+  <section class="panel" id="genPanel" aria-labelledby="h-level">
     <h2 id="h-level">難度</h2>
     <div class="field">
       <span class="lbl">節奏類型</span>

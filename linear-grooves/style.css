@@ -404,3 +404,8 @@ input[type="number"] { width: 5.5em; }
 /* Half-bar mini staff in the exercise list and the favourites */
 .ex-mini { flex: none; display: flex; align-items: center; color: var(--ink); }
 .fav-mini { display: flex; color: var(--ink); }
+
+/* Curated grooves: source switch, title on the sheet, the list with group headings */
+.seg.src span { padding: 10px 6px; font-weight: 600; }
+.lib-head { align-items: flex-start; }
+.lib-group { font: 600 12px var(--f-mono); color: var(--muted); letter-spacing: 0.06em; padding: 6px 2px 0; list-style: none; }
