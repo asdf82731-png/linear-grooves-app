@@ -276,6 +276,17 @@ function renderNotation() {
     body.join('') + '</svg>';
 }
 
+// The first two beats on a single line (accents, flams, drags), to recognise an exercise at a glance.
+function miniFor(ex) {
+  if (ex.poly || !window.MiniStaff) return '';
+  const notes = swapped(ex.notes).slice(0, 2 * ex.sub);
+  return MiniStaff.svg({
+    sub: ex.sub, line: true, label: `${ex.name}：前 2 拍`,
+    slots: notes.map((n) => [{ inst: 'pad', limb: n.h, acc: n.acc, grace: n.g }]),
+    letters: notes.map((n) => ({ c: n.h, cls: n.h })),
+  });
+}
+
 function renderList() {
   $('#exList').innerHTML = SHEET.map((ex, i) => {
     const b = best[ex.key];
@@ -284,6 +295,7 @@ function renderList() {
       : swapped(ex.notes).map((n) => `<b class="${n.h}${n.acc ? ' acc' : ''}">${n.h}</b>`).join('');
     return `<li><button type="button" class="ex" data-i="${i}">
       <span class="ex-main"><span class="ex-name">${ex.name}</span><span class="ex-st">${st}</span></span>
+      <span class="ex-mini">${miniFor(ex)}</span>
       <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span>
     </button></li>`;
   }).join('');

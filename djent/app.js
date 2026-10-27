@@ -301,6 +301,7 @@ function renderAll() {
 function rebuildCurrent() {
   SHEET = sheet();
   cur = SHEET[S.idx[S.cat]];
+  renderList();   // the list's mini staves follow the settings too
   showExercise(S.idx[S.cat]);
 }
 
@@ -508,12 +509,29 @@ function renderLegend() {
     '<span class="lg-note">↺ 接回第 1 拍　✂ 截斷</span>';
 }
 
+// Half a bar of the phrase as a small staff, to recognise an exercise at a glance.
+// Fill exercises show the last two beats, where the fill is.
+function miniFor(ex) {
+  const n = 2 * ex.sub, start = ex.cat === 'fill' && ex.fill ? ex.len - n : 0;
+  const part = ex.slots.slice(start, start + n);
+  const slots = part.map((s) => s.map((h) => ({ inst: h.inst, limb: h.limb, ghost: h.lvl === 'g', acc: h.lvl === 'a' })));
+  const letters = part.map((s, k) => {
+    const foot = s.find((h) => h.row === 'bd'), sn = s.find((h) => h.row === 'sn'), tm = s.find((h) => h.row === 'tm');
+    if (foot) return { c: foot.limb[0], cls: 'f' + foot.limb[0] };
+    if (sn) return { c: sn.lvl === 'g' ? 'g' : start + k >= ex.fillFrom ? 'L' : 'S', cls: 'L' };
+    if (tm || (start + k >= ex.fillFrom && s.length)) return { c: 'R', cls: 'R' };
+    return { c: '·', cls: 'rest' };
+  });
+  return window.MiniStaff ? MiniStaff.svg({ sub: ex.sub, slots, letters, label: `${ex.name}：${ex.cat === 'fill' ? '最後' : '前'} 2 拍` }) : '';
+}
+
 function renderList() {
   $('#exList').innerHTML = SHEET.map((ex, i) => {
     const b = best[ex.key];
     const st = ex.def.fill ? riffText(FILLS.find((f) => f.id === ex.def.fill).cells) : riffText(ex.riff);
     return `<li><button type="button" class="ex" data-i="${i}">
       <span class="ex-main"><span class="ex-name">${ex.name}</span><span class="ex-st">${st}</span></span>
+      <span class="ex-mini">${miniFor(ex)}</span>
       <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span>
     </button></li>`;
   }).join('');

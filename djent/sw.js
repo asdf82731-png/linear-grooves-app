@@ -1,7 +1,7 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "dj-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'dj-v4';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'manifest.webmanifest',
+const VERSION = 'dj-v5';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', '../shared/mini-staff.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -553,3 +553,10 @@ input[type="range"]#sens { width: 100%; accent-color: var(--accent); margin: 0; 
 }
 /* Four practice modes: a 2×2 grid. */
 .modes label { flex: 1 1 calc(50% - 6px); }
+
+/* What to play: the current pattern on the card, and the list with half-bar mini staves */
+.pat-now { display: flex; flex-direction: column; gap: 4px; align-items: center; }
+.pat-now .lbl b { color: var(--ink); font-size: 14px; }
+.pat-staff { color: var(--ink); max-width: 100%; overflow-x: auto; }
+.ex-mini { flex: none; display: flex; align-items: center; color: var(--ink); }
+.pat-group { font: 600 12px var(--f-mono); color: var(--muted); letter-spacing: 0.06em; padding: 6px 2px 0; list-style: none; }

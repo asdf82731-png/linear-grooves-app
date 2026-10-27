@@ -30,8 +30,8 @@
     <section class="guide" id="guide" hidden aria-label="使用說明">
       <h2>三步開始練習</h2>
       <ol class="steps">
-        <li><b>在「練什麼」選一種練法</b>，第一次建議選「Gap click」，響 2 小節、安靜 2 小節。</li>
-        <li><b>按 ▶</b>，跟著 click 打 4 分音符；安靜的時候繼續打，心裡數拍。</li>
+        <li><b>在「打什麼」選一個動作、「怎麼練」選一種練法</b>，第一次建議「4 分音符 R L R L」配「Gap click」（響 2 小節、安靜 2 小節）。</li>
+        <li><b>按 ▶</b>，照練習卡上的譜跟著 click 打；安靜的時候繼續打，心裡數拍。</li>
         <li><b>想知道準不準，按左下角「開始聽」</b>打開麥克風。第一次要先做「延遲校正」：跟著 click 打 8 下。</li>
       </ol>
       <details class="glossary">
@@ -53,6 +53,10 @@
           <span id="modeSub" class="ex-en"></span>
         </div>
         <button type="button" id="btnTap" class="ghost sm tap">點按測速</button>
+      </div>
+      <div class="pat-now">
+        <span class="lbl">打：<b id="patName">4 分音符 R L R L</b></span>
+        <div class="pat-staff" id="patStaff"></div>
       </div>
       <div class="status" id="status" aria-live="polite"></div>
       <div class="beats" id="beats" aria-label="拍子"></div>
@@ -77,8 +81,14 @@
   </div>
 
   <div class="col-side">
+    <section class="panel" aria-labelledby="h-play">
+      <h2 id="h-play">打什麼</h2>
+      <p class="hint">選一個動作，練習卡上會顯示一整小節的譜。麥克風會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</p>
+      <ol class="ex-list" id="patList"></ol>
+    </section>
+
     <section class="panel" aria-labelledby="h-what">
-      <h2 id="h-what">練什麼</h2>
+      <h2 id="h-what">怎麼練</h2>
       <div class="modes" role="radiogroup" aria-label="練習模式">
         <label><input type="radio" name="mode" value="metro" id="mode-metro"><span>節拍器<small>一般的 click</small></span></label>
         <label><input type="radio" name="mode" value="gap" id="mode-gap"><span>Gap click<small>響幾小節、安靜幾小節</small></span></label>
@@ -208,6 +218,7 @@
     </button>
   </div>
 </nav>
+<script src="../shared/mini-staff.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
