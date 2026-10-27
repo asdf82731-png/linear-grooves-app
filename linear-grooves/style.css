@@ -400,3 +400,7 @@ input[type="number"] { width: 5.5em; }
 .djent-opts { display: flex; flex-direction: column; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .cycle { margin: 0; font-size: 13px; }
 .staff .mk { fill: var(--accent); font: 600 12px var(--f-mono); }
+
+/* Half-bar mini staff in the exercise list and the favourites */
+.ex-mini { flex: none; display: flex; align-items: center; color: var(--ink); }
+.fav-mini { display: flex; color: var(--ink); }

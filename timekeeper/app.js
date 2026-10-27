@@ -8,6 +8,44 @@
  */
 
 const MODE_NAME = { metro: '節拍器', gap: 'Gap click', shift: '位移節拍器', ramp: '漸進速度' };
+
+/* What to play while practising. Every hit lands on the quarter or eighth-note grid, because the
+ * microphone only checks those; picking a pattern sets 「你打的音符」 to match (det).
+ * One bar of 4/4 per pattern, one character per slot (x hit, . rest); sub = slots per beat.
+ * RH plays `hand` (sn or hh), LH snare, RF bass drum, LF bass drum (double pedal). */
+const PATTERNS = [
+  { id: 'q-single', group: '單擊', name: '4 分音符 R L R L', sub: 1, det: 'q', hand: 'sn', RH: 'x.x.', LH: '.x.x' },
+  { id: 'e-single', group: '單擊', name: '8 分音符 R L R L', sub: 2, det: 'e', hand: 'sn', RH: 'x.x.x.x.', LH: '.x.x.x.x' },
+  { id: 'e-double', group: '手法', name: '8 分雙擊 R R L L', sub: 2, det: 'e', hand: 'sn', RH: 'xx..xx..', LH: '..xx..xx' },
+  { id: 'e-para', group: '手法', name: '8 分 Paradiddle', sub: 2, det: 'e', hand: 'sn', RH: 'x.xx.x..', LH: '.x..x.xx' },
+  { id: 'beat8', group: '節奏', name: '8 beat', sub: 2, det: 'e', hand: 'hh', RH: 'xxxxxxxx', LH: '..x...x.', RF: 'x...x...' },
+  { id: 'beat8-var', group: '節奏', name: '8 beat 變化（大鼓加 3 的 &）', sub: 2, det: 'e', hand: 'hh', RH: 'xxxxxxxx', LH: '..x...x.', RF: 'x...xx..' },
+  { id: 'half', group: '節奏', name: 'Half-time（小鼓第 3 拍）', sub: 2, det: 'e', hand: 'hh', RH: 'xxxxxxxx', LH: '....x...', RF: 'x.......' },
+  { id: 'four', group: '節奏', name: 'Four on the floor', sub: 2, det: 'e', hand: 'hh', RH: 'xxxxxxxx', LH: '..x...x.', RF: 'x.x.x.x.' },
+  { id: 'q-kick', group: '大鼓', name: '4 分大鼓', sub: 1, det: 'q', RF: 'xxxx' },
+  { id: 'e-double-bass', group: '大鼓', name: '8 分雙踏 R L R L', sub: 2, det: 'e', RF: 'x.x.x.x.', LF: '.x.x.x.x' },
+];
+const LIMBS = [['RH'], ['LH'], ['RF'], ['LF']];
+
+// A pattern as mini-staff slots: `beats` beats from the start.
+function patternStaff(p, beats, scale) {
+  if (!window.MiniStaff) return '';
+  const n = beats * p.sub, slots = [], letters = [];
+  for (let i = 0; i < n; i++) {
+    const hits = [];
+    for (const [lane] of LIMBS) {
+      if (!p[lane] || p[lane][i % p[lane].length] !== 'x') continue;
+      hits.push({ inst: lane === 'RH' ? p.hand : lane === 'LH' ? 'sn' : 'bd', limb: lane });
+    }
+    // One letter per slot: a foot first, then the snare hand, then the right hand (H on the hi-hat).
+    const foot = hits.find((h) => h.limb[1] === 'F'), lh = hits.find((h) => h.limb === 'LH'), rh = hits.find((h) => h.limb === 'RH');
+    slots.push(hits);
+    letters.push(foot ? { c: foot.limb[0], cls: 'f' + foot.limb[0] }
+      : lh ? { c: 'L', cls: 'L' }
+        : rh ? { c: p.hand === 'hh' ? 'H' : 'R', cls: 'R' } : { c: '·', cls: 'rest' });
+  }
+  return MiniStaff.svg({ sub: p.sub, slots, letters, scale, label: `${p.name}：${beats === 4 ? '一小節' : '前 2 拍'}` });
+}
 const SHIFT_NAME = { 24: '2、4 拍', and: '每拍的 &', e: '每拍的 e', a: '每拍的 a', bar: '每小節第 1 拍', '2bar': '每 2 小節第 1 拍' };
 const SHIFT_CELL = { and: 2, e: 1, a: 3 };   // where the click sits in a beat split into 1 e & a
 const SUB_NAME = { 2: '8 分音符', 3: '8 分三連音', 4: '16 分音符', 6: '16 分六連音' };
@@ -21,7 +59,7 @@ const DEFAULTS = {
   mode: 'gap', bpm: 80, meter: 4, subGrid: 2, subLevel: 'off', countIn: true,
   gapPlay: 2, gapMute: 2, gapShow: false, gapGrow: false, gapMax: 8,
   shiftPos: '24', rampKind: 'linear', rampEnd: 120, rampEvery: 4, rampStep: 5,
-  detNote: 'q', sens: 6, seenGuide: false,
+  detNote: 'q', sens: 6, seenGuide: false, pattern: 'q-single',
 };
 
 /* ---------- Storage (best effort) ---------- */
@@ -218,6 +256,23 @@ function lightBeat(b) {
   if (lit >= 0 && els[lit]) els[lit].classList.remove('on');
   if (b >= 0 && els[b]) els[b].classList.add('on');
   lit = b;
+}
+
+const curPattern = () => PATTERNS.find((p) => p.id === S.pattern) || PATTERNS[0];
+
+// The pattern list (name + half a bar) and the full bar on the practice card.
+function renderPatterns() {
+  const p = curPattern();
+  $('#patName').textContent = p.name;
+  $('#patStaff').innerHTML = patternStaff(p, 4, 1.7);
+  let html = '', group = '';
+  PATTERNS.forEach((q, i) => {
+    if (q.group !== group) { group = q.group; html += `<li class="pat-group">${group}</li>`; }
+    html += `<li><button type="button" class="ex${q.id === p.id ? ' cur' : ''}" data-p="${q.id}">
+      <span class="ex-main"><span class="ex-name">${q.name}</span><span class="ex-en">偵測 ${q.det === 'e' ? '8 分' : '4 分'}音符</span></span>
+      <span class="ex-mini">${patternStaff(q, 2)}</span></button></li>`;
+  });
+  $('#patList').innerHTML = html;
 }
 
 function renderMode() {
@@ -684,6 +739,20 @@ function bind() {
     saveSettings();
   });
 
+  $('#patList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-p]');
+    if (!btn) return;
+    const p = PATTERNS.find((q) => q.id === btn.dataset.p);
+    S.pattern = p.id;
+    S.detNote = p.det;   // the microphone checks the grid this pattern is played on
+    saveSettings();
+    syncControls();
+    renderPatterns();
+    restartIfPlaying();
+    $('#practice').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    flash(`打：${p.name}`);
+  });
+
   $('#btnClearLog').addEventListener('click', (e) => {
     const b = e.currentTarget;
     if (!b.classList.contains('armed')) {
@@ -713,12 +782,14 @@ function bind() {
 
 /* ---------- Boot ---------- */
 if (!MODE_NAME[S.mode]) S.mode = 'gap';
+if (!PATTERNS.some((p) => p.id === S.pattern)) S.pattern = PATTERNS[0].id;
 if (!['off', 'soft', 'same'].includes(S.subLevel)) S.subLevel = 'off';
 if (![2, 3, 4, 5, 6, 7].includes(S.meter)) S.meter = 4;
 S.bpm = clampBpm(S.bpm);
 syncControls();
 bind();
 renderMode();
+renderPatterns();
 renderLog();
 
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {

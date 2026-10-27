@@ -645,6 +645,17 @@ function flash(msg) {
 }
 function saveSettings() { save('lg.settings', S); if (document.getElementById('levelHint')) syncLevel(); }
 
+// First two beats of a saved groove as a small staff, to recognise it at a glance.
+function favMini(p) {
+  if (!window.MiniStaff) return '';
+  const sl = flatten(p).slice(0, 2 * p.sub);
+  return MiniStaff.svg({
+    sub: p.sub, label: '收藏的節奏：前 2 拍',
+    slots: sl.map((s) => [{ inst: s.voice === 'k' ? 'bd' : s.voice, limb: s.limb, acc: s.acc }]),
+    letters: sl.map((s) => ({ c: s.limb, cls: s.limb })),
+  });
+}
+
 function renderFavs() {
   const ul = $('#favs');
   if (!favs.length) {
@@ -654,6 +665,7 @@ function renderFavs() {
   ul.innerHTML = favs.map((f, i) => `
     <li class="fav">
       <div class="fav-main">
+        <div class="fav-mini">${favMini(f.p)}</div>
         <div class="fav-stk">${stickingText(f.p)}</div>
         <div class="fav-meta">${SUB_NAME[f.p.sub]} · ${f.p.beats}/4 · ${f.p.bars} 小節 · ${f.bpm} BPM</div>
       </div>

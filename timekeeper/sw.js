@@ -1,7 +1,7 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "tk-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'tk-v1';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'onset-worklet.js', 'manifest.webmanifest',
+const VERSION = 'tk-v2';
+const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'onset-worklet.js', '../shared/mini-staff.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
 self.addEventListener('install', (e) => {

@@ -374,12 +374,23 @@ function renderGrid() {
   $('#legend').innerHTML = CL.map((l) => `<span><i class="dot ${l.limb}"></i>${LIMB_NAME[l.limb]}・${INST_NAME[l.inst]}</span>`).join('');
 }
 
+// The first two beats as a small staff (hands and feet), to recognise an exercise at a glance.
+function miniFor(ex, lanes) {
+  const n = Math.min(ex.len, 2 * ex.sub);
+  const slots = [];
+  for (let i = 0; i < n; i++) slots.push(lanes.filter((l) => l.hits[i] !== '.').map((l) => ({ inst: l.inst, limb: l.limb })));
+  const letters = sticking(ex, lanes).slice(0, n);
+  return window.MiniStaff ? MiniStaff.svg({ sub: ex.sub, slots, letters, label: `${ex.name}：前 2 拍` }) : '';
+}
+
 function renderList() {
   $('#exList').innerHTML = SHEET.map((ex, i) => {
     const b = best[ex.key];
-    const st = sticking(ex, swapped(ex)).map((s) => `<b class="${s.cls}">${s.c}</b>`).join('');
+    const lanes = swapped(ex);
+    const st = sticking(ex, lanes).map((s) => `<b class="${s.cls}">${s.c}</b>`).join('');
     return `<li><button type="button" class="ex" data-i="${i}">
       <span class="ex-main"><span class="ex-name">${ex.name}</span><span class="ex-st">${st}</span></span>
+      <span class="ex-mini">${miniFor(ex, lanes)}</span>
       <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span>
     </button></li>`;
   }).join('');

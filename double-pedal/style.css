@@ -431,3 +431,6 @@ input[type="number"] { width: 5.5em; }
 /* Cymbals and the hi-hat foot are diamonds, drums are dots. */
 .hit.hh, .hit.ride, .hit.hf { border-radius: 2px; transform: rotate(45deg); width: 9px; height: 9px; }
 @media (prefers-reduced-motion: no-preference) { .kc, .big .n { transition: background-color 60ms linear; } }
+
+/* Half-bar mini staff in the exercise list */
+.ex-mini { flex: none; display: flex; align-items: center; color: var(--ink); }

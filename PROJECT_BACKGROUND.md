@@ -55,6 +55,8 @@
    ├─ manifest.webmanifest   id: "djent"
    ├─ sw.js            快取前綴 dj-
    └─ icons/           深灰底、銅色 China 鈸＋綠點紫點
+├─ shared/
+│  └─ mini-staff.js    四個 App 共用：練習清單上的「半小節小譜」（見 §5 清單小譜）
 └─ timekeeper/         App 4
    ├─ index.html       .col-main（拍子、結果）＋ .col-side（設定、紀錄）
    ├─ app.js
@@ -131,6 +133,13 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
   - 音色：參考使用者自己的 Pro Metronome（`asdf82731-png/metronome`）木魚的音高滑落 1250→875 Hz，改成低通 3.5 kHz 的方波，滿音量保持 25 ms 再淡出。
   - 走獨立的 `clickBus`（0.9），在各頁面的放大倍數之後才接進限幅器，所以三個頁面的節拍器一樣大聲，約 −5.5 dB，比鼓聲大。
   - 要再更大聲，就會開始犧牲重音和輕音的差距。調整時要量兩件事：每一下的音量，以及重音和一般音的差距（約 50 ms 視窗）。
+
+### 清單小譜（`shared/mini-staff.js`）
+- 每個 App 的練習清單，每一列都顯示**名稱＋前 2 拍的小譜**（Djent 的 Fill 類顯示最後 2 拍），下面一排是手腳字母。
+- 各 App 把自己的資料轉成 `{ sub, slots: [[{ inst, limb, acc, ghost, grace }]], letters, line }` 再呼叫 `MiniStaff.svg()`；手順練習用單線譜（`line: true`），複節奏不畫小譜。
+- 用到的地方：Linear Grooves 手順練習清單與「我的收藏」、Double Pedal、Djent Grooves、Time Keeper「打什麼」。
+- 顏色用各 App 自己的 token（`--ink`、`--muted`、`--r`、`--l`、`--k`、`--lf`），CSS 由這個檔自己插入。
+- **改這個檔時，四個 App 的 `sw.js` 版本都要加一**，因為每個 App 都把 `../shared/mini-staff.js` 放在自己的快取清單裡。
 
 ### 文案語氣
 - 直接、口語、短句。例如「打順了就按…」「寧可慢也不要亂」。
@@ -285,7 +294,10 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 - 偵測只能用**平板內建麥克風**聽鼓棒打在 pad 上的聲音（Xenyx 502 沒有 USB）。
 - **電子鼓 MIDI 留到第二版**：要先有能同時接 eDRUMin 和耳機、支援 Android USB 音訊的 USB-C 擴充器。
 
-### 四種模式（`S.mode`）
+### 打什麼（`PATTERNS`）
+10 個動作，分成單擊、手法、節奏、大鼓四組；每一下都落在 4 分或 8 分格線上，選了動作就自動設定「你打的音符」（`det`）。練習卡顯示一整小節的譜，清單顯示前 2 拍。動作只告訴你打什麼，App 不會播放鼓聲。
+
+### 四種練法（`S.mode`，畫面上叫「怎麼練」）
 - `metro` 節拍器：30–300 BPM、點按測速、拍號 2/4–7/4、細分 `subGrid`（2、3、4、6）＋ `subLevel`（off、soft、same）、預備拍。
 - `gap` Gap click：`gapPlay` 小節響、`muteBars` 小節安靜；`gapShow` 安靜時是否標示拍子（預設不標示）；`gapGrow` 漸進，在每輪第一個安靜小節開始時決定，開麥克風要「回來那一拍 ±30 ms」才加。
 - `shift` 位移節拍器：`shiftPos` = 24、and、e、a、bar、2bar。預備拍仍是一般 click。
