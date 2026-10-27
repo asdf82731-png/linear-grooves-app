@@ -51,6 +51,44 @@ const DJENT_CELLS = {
 };
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
 
+/* ---------- Curated grooves ----------
+ * A fixed list next to the generator, so you can see what you have practised and how fast.
+ * groups: a group is a sticking string (R L K) voiced with the current 配器, or { stick, voices } for
+ * fills that set their own drums. cell: Djent linear, one cell repeated over `bars` bars and cut at the end.
+ * One bar of 4/4: groups add up to 4 × sub. */
+const tom = (stick, voices) => ({ stick, voices: voices.split(' ') });
+const LIB_CATS = { start: '16 分入門', more: '16 分進階', trip: '三連音', sext: '六連音', fill: 'Fill（筒鼓）', djent: 'Djent 線性' };
+const LIBRARY = [
+  { id: 'rlrk4', cat: 'start', name: 'R L R K ×4', en: '最基本的線性：每拍一組', sub: 4, groups: ['RLRK', 'RLRK', 'RLRK', 'RLRK'] },
+  { id: 'rllk4', cat: 'start', name: 'R L L K ×4', en: '左手連兩下', sub: 4, groups: ['RLLK', 'RLLK', 'RLLK', 'RLLK'] },
+  { id: 'rrlk4', cat: 'start', name: 'R R L K ×4', en: '右手連兩下', sub: 4, groups: ['RRLK', 'RRLK', 'RRLK', 'RRLK'] },
+  { id: '332', cat: 'start', name: '3-3-2', en: 'R L K · R L K · R K，一小節兩輪', sub: 4, groups: ['RLK', 'RLK', 'RK', 'RLK', 'RLK', 'RK'] },
+  { id: 'rlkk4', cat: 'start', name: 'R L K K ×4', en: '大鼓連踩兩下', sub: 4, groups: ['RLKK', 'RLKK', 'RLKK', 'RLKK'] },
+  { id: 'krlr4', cat: 'start', name: 'K R L R ×4', en: '大鼓在每組最前面，落在拍點上', sub: 4, groups: ['KRLR', 'KRLR', 'KRLR', 'KRLR'] },
+  { id: '33334', cat: 'more', name: '3-3-3-3-4', en: 'R L K ×4 ＋ R L R K', sub: 4, groups: ['RLK', 'RLK', 'RLK', 'RLK', 'RLRK'] },
+  { id: '556', cat: 'more', name: '5-5-6', en: 'R L R L K · R L R L K · R L R L L K', sub: 4, groups: ['RLRLK', 'RLRLK', 'RLRLLK'] },
+  { id: '772', cat: 'more', name: '7-7-2', en: '兩組長的接一組短的', sub: 4, groups: ['RLRLRLK', 'RLRLRLK', 'RK'] },
+  { id: '53mix', cat: 'more', name: 'R L R L K ＋ R L K', en: '5 和 3 交替', sub: 4, groups: ['RLRLK', 'RLK', 'RLRLK', 'RLK'] },
+  { id: 't-rlk', cat: 'trip', name: '三連音 R L K', en: '每拍一組', sub: 3, groups: ['RLK', 'RLK', 'RLK', 'RLK'] },
+  { id: 't-rkl', cat: 'trip', name: '三連音 R K L', en: '大鼓在中間', sub: 3, groups: ['RKL', 'RKL', 'RKL', 'RKL'] },
+  { id: 't-rrk', cat: 'trip', name: '三連音 R R K', en: '右手兩下接大鼓', sub: 3, groups: ['RRK', 'RRK', 'RRK', 'RRK'] },
+  { id: 't-lrk', cat: 'trip', name: '三連音 L R K', en: '左手起頭', sub: 3, groups: ['LRK', 'LRK', 'LRK', 'LRK'] },
+  { id: 's-rlrlkk', cat: 'sext', name: '六連音 R L R L K K', en: '手四下、腳兩下', sub: 6, groups: ['RLRLKK', 'RLRLKK', 'RLRLKK', 'RLRLKK'] },
+  { id: 's-rlk', cat: 'sext', name: '六連音 R L K ×8', en: '一拍兩組', sub: 6, groups: ['RLK', 'RLK', 'RLK', 'RLK', 'RLK', 'RLK', 'RLK', 'RLK'] },
+  { id: 's-rrllkk', cat: 'sext', name: '六連音 R R L L K K', en: '手雙擊加腳兩下', sub: 6, groups: ['RRLLKK', 'RRLLKK', 'RRLLKK', 'RRLLKK'] },
+  { id: 's-rlrlrk', cat: 'sext', name: '六連音 R L R L R K', en: '手五下、腳一下', sub: 6, groups: ['RLRLRK', 'RLRLRK', 'RLRLRK', 'RLRLRK'] },
+  { id: 'f-down', cat: 'fill', name: '筒鼓下行 R L R K', en: '中鼓 → 小鼓 → 落地鼓', sub: 4,
+    groups: [tom('RLRK', 't1 t1 t1 k'), tom('RLRK', 'sn sn sn k'), tom('RLRK', 'ft ft ft k'), tom('RLRK', 'ft ft ft k')] },
+  { id: 'f-332', cat: 'fill', name: '筒鼓 3-3-2', en: '每組換一個鼓', sub: 4,
+    groups: [tom('RLK', 't1 t1 k'), tom('RLK', 'sn sn k'), tom('RK', 'ft k'), tom('RLK', 't1 t1 k'), tom('RLK', 'sn sn k'), tom('RK', 'ft k')] },
+  { id: 'f-rllk', cat: 'fill', name: '筒鼓 R L L K', en: '右手在筒鼓、左手在小鼓', sub: 4,
+    groups: [tom('RLLK', 't1 sn sn k'), tom('RLLK', 't1 sn sn k'), tom('RLLK', 'ft sn sn k'), tom('RLLK', 'ft sn sn k')] },
+  { id: 'f-sext', cat: 'fill', name: '六連音筒鼓 Fill', en: 'R L R L K K，一拍換一個鼓', sub: 6,
+    groups: [tom('RLRLKK', 't1 t1 t1 t1 k k'), tom('RLRLKK', 'sn sn sn sn k k'), tom('RLRLKK', 'ft ft ft ft k k'), tom('RLRLKK', 'ft sn ft sn k k')] },
+  { id: 'd-5', cat: 'djent', name: '5 個一組（跨小節）', en: 'R L R L K 一直重複，4 小節', sub: 4, bars: 4, cell: ['RLRLK'] },
+  { id: 'd-7', cat: 'djent', name: '7 個一組（跨小節）', en: 'R L R L R L K 一直重複，4 小節', sub: 4, bars: 4, cell: ['RLRLRLK'] },
+];
+
 // y = offset from the top staff line, in px (half a staff space = 4).
 const VOICES = {
   china: { label: 'CH', y: -12, cym: true }, // B5
@@ -68,7 +106,7 @@ const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' 
 const MIN_BPM = 40;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
-  orch: 'hh', accents: true, bpm: 80, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut', click: true, clickSub: 'soft', countIn: false,
+  orch: 'hh', accents: true, bpm: 80, src: 'lib', libIdx: 0, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut', click: true, clickSub: 'soft', countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
 
@@ -85,6 +123,7 @@ function save(key, value) {
 
 const S = Object.assign({}, DEFAULTS, load('lg.settings', {}));
 let favs = load('lg.favs', []);
+let libBest = load('lg.best', {});
 let pattern = load('lg.pattern', null);
 let SL = [];          // flattened slots of the current pattern
 
@@ -182,6 +221,60 @@ function generateDjent() {
   patternChanged(true);
   return true;
 }
+
+// A curated groove as a pattern (voices from the current 配器 unless the groove sets its own drums).
+function buildLib(def) {
+  const groups = (def.cell || def.groups).map((x) => (typeof x === 'string'
+    ? { stick: x, voices: voicesFor(x) } : { stick: x.stick, voices: x.voices.slice() }));
+  if (!def.cell) return { sub: def.sub, beats: 4, bars: 1, shift: 0, groups };
+  const p = { sub: def.sub, beats: 4, bars: def.bars, shift: 0, cell: groups };
+  p.groups = expand(p);
+  return p;
+}
+
+function loadLib(i) {
+  S.libIdx = ((i % LIBRARY.length) + LIBRARY.length) % LIBRARY.length;
+  saveSettings();
+  pattern = buildLib(LIBRARY[S.libIdx]);
+  closePicker();
+  patternChanged(true);
+  renderLibHead();
+  document.querySelectorAll('#libList .ex').forEach((el) => el.classList.toggle('cur', +el.dataset.i === S.libIdx));
+}
+
+function renderLibHead() {
+  const def = LIBRARY[S.libIdx], b = libBest[def.id];
+  $('#libName').textContent = def.name;
+  $('#libEn').textContent = def.en;
+  $('#libBest').textContent = b ? `最佳 ${b} BPM` : '還沒記錄';
+  $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
+}
+
+function renderLibList() {
+  let html = '', cat = '';
+  LIBRARY.forEach((def, i) => {
+    if (def.cat !== cat) { cat = def.cat; html += `<li class="lib-group">${LIB_CATS[cat]}</li>`; }
+    const b = libBest[def.id];
+    html += `<li><button type="button" class="ex${i === S.libIdx ? ' cur' : ''}" data-i="${i}">
+      <span class="ex-main"><span class="ex-name">${def.name}</span><span class="ex-en">${def.en}</span></span>
+      <span class="ex-mini">${favMini(buildLib(def))}</span>
+      <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span></button></li>`;
+  });
+  $('#libList').innerHTML = html;
+}
+
+// 精選節奏 or 隨機產生: show the controls that belong to each.
+function syncSrc() {
+  const lib = S.src === 'lib';
+  $(lib ? '#src-lib' : '#src-gen').checked = true;
+  $('#libHead').hidden = !lib;
+  $('#btnDone').hidden = !lib;
+  $('#libPanel').hidden = !lib;
+  $('#genPanel').hidden = lib;
+  $('#foldAdv').hidden = lib;
+  $('#btnGen').textContent = lib ? '下一個' : '換一個';
+}
+const nextGroove = () => (S.src === 'lib' ? loadLib(S.libIdx + 1) : generate());
 
 function generate() {
   if (S.type === 'djent') return generateDjent();
@@ -633,6 +726,7 @@ function setBpm(v) {
   S.bpm = Math.max(MIN_BPM, Math.min(240, Math.round(v)));
   $('#bpm').value = S.bpm;
   if (document.activeElement !== $('#bpmOut')) $('#bpmOut').value = S.bpm;
+  $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
   saveSettings();
 }
 
@@ -721,7 +815,27 @@ function bind() {
   };
   $('#helpBtn').addEventListener('click', () => showGuide($('#guide').hidden));
   $('#guideOk').addEventListener('click', () => { S.seenGuide = true; saveSettings(); showGuide(false); });
-  $('#btnGen').addEventListener('click', generate);
+  $('#btnGen').addEventListener('click', nextGroove);
+  document.querySelectorAll('input[name="src"]').forEach((el) => el.addEventListener('change', () => {
+    S.src = el.value;
+    saveSettings();
+    syncSrc();
+    if (S.src === 'lib') { renderLibList(); loadLib(S.libIdx); } else generate();
+  }));
+  $('#libList').addEventListener('click', (e) => {
+    const b = e.target.closest('.ex');
+    if (!b) return;
+    loadLib(+b.dataset.i);
+    $('#practice').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  $('#btnDone').addEventListener('click', () => {
+    const def = LIBRARY[S.libIdx], prev = libBest[def.id] || 0;
+    libBest[def.id] = Math.max(prev, S.bpm);
+    save('lg.best', libBest);
+    renderLibHead();
+    renderLibList();
+    flash(S.bpm > prev ? `記錄 ${S.bpm} BPM！下次試試 ${S.bpm + 5}` : `已記錄，你的最佳是 ${prev} BPM`);
+  });
   $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
   $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
   $('#bpmUp').addEventListener('click', () => setBpm(S.bpm + 5));
@@ -860,6 +974,8 @@ function bind() {
       const f = favs[+l.dataset.load];
       pattern = JSON.parse(JSON.stringify(f.p));
       closePicker();
+      S.src = 'gen';   // a favourite is a groove of your own, not one from the curated list
+      syncSrc();
       adoptPattern();
       syncControls();
       setBpm(f.bpm);
@@ -882,7 +998,9 @@ function bind() {
   document.addEventListener('keydown', (e) => {
     if (e.target.matches('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); playing ? stop() : play(); }
-    else if (e.key === 'g' || e.key === 'G') generate();
+    else if (e.key === 'g' || e.key === 'G') nextGroove();
+    else if (S.src === 'lib' && e.key === 'ArrowRight') loadLib(S.libIdx + 1);
+    else if (S.src === 'lib' && e.key === 'ArrowLeft') loadLib(S.libIdx - 1);
   });
   document.addEventListener('visibilitychange', async () => {
     if (playing && document.visibilityState === 'visible' && !wakeLock) {
@@ -916,7 +1034,12 @@ function validPattern(p) {
 syncControls();
 bind();
 renderFavs();
-if (validPattern(pattern)) {
+if (S.src !== 'gen') S.src = 'lib';
+syncSrc();
+if (S.src === 'lib') {
+  renderLibList();
+  loadLib(S.libIdx || 0);
+} else if (validPattern(pattern)) {
   adoptPattern();
   syncControls();
   patternChanged(false);
