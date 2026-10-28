@@ -1,11 +1,13 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "dp-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'dp-v14';
+const VERSION = 'dp-v15';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', '../shared/mini-staff.js', 'manifest.webmanifest',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
+// cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in an old app.js.
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
+    .then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {
