@@ -418,4 +418,4 @@ input[type="number"] { width: 5.5em; }
 /* Curated grooves: source switch, title on the sheet, the list with group headings */
 .seg.src span { padding: 10px 6px; font-weight: 600; }
 .lib-head { align-items: flex-start; }
-.lib-group { font: 600 12px var(--f-mono); color: var(--muted); letter-spacing: 0.06em; padding: 6px 2px 0; list-style: none; }
+#libCats { margin-bottom: 4px; }
