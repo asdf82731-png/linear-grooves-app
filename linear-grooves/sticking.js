@@ -38,6 +38,7 @@ const POLYS = [[3, 2], [4, 3], [5, 4], [5, 3], [5, 2], [7, 4], [2, 3], [3, 4]];
 
 const ACCENT_BASES = {
   single: { name: '單擊', p: 'RL' },
+  single2: { name: '單擊（兩個重音）', p: 'RL', two: true },
   double: { name: '雙擊', p: 'RRLL' },
   para:   { name: 'Paradiddle', p: 'RLRRLRLL' },
 };
@@ -125,20 +126,22 @@ function sheet() {
       notes: [...h].map((c) => ({ h: c, acc: false, g: 0 })),
     }));
   }
-  // Accent moving: the same hand pattern, accent walks through every position.
-  const base = ACCENT_BASES[S.aBase].p;
+  // Accent moving: the same hand pattern, accent walks through every position
+  // (or, for a two-accent base, every pair of positions in the beat).
+  const { p: base, two } = ACCENT_BASES[S.aBase];
   const unit = Math.max(base.length, S.aSub);
   const total = Math.ceil((S.aSub * 4) / unit) * unit;
-  const out = [];
-  for (let k = 0; k < unit; k++) {
-    const notes = [];
-    for (let i = 0; i < total; i++) notes.push({ h: base[i % base.length], acc: i % unit === k, g: 0 });
-    const pos = k % S.aSub;
-    const beat = Math.floor(k / S.aSub) + 1;
-    const where = `${beat}${pos ? ' ' + COUNTS[S.aSub][pos] : ''}`;
-    out.push({ key: `acc:${S.aBase}:${S.aSub}:${k}`, name: `重音在「${where}」`, sub: S.aSub, notes });
+  const spot = (k) => `${Math.floor(k / S.aSub) + 1}${k % S.aSub ? ' ' + COUNTS[S.aSub][k % S.aSub] : ''}`;
+  const sets = [];
+  for (let a = 0; a < unit; a++) {
+    if (!two) sets.push([a]);
+    else for (let b = a + 1; b < unit; b++) sets.push([a, b]);
   }
-  return out;
+  return sets.map((ks) => {
+    const notes = [];
+    for (let i = 0; i < total; i++) notes.push({ h: base[i % base.length], acc: ks.includes(i % unit), g: 0 });
+    return { key: `acc:${S.aBase}:${S.aSub}:${ks.join('-')}`, name: `重音在「${two ? ks.map((k) => COUNTS[S.aSub][k % S.aSub] || '1').join('、') : spot(ks[0])}」`, sub: S.aSub, notes };
+  });
 }
 
 let SHEET = [];
