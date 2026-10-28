@@ -616,7 +616,7 @@ function bind() {
   $('#rRun').addEventListener('change', (e) => { if (playing) stop(); S.rRun = +e.target.value; saveSettings(); renderAll(); });
   $('#btnReroll').addEventListener('click', () => { if (playing) stop(); makeRandomSheet(); renderAll(); flash('換了一組新的隨機手順'); });
   $('#polyMute').addEventListener('change', (e) => { S.polyMute = e.target.value; saveSettings(); });
-  $('#aBase').addEventListener('change', (e) => { if (playing) stop(); S.aBase = e.target.value; S.idx.acc = 0; saveSettings(); renderAll(); });
+  $('#aBase').addEventListener('change', (e) => { if (playing) stop(); S.aBase = ACCENT_BASES[e.target.value] ? e.target.value : 'single'; S.idx.acc = 0; saveSettings(); renderAll(); });
   document.querySelectorAll('input[name="aSub"]').forEach((el) => el.addEventListener('change', () => {
     if (playing) stop();
     S.aSub = +el.value; S.idx.acc = 0; saveSettings(); renderAll();
