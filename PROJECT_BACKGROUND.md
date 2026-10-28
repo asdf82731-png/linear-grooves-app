@@ -35,7 +35,7 @@
 ├─ linear-grooves/     App 1
 │  ├─ index.html       線性節奏產生器（主頁）
 │  ├─ app.js
-│  ├─ sticking.html    手順練習（同一個 App 裡的第二個工具，上方膠囊切換）
+│  ├─ sticking.html    手順練習（App 首頁，manifest start_url；上方「線性節奏」開關切到 index.html）
 │  ├─ sticking.js
 │  ├─ style.css        兩個頁面共用
 │  ├─ manifest.webmanifest   id: "linear-grooves"

@@ -321,15 +321,25 @@ input[type="number"] { width: 5.5em; }
 .bpm-unit { line-height: 1.15; }
 
 /* ---------- Tool switcher ---------- */
-.tools-nav {
-  display: flex; gap: 4px; padding: 4px; border-radius: 999px;
-  background: var(--surface); border: 1px solid var(--line); align-self: flex-start;
+/* 手順練習 is the main tool; 線性節奏 is a switch that opens the other page. */
+.tools-nav { display: flex; align-self: flex-start; }
+.mode-switch {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--line); text-decoration: none;
+  color: var(--muted); font-size: 14px; font-weight: 600;
 }
-.tools-nav a {
-  padding: 6px 16px; border-radius: 999px; text-decoration: none; color: var(--muted);
-  font-size: 14px; font-weight: 600;
+.mode-switch[aria-checked="true"] { color: var(--ink); }
+.mode-switch:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.sw-track {
+  position: relative; width: 40px; height: 24px; border-radius: 999px; flex: none;
+  background: var(--line); transition: background 0.15s;
 }
-.tools-nav a[aria-current="page"] { background: var(--ink); color: var(--surface); }
+.sw-knob {
+  position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); transition: transform 0.15s;
+}
+.mode-switch[aria-checked="true"] .sw-track { background: var(--ink); }
+.mode-switch[aria-checked="true"] .sw-knob { transform: translateX(16px); }
 
 /* ---------- Sticking page ---------- */
 .ex-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
