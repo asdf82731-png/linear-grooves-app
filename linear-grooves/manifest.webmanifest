@@ -4,7 +4,7 @@
   "short_name": "Linear Grooves",
   "description": "爵士鼓線性節奏產生器與練習器",
   "lang": "zh-Hant",
-  "start_url": "./",
+  "start_url": "sticking.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
@@ -32,8 +32,8 @@
   ],
   "shortcuts": [
     {
-      "name": "線性節奏",
-      "url": "./",
+      "name": "手順練習",
+      "url": "sticking.html",
       "icons": [
         {
           "src": "icons/icon-192.png",
@@ -42,8 +42,8 @@
       ]
     },
     {
-      "name": "手順練習",
-      "url": "sticking.html",
+      "name": "線性節奏",
+      "url": "./",
       "icons": [
         {
           "src": "icons/icon-192.png",

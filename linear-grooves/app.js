@@ -106,7 +106,7 @@ const SUB_NAME = { 4: '16 分音符', 3: '8 分三連音', 6: '16 分六連音' 
 const MIN_BPM = 40;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
-  orch: 'hh', accents: true, bpm: 80, src: 'lib', libIdx: 0, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut', click: true, clickSub: 'soft', countIn: false,
+  orch: 'hh', accents: true, bpm: 80, src: 'lib', libIdx: 0, libLast: {}, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut', click: true, clickSub: 'soft', countIn: false,
   trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
 
@@ -232,8 +232,19 @@ function buildLib(def) {
   return p;
 }
 
+// 精選節奏 shows one category at a time, like the Double Pedal modes; ◀ ▶ stay inside it.
+const catItems = (cat) => LIBRARY.reduce((a, d, i) => (d.cat === cat ? a.concat(i) : a), []);
+function stepLib(d) {
+  const items = catItems(LIBRARY[S.libIdx].cat), n = items.length;
+  loadLib(items[(items.indexOf(S.libIdx) + d + n) % n]);
+}
+
 function loadLib(i) {
   S.libIdx = ((i % LIBRARY.length) + LIBRARY.length) % LIBRARY.length;
+  const cat = LIBRARY[S.libIdx].cat;
+  $(`#cat-${cat}`).checked = true;
+  if ($('#libList').dataset.cat !== cat) renderLibList();
+  S.libLast[cat] = S.libIdx;
   saveSettings();
   pattern = buildLib(LIBRARY[S.libIdx]);
   closePicker();
@@ -250,10 +261,16 @@ function renderLibHead() {
   $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
 }
 
+function renderLibCats() {
+  $('#libCats').innerHTML = Object.entries(LIB_CATS).map(([cat, name]) =>
+    `<label><input type="radio" name="libCat" value="${cat}" id="cat-${cat}"><span>${name}<small>${catItems(cat).length} 個</small></span></label>`).join('');
+}
+
 function renderLibList() {
-  let html = '', cat = '';
+  const cat = LIBRARY[S.libIdx].cat;
+  let html = '';
   LIBRARY.forEach((def, i) => {
-    if (def.cat !== cat) { cat = def.cat; html += `<li class="lib-group">${LIB_CATS[cat]}</li>`; }
+    if (def.cat !== cat) return;
     const b = libBest[def.id];
     html += `<li><button type="button" class="ex${i === S.libIdx ? ' cur' : ''}" data-i="${i}">
       <span class="ex-main"><span class="ex-name">${def.name}</span><span class="ex-en">${def.en}</span></span>
@@ -261,6 +278,7 @@ function renderLibList() {
       <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span></button></li>`;
   });
   $('#libList').innerHTML = html;
+  $('#libList').dataset.cat = cat;
 }
 
 // 精選節奏 or 隨機產生: show the controls that belong to each.
@@ -274,7 +292,7 @@ function syncSrc() {
   $('#foldAdv').hidden = lib;
   $('#btnGen').textContent = lib ? '下一個' : '換一個';
 }
-const nextGroove = () => (S.src === 'lib' ? loadLib(S.libIdx + 1) : generate());
+const nextGroove = () => (S.src === 'lib' ? stepLib(1) : generate());
 
 function generate() {
   if (S.type === 'djent') return generateDjent();
@@ -822,6 +840,10 @@ function bind() {
     syncSrc();
     if (S.src === 'lib') { renderLibList(); loadLib(S.libIdx); } else generate();
   }));
+  $('#libCats').addEventListener('change', (e) => {
+    const items = catItems(e.target.value);
+    loadLib(items.includes(S.libLast[e.target.value]) ? S.libLast[e.target.value] : items[0]);
+  });
   $('#libList').addEventListener('click', (e) => {
     const b = e.target.closest('.ex');
     if (!b) return;
@@ -999,8 +1021,8 @@ function bind() {
     if (e.target.matches('input, select, textarea')) return;
     if (e.code === 'Space') { e.preventDefault(); playing ? stop() : play(); }
     else if (e.key === 'g' || e.key === 'G') nextGroove();
-    else if (S.src === 'lib' && e.key === 'ArrowRight') loadLib(S.libIdx + 1);
-    else if (S.src === 'lib' && e.key === 'ArrowLeft') loadLib(S.libIdx - 1);
+    else if (S.src === 'lib' && e.key === 'ArrowRight') stepLib(1);
+    else if (S.src === 'lib' && e.key === 'ArrowLeft') stepLib(-1);
   });
   document.addEventListener('visibilitychange', async () => {
     if (playing && document.visibilityState === 'visible' && !wakeLock) {
@@ -1031,6 +1053,9 @@ function validPattern(p) {
     p.groups.reduce((n, g) => n + g.stick.length, 0) === p.beats * p.sub * p.bars;
 }
 
+if (!LIBRARY[S.libIdx]) S.libIdx = 0;
+if (!S.libLast || typeof S.libLast !== 'object') S.libLast = {};
+renderLibCats();
 syncControls();
 bind();
 renderFavs();
@@ -1038,7 +1063,7 @@ if (S.src !== 'gen') S.src = 'lib';
 syncSrc();
 if (S.src === 'lib') {
   renderLibList();
-  loadLib(S.libIdx || 0);
+  loadLib(S.libIdx);
 } else if (validPattern(pattern)) {
   adoptPattern();
   syncControls();

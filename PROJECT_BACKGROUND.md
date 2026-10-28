@@ -35,7 +35,7 @@
 ├─ linear-grooves/     App 1
 │  ├─ index.html       線性節奏產生器（主頁）
 │  ├─ app.js
-│  ├─ sticking.html    手順練習（同一個 App 裡的第二個工具，上方膠囊切換）
+│  ├─ sticking.html    手順練習（App 首頁，manifest start_url；上方「線性節奏」開關切到 index.html）
 │  ├─ sticking.js
 │  ├─ style.css        兩個頁面共用
 │  ├─ manifest.webmanifest   id: "linear-grooves"
@@ -152,7 +152,7 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 **線性節奏的規則**：任何時刻只有一個肢體發聲（右手 R、左手 L、大鼓 K 不重疊）。
 
 **精選節奏與隨機產生**（頁面最上方切換，`S.src` = `lib`（預設）或 `gen`）
-- 精選節奏：`LIBRARY` 共 24 個，分 6 類（`LIB_CATS`）。每個是一小節 4/4 的 `groups`（手順字串用目前的配器；Fill 用 `tom()` 指定每一下的鼓），Djent 線性用 `cell` 跑 4 小節、結尾截斷。清單每一列有名稱、說明、半小節小譜、最佳速度；「✓ 打順了」記在 `lg.best`（以練習 id 為 key）。
+- 精選節奏：`LIBRARY` 共 24 個，分 6 類（`LIB_CATS`），用 `.modes` 按鈕切換分類，一次只列一類；「下一個」在同一類裡循環，`lg.settings.libLast` 記住每類上次練到哪個。每個是一小節 4/4 的 `groups`（手順字串用目前的配器；Fill 用 `tom()` 指定每一下的鼓），Djent 線性用 `cell` 跑 4 小節、結尾截斷。清單每一列有名稱、說明、半小節小譜、最佳速度；「✓ 打順了」記在 `lg.best`（以練習 id 為 key）。
 - 精選模式時藏起「難度」和「進階規則」（那些只影響產生器）；「修改這個節奏」的工具照樣能用。播放列的按鈕叫「下一個」，← → 也可以換。
 - 載入收藏會自動切到「隨機產生」，因為收藏是你自己的節奏。
 

@@ -18,8 +18,9 @@
 <!--APP-START-->
 <div class="app">
   <nav class="tools-nav" aria-label="切換工具">
-    <a href="./" aria-current="page">線性節奏</a>
-    <a href="sticking.html">手順練習</a>
+    <a class="mode-switch" href="sticking.html" role="switch" aria-checked="true">
+      <span class="sw-track" aria-hidden="true"><span class="sw-knob"></span></span>線性節奏
+    </a>
   </nav>
 
   <header class="top">
@@ -89,6 +90,7 @@
 
   <section class="panel" id="libPanel" aria-labelledby="h-lib" hidden>
     <h2 id="h-lib">精選節奏</h2>
+    <div class="modes" id="libCats" role="radiogroup" aria-label="節奏分類"></div>
     <p class="hint">點一個開始練，右邊是前 2 拍的譜。練熟了按「✓ 打順了」記下速度，清單上就看得到哪些練過、練到多快。</p>
     <ol class="ex-list" id="libList"></ol>
   </section>
