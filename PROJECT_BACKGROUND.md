@@ -19,7 +19,7 @@
 ## 2. 技術原則
 
 - **正在改用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，一個 App 一個 App 換：
-  - 已換：**Double Pedal**、**Djent Grooves**。原始碼在 `<app>/src/`（例如 `double-pedal/src/`），`npm run build -- double-pedal` 把結果寫到 `double-pedal/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
+  - 已換：**Double Pedal**、**Djent Grooves**、**Time Keeper**。原始碼在 `<app>/src/`（例如 `double-pedal/src/`），`npm run build -- double-pedal` 把結果寫到 `double-pedal/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
   - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入、模式格子、練習清單…）、`audio.js`（輸出鏈、合成積木、節拍器 click、Wake Lock）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。
   - 還沒換的 App 仍是純 HTML／CSS／JavaScript。
 - **聲音全部用 Web Audio API 即時合成**，不用任何音檔。
