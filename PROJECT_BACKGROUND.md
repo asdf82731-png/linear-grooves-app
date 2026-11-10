@@ -18,7 +18,10 @@
 
 ## 2. 技術原則
 
-- **純 HTML／CSS／JavaScript**，沒有框架、沒有建置步驟、沒有外部 JS 套件。
+- **正在改用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，一個 App 一個 App 換：
+  - 已換：**Double Pedal**。原始碼在 `double-pedal/src/`，`npm run build -- double-pedal` 把結果寫到 `double-pedal/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
+  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入、模式格子、練習清單…）、`audio.js`（輸出鏈、合成積木、節拍器 click、Wake Lock）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。
+  - 還沒換的 App 仍是純 HTML／CSS／JavaScript。
 - **聲音全部用 Web Audio API 即時合成**，不用任何音檔。
 - 外部資源只有 Google Fonts（Big Shoulders Display、IBM Plex Mono、IBM Plex Sans），service worker 會把它快取起來離線用。
 - 資料只存在使用者裝置的 `localStorage`，沒有後端、沒有帳號。
