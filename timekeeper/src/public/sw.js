@@ -1,15 +1,15 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "tk-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'tk-v6';
+const VERSION = 'tk-v7';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'onset-worklet.js'];
 
 // cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
-// The build gives JS/CSS hashed names, so read them from the fresh index.html and cache them too.
+// The build gives JS/CSS hashed names (and splits off chunks loaded only when needed); assets/files.json lists them all.
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(VERSION).then(async (c) => {
     await c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })));
-    const html = await (await c.match('index.html')).text();
-    await c.addAll([...new Set(html.match(/\.\/assets\/[^"']+/g) || [])]);
+    const files = await (await fetch('assets/files.json', { cache: 'reload' })).json();
+    await c.addAll(files);
   }).then(() => self.skipWaiting()));
 });
 
