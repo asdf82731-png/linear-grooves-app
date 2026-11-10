@@ -11,6 +11,8 @@
 .kc.on { background: var(--hl); }
 .kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--muted); }
 .kr.cnt .kb { border-left-color: transparent; }
+.kit.dense .kr.cnt .kc { font-size: 8px; letter-spacing: -.02em; }
+.kit.dense .kr.cnt .kc:first-child { font-size: 10px; }
 .kr.RH .kl { color: var(--r); } .kr.LH .kl { color: var(--l); }
 .kr.RF .kl { color: var(--k); } .kr.LF .kl { color: var(--lf); }
 .hit { display: block; width: 11px; height: 11px; border-radius: 50%; }

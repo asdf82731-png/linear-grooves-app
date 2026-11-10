@@ -27,6 +27,7 @@
 .ms .st, .ms .gs { stroke: var(--ink); stroke-width: 1; }
 .ms .ac { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linejoin: round; }
 .ms .gp { font: 9px sans-serif; }
+.ms .tp { font: italic 600 7px sans-serif; fill: var(--muted); }
 .ms .lt { font: 600 8.5px var(--f-mono, ui-monospace, monospace); fill: var(--muted); }
 .ms .lt.R { fill: var(--r); } .ms .lt.L { fill: var(--l); }
 .ms .lt.K, .ms .lt.fR { fill: var(--k); } .ms .lt.fL { fill: var(--lf, #7A4FB0); }
@@ -93,6 +94,8 @@
         const bx1 = xs[0] + 2.7, bx2 = xs.length > 1 ? xs[xs.length - 1] + 3.7 : xs[0] + 9;
         beams.push(`<rect class="bm" x="${bx1}" y="${BEAM}" width="${bx2 - bx1}" height="2.5"/>`);
         if (sub >= 4) beams.push(`<rect class="bm" x="${bx1}" y="${BEAM + 4.5}" width="${bx2 - bx1}" height="2.5"/>`);
+        // Triplets and sextuplets carry their number above the beam, like the big staff.
+        if (sub === 3 || sub === 6) beams.push(`<text class="tp" x="${(bx1 + bx2) / 2}" y="${BEAM - 2}" text-anchor="middle">${sub}</text>`);
       }
     }
 
