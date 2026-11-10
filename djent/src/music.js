@@ -1,4 +1,4 @@
-'use strict';
+// Djent library, phrase builder and the staff / grid renderers (moved from the old app.js; S is the settings object).
 
 /* ---------- Library ----------
  * Two layers. Top: the cymbal keeps a steady 4/4 pulse (right hand) and the snare sits on a backbeat (left hand).
@@ -9,7 +9,7 @@
  * The kick has no dynamics: every hit is the same level. Only the ghost-note grooves use snare dynamics
  * (ghost / normal / accented backbeat) and a lighter hi-hat between the beats.
  */
-const LIB = {
+export const LIB = {
   chug: [
     { id: 'c-332', name: '3-3-2 Chug', en: '3 + 3 + 2 · 一小節剛好兩輪', riff: ['KK.', 'KK.', 'K.'],
       tip: '一小節分成 3+3+2 兩輪，是很多 Djent riff 的骨架。先數清楚「1 e & a」，看每一組從哪裡開始。' },
@@ -90,7 +90,7 @@ LIB.ghost = [
 
 // Gospel-chops fills: linear hand/foot cells (R right hand, L left hand, K kick). A fill repeats its cells
 // and is right-aligned so it always ends on a complete cell and lands on the next downbeat.
-const FILLS = [
+export const FILLS = [
   { id: 'f-rlk', name: 'R L K', en: '1 拍 Fill · 3 個一組', cells: ['RLK'], len: 'b1',
     tip: '最基本的 Gospel chops。右手打筒鼓、左手打小鼓、腳踩大鼓，三個肢體輪流，不重疊。' },
   { id: 'f-rlkk', name: 'R L K K', en: '2 拍 Fill · 4 個一組', cells: ['RLKK'], len: 'b2',
@@ -108,58 +108,30 @@ LIB.fill = FILLS.map((f) => ({
   id: f.id, name: f.name, en: f.en, sub: f.sub || 4, riff: f.sub === 6 ? ['KK.KK.'] : ['K.KK'], fill: f.id, tip: f.tip,
 }));
 
-const CATS = ['chug', 'odd', 'snare', 'sext', 'ghost', 'fill'];
-const COUNTS = { 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
-const SUB_NAME = { 4: '16 分音符', 6: '16 分六連音' };
-const INST_NAME = { china: 'China', crash: 'Crash', ride: 'Ride', hh: 'Hi-hat', t1: '中鼓', t2: '中鼓 2', ft: '落地鼓', sn: '小鼓', bd: '大鼓' };
-const FILL_LEN_NAME = { b1: '1 拍', b2: '2 拍', bar: '1 小節', none: '' };
+export const CATS = ['chug', 'odd', 'snare', 'sext', 'ghost', 'fill'];
+export const COUNTS = { 4: ['', 'e', '&', 'a'], 6: ['', 'la', 'li', '&', 'la', 'li'] };
+export const SUB_NAME = { 4: '16 分音符', 6: '16 分六連音' };
+export const INST_NAME = { china: 'China', crash: 'Crash', ride: 'Ride', hh: 'Hi-hat', t1: '中鼓', t2: '中鼓 2', ft: '落地鼓', sn: '小鼓', bd: '大鼓' };
+export const FILL_LEN_NAME = { b1: '1 拍', b2: '2 拍', bar: '1 小節', none: '' };
 // Grid rows, top to bottom. 'gp' is the group bracket row of the riff.
 // Both feet share the kick row; the dot colour tells them apart (right green, left purple).
-const ROWS = ['cy', 'tm', 'gp', 'sn', 'bd'];
-const ROW_NAME = { cy: '鈸', tm: '筒鼓', gp: '分組', sn: '小鼓', bd: '大鼓' };
-const PAN = { RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35 };
-const AMP = 0.62;
+export const ROWS = ['cy', 'tm', 'gp', 'sn', 'bd'];
+export const ROW_NAME = { cy: '鈸', tm: '筒鼓', gp: '分組', sn: '小鼓', bd: '大鼓' };
+export const PAN = { RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35 };
+export const AMP = 0.62;
 // Levels for the ghost-note grooves: g ghost, a accented backbeat, s hi-hat between the beats.
-const LEVEL = { g: 0.28, a: 1.45, s: 0.7 };
+export const LEVEL = { g: 0.28, a: 1.45, s: 0.7 };
 
-const MIN_BPM = 30;
-const DEFAULTS = {
-  cat: 'chug', idx: { chug: 0, odd: 0, snare: 0, sext: 0, ghost: 0, fill: 0 },
-  basic: false, view: 'staff', phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
-  sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
-  reps: 8, autoNext: false, playPart: 'all', timer: 0,
-  bpm: 80, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false,
-};
-
-/* ---------- Storage (best effort) ---------- */
-function load(key, fallback) {
-  try { const v = JSON.parse(localStorage.getItem(key)); return v == null ? fallback : v; } catch { return fallback; }
-}
-function save(key, value) {
-  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* storage unavailable */ }
-}
-
-const saved = load('dj.settings', {});
-const S = Object.assign({}, DEFAULTS, saved);
-S.idx = Object.assign({}, DEFAULTS.idx, S.idx);
-let best = load('dj.best', {});
-
-const $ = (s) => document.querySelector(s);
-const pick = (a) => a[Math.floor(Math.random() * a.length)];
+export const pick = (a) => a[Math.floor(Math.random() * a.length)];
 const gcd = (a, b) => (b ? gcd(b, a % b) : a);
-function saveSettings() { save('dj.settings', S); }
 
-/* ---------- Building a phrase ---------- */
-let fillChoice = {};   // exercise id → fill id, when the fill is picked at random
-
-function fillFor(def) {
+function fillFor(def, S, fillChoice) {
   if (def.fill) return FILLS.find((f) => f.id === def.fill);
   if (S.fillPick !== 'rand') return FILLS.find((f) => f.id === S.fillPick) || FILLS[0];
   if (!fillChoice[def.id]) fillChoice[def.id] = pick(FILLS).id;
   return FILLS.find((f) => f.id === fillChoice[def.id]);
 }
-function fillLenFor(def) {
+function fillLenFor(def, S) {
   if (S.fillLen !== 'auto') return S.fillLen;
   return def.fill ? FILLS.find((f) => f.id === def.fill).len : 'bar';
 }
@@ -172,14 +144,15 @@ function fullBars(cell, bar, min) {
 
 /* Turns a library entry into a playable phrase:
  * { key, name, sub, bar, bars, len, slots: [[{ row, inst, limb }]], grp: [{ n, start, end, ret, cut, alt }], fillFrom, … } */
-function build(def, cat) {
+// fillChoice: exercise id → fill id, when the fill is picked at random (kept across rebuilds by the caller)
+export function build(def, cat, S, fillChoice) {
   const sub = S.sub === 'auto' ? (def.sub || 4) : +S.sub;
   const bar = 4 * sub;
   const cell = def.riff.join('');
   const starts = [];   // group start offsets within the cell
   def.riff.reduce((o, g) => { starts.push(o); return o + g.length; }, 0);
 
-  const fl = fillLenFor(def);
+  const fl = fillLenFor(def, S);
   const fillSlots = { b1: sub, b2: 2 * sub, bar, none: 0 }[fl];
   const bars = S.end === 'full' ? fullBars(cell.length, bar, S.phrase) : S.phrase;
   const len = bars * bar;
@@ -234,7 +207,7 @@ function build(def, cat) {
   // Fill: cells repeated and right-aligned, so the last cell is complete.
   let fill = null;
   if (fillSlots) {
-    fill = fillFor(def);
+    fill = fillFor(def, S, fillChoice);
     let seq = '';
     const marks = [];
     for (let c = 0; seq.length < fillSlots; c++) {
@@ -279,76 +252,24 @@ function build(def, cat) {
   };
 }
 
-let SHEET = [];
-let cur = null;
-
-function sheet() { return LIB[S.cat].map((d) => build(d, S.cat)); }
-function exAt(i) { return SHEET[((i % SHEET.length) + SHEET.length) % SHEET.length]; }
-
-/* ---------- Rendering ---------- */
-function riffText(riff) {
+// Riff as coloured letters (HTML) for the exercise list.
+export function riffText(riff) {
   return riff.map((g) => [...g].map((c) => `<b class="${c === '.' ? 'rest' : c}">${c === '.' ? '·' : c === 'g' ? '(S)' : c}</b>`).join('')).join('<i>|</i>');
 }
 
-function renderAll() {
-  SHEET = sheet();
-  S.idx[S.cat] = Math.min(S.idx[S.cat] || 0, SHEET.length - 1);
-  renderList();
-  showExercise(S.idx[S.cat]);
-  syncCat();
-}
-
-function rebuildCurrent() {
-  SHEET = sheet();
-  cur = SHEET[S.idx[S.cat]];
-  renderList();   // the list's mini staves follow the settings too
-  showExercise(S.idx[S.cat]);
-}
-
-function describe(ex) {
+export function describe(ex, S, idx, n) {
   const parts = [SUB_NAME[ex.sub], `${ex.bars} 小節`];
   parts.push(ex.fill ? `最後 ${FILL_LEN_NAME[ex.fillLen]} Fill` : '沒有 Fill');
-  parts.push(`第 ${S.idx[S.cat] + 1} / ${SHEET.length} 個`);
+  parts.push(`第 ${idx + 1} / ${n} 個`);
   return parts.join(' · ');
 }
-function cycleText(ex) {
+export function cycleText(ex, S) {
   const groups = ex.riff.map((g) => g.length).join(' + ');
   const n = ex.riff.length > 1 ? `${groups} = ${ex.cell} 個音一循環` : `${ex.cell} 個音一組`;
   if (ex.bar % ex.cell === 0) return `${n}，每小節都從第 1 拍重新開始。`;
   const back = `要 ${ex.cycleBars} 小節才接回第 1 拍`;
   if (S.end === 'full') return `${n}，${back}，這個樂句跑完整個循環（${ex.bars} 小節）${ex.fill ? '，Fill 蓋掉最後一段' : ''}。`;
   return `${n}，${back}。這個樂句在第 ${ex.bars} 小節${ex.fill ? '的 Fill 前' : '結尾'}截斷（✂），下一輪從頭開始。`;
-}
-
-function showExercise(i) {
-  S.idx[S.cat] = ((i % SHEET.length) + SHEET.length) % SHEET.length;
-  saveSettings();
-  cur = SHEET[S.idx[S.cat]];
-  $('#exName').textContent = cur.name;
-  $('#exEn').textContent = cur.en;
-  $('#exMeta').textContent = describe(cur);
-  $('#exCycle').textContent = cycleText(cur);
-  $('#exTip').textContent = cur.tip || '';
-  $('#exFill').innerHTML = cur.fill ? `Fill：<b>${cur.fill.name}</b>${S.basic ? '（基本練習：Hi-hat、小鼓、大鼓）' : '（右手筒鼓、左手小鼓）'}` : '';
-  $('#btnFill').hidden = !(cur.fill && !cur.def.fill && S.fillPick === 'rand');
-  renderBest();
-  renderSheet();
-  document.querySelectorAll('.ex').forEach((el) => el.classList.toggle('cur', +el.dataset.i === S.idx[S.cat]));
-  setReps(0);
-}
-
-function renderBest() {
-  const b = best[cur.key];
-  $('#exBest').textContent = b ? `最佳 ${b} BPM` : '還沒記錄';
-  $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
-}
-
-function renderSheet() {
-  $('#grid').hidden = S.view !== 'grid';
-  $('#staff').hidden = S.view !== 'staff';
-  if (S.view === 'grid') renderGrid(); else renderStaff();
-  renderLegend();
-  indexHighlights();
 }
 
 // Rows for one bar: cymbal, groups, snare and kick always; toms only where the fill uses them.
@@ -358,7 +279,7 @@ function usedRows(ex, b) {
   return ROWS.filter((r) => used.has(r));
 }
 
-function rowLabel(ex, r) {
+function rowLabel(ex, r, S) {
   if (r === 'cy') return `${ROW_NAME.cy}<small>${INST_NAME[ex.cym]}</small>`;
   if (r === 'bd') return `${ROW_NAME.bd}<small>${S.pedal === 'single' ? '右腳' : '<em class="fR">右</em><em class="fL">左</em>腳'}</small>`;
   return ROW_NAME[r];
@@ -366,14 +287,14 @@ function rowLabel(ex, r) {
 
 // Kit grid: one bar per row of the page, so beat 1 of every bar lines up on the left
 // and you can see each group's start drift to the right.
-function renderGrid() {
-  const ex = cur;
+// Returns the grid's HTML; every slot cell carries data-i so the player can light it.
+export function gridHtml(ex, S) {
   let html = '';
   for (let b = 0; b < ex.bars; b++) {
     const rows = usedRows(ex, b);
     html += `<div class="ksys" data-bar="${b}">`;
     for (const r of rows) {
-      html += `<div class="kr ${r}"><span class="kl">${rowLabel(ex, r)}</span>`;
+      html += `<div class="kr ${r}"><span class="kl">${rowLabel(ex, r, S)}</span>`;
       for (let bt = 0; bt < 4; bt++) {
         html += '<span class="kb">';
         for (let k = 0; k < ex.sub; k++) {
@@ -406,19 +327,15 @@ function renderGrid() {
     }
     html += '</div></div>';
   }
-  const grid = $('#grid');
-  grid.style.setProperty('--slots', ex.bar);
-  grid.classList.toggle('dense', ex.sub >= 6);
-  grid.innerHTML = html;
-  grid.setAttribute('aria-label', `${ex.name}：${ex.bars} 小節`);
+  return html;
 }
 
 // Staff positions: offset from the top staff line in px (half a staff space = 4).
 const STAFF_Y = { china: -12, crash: -8, hh: -4, ride: 0, t1: 4, t2: 8, sn: 12, ft: 20, bd: 28 };
 const CYMBALS = new Set(['china', 'crash', 'hh', 'ride']);
 
-function renderStaff() {
-  const ex = cur;
+// Returns one SVG per bar; every slot carries data-i (highlight rect) and every bar data-bar.
+export function staffHtml(ex) {
   const slotW = ex.sub === 6 ? 16 : 22, beatGap = 10, top = 52, H = 140, beamY = 22;
   const beatW = ex.sub * slotW + beatGap;
   let html = '';
@@ -495,23 +412,12 @@ function renderStaff() {
     s += beams.join('') + body.join('') + '</svg>';
     html += s;
   }
-  $('#staff').innerHTML = html;
-}
-
-function renderLegend() {
-  const used = new Set();
-  cur.slots.forEach((s) => s.forEach((h) => used.add(h.limb)));
-  const names = { RH: '右手', LH: '左手', RF: '右腳', LF: '左腳' };
-  const ghost = cur.slots.some((s) => s.some((h) => h.lvl === 'g'));
-  $('#legend').innerHTML = ['RH', 'LH', 'RF', 'LF'].filter((l) => used.has(l))
-    .map((l) => `<span><i class="dot ${l}"></i>${names[l]}</span>`).join('') +
-    (ghost ? '<span class="lg-note">(S) Ghost note 很輕　&gt; 重音</span>' : '') +
-    '<span class="lg-note">↺ 接回第 1 拍　✂ 截斷</span>';
+  return html;
 }
 
 // Half a bar of the phrase as a small staff, to recognise an exercise at a glance.
 // Fill exercises show the last two beats, where the fill is.
-function miniFor(ex) {
+export function miniFor(ex) {
   const n = 2 * ex.sub, start = ex.cat === 'fill' && ex.fill ? ex.len - n : 0;
   const part = ex.slots.slice(start, start + n);
   const slots = part.map((s) => s.map((h) => ({ inst: h.inst, limb: h.limb, ghost: h.lvl === 'g', acc: h.lvl === 'a' })));
@@ -522,446 +428,6 @@ function miniFor(ex) {
     if (tm || (start + k >= ex.fillFrom && s.length)) return { c: 'R', cls: 'R' };
     return { c: '·', cls: 'rest' };
   });
-  return window.MiniStaff ? MiniStaff.svg({ sub: ex.sub, slots, letters, label: `${ex.name}：${ex.cat === 'fill' ? '最後' : '前'} 2 拍` }) : '';
+  return window.MiniStaff ? window.MiniStaff.svg({ sub: ex.sub, slots, letters, label: `${ex.name}：${ex.cat === 'fill' ? '最後' : '前'} 2 拍` }) : '';
 }
 
-function renderList() {
-  $('#exList').innerHTML = SHEET.map((ex, i) => {
-    const b = best[ex.key];
-    const st = ex.def.fill ? riffText(FILLS.find((f) => f.id === ex.def.fill).cells) : riffText(ex.riff);
-    return `<li><button type="button" class="ex" data-i="${i}">
-      <span class="ex-main"><span class="ex-name">${ex.name}</span><span class="ex-st">${st}</span></span>
-      <span class="ex-mini">${miniFor(ex)}</span>
-      <span class="ex-best${b ? ' has' : ''}">${b ? b + ' BPM' : '—'}</span>
-    </button></li>`;
-  }).join('');
-}
-
-function syncCat() {
-  $(`#cat-${S.cat}`).checked = true;
-  document.querySelectorAll('.mode-opts').forEach((el) => { el.hidden = el.dataset.cat !== S.cat; });
-}
-
-let hlMap = [], lastHl = -1, barEls = [];
-function indexHighlights() {
-  hlMap = Array.from({ length: cur.len }, () => []);
-  const box = S.view === 'grid' ? '#grid' : '#staff';
-  document.querySelectorAll(`${box} [data-i]`).forEach((el) => hlMap[+el.dataset.i].push(el));
-  barEls = [...document.querySelectorAll(`${box} [data-bar]`)];
-  lastHl = -1;
-}
-function highlight(i) {
-  if (lastHl >= 0 && hlMap[lastHl]) hlMap[lastHl].forEach((el) => el.classList.remove('on'));
-  if (i >= 0 && hlMap[i]) hlMap[i].forEach((el) => el.classList.add('on'));
-  lastHl = i;
-  // Keep the bar being played on screen.
-  if (i >= 0 && i % cur.bar === 0) {
-    const el = barEls[i / cur.bar];
-    if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }
-}
-function setReps(n) {
-  const total = S.autoNext && S.reps ? ` / ${S.reps}` : '';
-  let txt = playing ? `第 ${n + 1}${total} 次` : (S.autoNext && S.reps ? `每個練 ${S.reps} 次` : '重複練同一個');
-  if (playing && S.timer) {
-    const left = Math.max(0, Math.ceil(S.timer * 60 - (performance.now() - startedAt) / 1000));
-    txt += ` · 剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
-  }
-  $('#reps').textContent = txt;
-}
-
-/* ---------- Audio: synthesized kit, no samples ---------- */
-let ctx = null, master = null, clickBus = null, noiseBuf = null;
-function ensureAudio() {
-  if (!ctx) {
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
-    // Same chain as the other apps: boost, a limiter that only touches the loudest peaks,
-    // then a soft clipper that rounds off anything the limiter lets through.
-    const comp = ctx.createDynamicsCompressor();
-    comp.threshold.value = 0;
-    comp.knee.value = 0;
-    comp.ratio.value = 20;
-    comp.attack.value = 0;
-    comp.release.value = 0.05;
-    const half = ctx.createGain();
-    half.gain.value = 0.5;
-    const clip = ctx.createWaveShaper();
-    const curve = new Float32Array(2048);
-    for (let i = 0; i < curve.length; i++) {
-      const x = ((i / (curve.length - 1)) * 2 - 1) * 2, a = Math.abs(x);
-      curve[i] = Math.sign(x) * (a <= 0.7 ? a : 0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
-    }
-    clip.curve = curve;
-    master = ctx.createGain();
-    master.gain.value = 2.6;
-    master.connect(comp).connect(half).connect(clip).connect(ctx.destination);
-    clickBus = ctx.createGain();
-    clickBus.gain.value = 0.9;
-    clickBus.connect(comp);
-    noiseBuf = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
-  }
-  if (ctx.state === 'suspended') ctx.resume();
-}
-function out(pan) {
-  if (!ctx.createStereoPanner) return master;
-  const p = ctx.createStereoPanner();
-  p.pan.value = pan;
-  p.connect(master);
-  return p;
-}
-function env(node, t, amp, dur) {
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(Math.max(0.0001, amp), t);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-  node.connect(g);
-  return g;
-}
-function noise(t, dur, type, freq, q) {
-  const src = ctx.createBufferSource();
-  src.buffer = noiseBuf;
-  const f = ctx.createBiquadFilter();
-  f.type = type;
-  f.frequency.value = freq;
-  if (q) f.Q.value = q;
-  src.connect(f);
-  src.start(t, Math.random() * 0.5);
-  src.stop(t + dur + 0.02);
-  return f;
-}
-function tone(t, dur, type, f0, f1) {
-  const o = ctx.createOscillator();
-  o.type = type;
-  o.frequency.setValueAtTime(f0, t);
-  if (f1) o.frequency.exponentialRampToValueAtTime(f1, t + dur * 0.6);
-  o.start(t);
-  o.stop(t + dur + 0.02);
-  return o;
-}
-function hit(inst, t, amp, pan) {
-  const dest = out(pan);
-  if (inst === 'bd') {
-    // Tight metal kick: short body plus a click so fast doubles stay clear.
-    env(tone(t, 0.2, 'sine', 130, 48), t, amp * 1.15, 0.2).connect(dest);
-    env(noise(t, 0.015, 'highpass', 2500), t, amp * 0.35, 0.015).connect(dest);
-  } else if (inst === 'sn') {
-    env(noise(t, 0.18, 'bandpass', 1900, 0.8), t, amp * 0.85, 0.18).connect(dest);
-    env(tone(t, 0.08, 'triangle', 220, 170), t, amp * 0.5, 0.08).connect(dest);
-  } else if (inst === 'hh') {
-    env(noise(t, 0.05, 'highpass', 7500), t, amp * 0.45, 0.05).connect(dest);
-  } else if (inst === 'ride') {
-    env(noise(t, 0.4, 'highpass', 5200), t, amp * 0.22, 0.4).connect(dest);
-    env(tone(t, 0.3, 'square', 760), t, amp * 0.035, 0.3).connect(dest);
-    env(tone(t, 0.3, 'square', 1140), t, amp * 0.025, 0.3).connect(dest);
-  } else if (inst === 'crash') {
-    // Bright wash with a fast attack.
-    env(noise(t, 1.1, 'highpass', 4200), t, amp * 0.34, 1.1).connect(dest);
-    env(noise(t, 0.5, 'bandpass', 3000, 0.6), t, amp * 0.18, 0.5).connect(dest);
-  } else if (inst === 'china') {
-    // Trashy and shorter than a crash: a mid-band noise burst plus clashing square partials.
-    env(noise(t, 0.55, 'bandpass', 2600, 0.9), t, amp * 0.42, 0.55).connect(dest);
-    env(noise(t, 0.35, 'highpass', 6000), t, amp * 0.16, 0.35).connect(dest);
-    for (const [f, a] of [[523, 0.03], [787, 0.025], [1171, 0.02]]) env(tone(t, 0.4, 'square', f), t, amp * a, 0.4).connect(dest);
-  } else if (inst === 't1' || inst === 't2' || inst === 'ft') {
-    const [f0, f1, d] = { t1: [230, 155, 0.28], t2: [175, 118, 0.32], ft: [125, 82, 0.4] }[inst];
-    env(tone(t, d, 'sine', f0, f1), t, amp * 0.95, d).connect(dest);
-    env(noise(t, 0.02, 'bandpass', 1300, 1), t, amp * 0.18, 0.02).connect(dest);
-  }
-}
-// Metronome: the same wood-block click on every beat (see PROJECT_BACKGROUND §5).
-const SUB_CLICK = 0.3;
-function click(t, level = 1) {
-  const o = ctx.createOscillator(), lp = ctx.createBiquadFilter(), g = ctx.createGain();
-  o.type = 'square';
-  o.frequency.setValueAtTime(1250, t);
-  o.frequency.exponentialRampToValueAtTime(875, t + 0.09);
-  lp.type = 'lowpass';
-  lp.frequency.value = 3500;
-  g.gain.setValueAtTime(0.0001, t);
-  g.gain.exponentialRampToValueAtTime(level, t + 0.002);
-  g.gain.setValueAtTime(level, t + 0.025);
-  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
-  o.connect(lp).connect(g).connect(clickBus);
-  o.start(t);
-  o.stop(t + 0.11);
-}
-function audible(limb) {
-  if (S.playPart === 'all') return true;
-  if (S.playPart === 'none') return false;
-  return S.playPart === 'hands' ? limb[1] === 'H' : limb[1] === 'F';
-}
-
-/* ---------- Transport ---------- */
-let playing = false, step = 0, nextTime = 0, timer = null, countSlots = 0, reps = 0, loops = 0, startedAt = 0;
-let queue = [], wakeLock = null, schedEx = null;
-
-function scheduleSlot(n, t) {
-  const sub = schedEx.sub;
-  if (n < 0) {
-    const k = n + countSlots;
-    if (k % sub === 0) { click(t); queue.push({ t, count: k / sub + 1 }); }
-    return;
-  }
-  let i = n % schedEx.len;
-  if (i === 0 && n > 0) {
-    reps++;
-    loops++;
-    if (S.trainer && loops % S.trainerEvery === 0 && S.bpm < S.trainerMax) {
-      setBpm(Math.min(S.trainerMax, S.bpm + S.trainerStep));
-      queue.push({ t, msg: `加快到 ${S.bpm} BPM` });
-    }
-    if (S.autoNext && S.reps && reps >= S.reps) {
-      reps = 0;
-      const nextIdx = (SHEET.indexOf(schedEx) + 1) % SHEET.length;
-      schedEx = exAt(nextIdx);
-      step = 0; n = 0; i = 0;
-      queue.push({ t, show: nextIdx });
-    }
-    queue.push({ t, reps });
-  }
-  for (const h of schedEx.slots[i]) if (audible(h.limb)) hit(h.inst, t, AMP * (LEVEL[h.lvl] || 1), PAN[h.limb]);
-  if (S.click && i % sub === 0) click(t);
-  else if (S.click && S.clickSub !== 'off') click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
-  queue.push({ t, i });
-}
-
-function tick() {
-  while (nextTime < ctx.currentTime + 0.12) {
-    scheduleSlot(step, nextTime);
-    nextTime += 60 / S.bpm / schedEx.sub;
-    step++;
-  }
-}
-
-function draw() {
-  if (!playing) return;
-  if (S.timer && performance.now() - startedAt >= S.timer * 60000) {
-    stop();
-    flash(`時間到！練了 ${S.timer} 分鐘`);
-    return;
-  }
-  const now = ctx.currentTime;
-  while (queue.length && queue[0].t <= now) {
-    const e = queue.shift();
-    if (e.show !== undefined) { showExercise(e.show); flash(`下一個：${cur.name}`); }
-    else if (e.count !== undefined) $('#status').textContent = `預備 ${e.count}`;
-    else if (e.msg) flash(e.msg);
-    else if (e.reps !== undefined) setReps(e.reps);
-    else {
-      if (e.i === 0 && $('#status').textContent.startsWith('預備')) $('#status').textContent = '';
-      if (e.i % schedEx.sub === 0 && S.timer) setReps(reps);
-      highlight(e.i);
-    }
-  }
-  requestAnimationFrame(draw);
-}
-
-async function play() {
-  ensureAudio();
-  playing = true;
-  schedEx = cur;
-  countSlots = S.countIn ? 4 * cur.sub : 0;
-  step = -countSlots;
-  reps = 0;
-  loops = 0;
-  queue = [];
-  startedAt = performance.now();
-  nextTime = ctx.currentTime + 0.08;
-  setReps(0);
-  tick();
-  timer = setInterval(tick, 25);
-  requestAnimationFrame(draw);
-  setPlayIcon();
-  try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { wakeLock = null; }
-}
-function stop() {
-  playing = false;
-  clearInterval(timer);
-  queue = [];
-  highlight(-1);
-  $('#status').textContent = '';
-  setPlayIcon();
-  setReps(0);
-  try { wakeLock?.release(); } catch { /* ignore */ }
-  wakeLock = null;
-}
-function go(i) {
-  showExercise(i);
-  if (playing) { stop(); play(); }
-}
-// Settings that change the phrase: rebuild it, and keep playing on the new one.
-function reshape(fn) {
-  const was = playing;
-  if (was) stop();
-  fn();
-  saveSettings();
-  rebuildCurrent();
-  syncControls();
-  if (was) play();
-}
-function setPlayIcon() {
-  $('#playIcon').setAttribute('d', playing ? 'M6 5h4.5v14H6zM13.5 5H18v14h-4.5z' : 'M7 4.5v15l13-7.5z');
-  $('#btnPlay').setAttribute('aria-label', playing ? '停止' : '播放');
-}
-function setBpm(v) {
-  S.bpm = Math.max(MIN_BPM, Math.min(240, Math.round(v)));
-  $('#bpm').value = S.bpm;
-  if (document.activeElement !== $('#bpmOut')) $('#bpmOut').value = S.bpm;
-  if (cur) $('#btnDone').textContent = `✓ 打順了，記錄 ${S.bpm} BPM`;
-  saveSettings();
-}
-
-let flashTimer = null;
-function flash(msg) {
-  $('#status').textContent = msg;
-  clearTimeout(flashTimer);
-  flashTimer = setTimeout(() => { if ($('#status').textContent === msg) $('#status').textContent = ''; }, 2600);
-}
-
-/* ---------- Controls ---------- */
-const SELECTS = ['view', 'fillLen', 'fillPick', 'end', 'sub', 'pulse', 'snare', 'cym', 'playPart'];
-
-function syncControls() {
-  for (const k of SELECTS) $(`#${k}`).value = String(S[k]);
-  $(`#phrase${S.phrase}`).checked = true;
-  $(S.pedal === 'single' ? '#pedalSingle' : '#pedalDouble').checked = true;
-  $('#basic').checked = S.basic;
-  $('#cym').disabled = S.basic;
-  $('#cymNote').hidden = !S.basic;
-  $('#fillPick').disabled = S.cat === 'fill' || S.fillLen === 'none';
-  $('#phraseNote').hidden = S.end !== 'full';
-  document.body.classList.toggle('basic', S.basic);
-  $('#repsSel').value = S.reps;
-  $('#autoNext').checked = S.autoNext;
-  $('#timerSel').value = S.timer;
-  $('#click').checked = S.click;
-  $('#clickSub').value = S.clickSub;
-  $('#countIn').checked = S.countIn;
-  $('#trainer').checked = S.trainer;
-  $('#trainerEvery').value = S.trainerEvery;
-  $('#trainerStep').value = S.trainerStep;
-  $('#trainerMax').value = S.trainerMax;
-  $('#trainerOpts').hidden = !S.trainer;
-  setBpm(S.bpm);
-}
-
-function bind() {
-  $('#btnPlay').addEventListener('click', () => (playing ? stop() : play()));
-  $('#btnNext').addEventListener('click', () => go(S.idx[S.cat] + 1));
-  $('#btnPrev').addEventListener('click', () => go(S.idx[S.cat] - 1));
-  $('#btnNext2').addEventListener('click', () => go(S.idx[S.cat] + 1));
-  $('#bpm').addEventListener('input', (e) => setBpm(+e.target.value));
-  $('#bpmDown').addEventListener('click', () => setBpm(S.bpm - 5));
-  $('#bpmUp').addEventListener('click', () => setBpm(S.bpm + 5));
-  // Tap the number to type a tempo directly.
-  const bpmIn = $('#bpmOut');
-  bpmIn.addEventListener('focus', () => { bpmIn.select(); setTimeout(() => bpmIn.select(), 0); });
-  bpmIn.addEventListener('input', () => { bpmIn.value = bpmIn.value.replace(/\D/g, '').slice(0, 3); });
-  bpmIn.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') bpmIn.blur();
-    else if (e.key === 'Escape') { bpmIn.value = S.bpm; bpmIn.blur(); }
-  });
-  bpmIn.addEventListener('blur', () => {
-    const v = parseInt(bpmIn.value, 10);
-    if (!v) { bpmIn.value = S.bpm; return; }
-    setBpm(v);
-    if (S.bpm !== v) flash(`速度可以設定 ${MIN_BPM}–240，已改成 ${S.bpm}`);
-  });
-
-  const showGuide = (show) => {
-    $('#guide').hidden = !show;
-    $('#helpBtn').setAttribute('aria-expanded', String(show));
-    if (show) $('#guide').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-  $('#helpBtn').addEventListener('click', () => showGuide($('#guide').hidden));
-  $('#guideOk').addEventListener('click', () => { S.seenGuide = true; saveSettings(); showGuide(false); });
-
-  $('#btnDone').addEventListener('click', () => {
-    const prev = best[cur.key] || 0;
-    best[cur.key] = Math.max(prev, S.bpm);
-    save('dj.best', best);
-    renderBest();
-    renderList();
-    document.querySelectorAll('.ex').forEach((el) => el.classList.toggle('cur', +el.dataset.i === S.idx[S.cat]));
-    flash(S.bpm > prev ? `記錄 ${S.bpm} BPM！下次試試 ${S.bpm + 5}` : `已記錄，你的最佳是 ${prev} BPM`);
-  });
-
-  document.querySelectorAll('input[name="cat"]').forEach((el) => el.addEventListener('change', () => {
-    if (playing) stop();
-    S.cat = el.value;
-    saveSettings();
-    renderAll();
-    syncControls();
-  }));
-  $('#exList').addEventListener('click', (e) => {
-    const b = e.target.closest('.ex');
-    if (!b) return;
-    go(+b.dataset.i);
-    $('#practice').scrollIntoView({ behavior: 'smooth', block: 'start' });
-  });
-
-  // Groove settings: each one rebuilds the phrase.
-  $('#basic').addEventListener('change', (e) => reshape(() => { S.basic = e.target.checked; }));
-  $('#view').addEventListener('change', (e) => { S.view = e.target.value; saveSettings(); renderSheet(); });
-  for (const k of ['fillLen', 'fillPick', 'end', 'sub', 'pulse', 'snare', 'cym']) {
-    $(`#${k}`).addEventListener('change', (e) => reshape(() => { S[k] = e.target.value; }));
-  }
-  document.querySelectorAll('input[name="phrase"]').forEach((el) => el.addEventListener('change', () => reshape(() => { S.phrase = +el.value; })));
-  document.querySelectorAll('input[name="pedal"]').forEach((el) => el.addEventListener('change', () => reshape(() => { S.pedal = el.value; })));
-  $('#btnFill').addEventListener('click', () => reshape(() => {
-    const now = fillChoice[cur.key];
-    fillChoice[cur.key] = pick(FILLS.filter((f) => f.id !== now)).id;
-  }));
-  $('#btnReset').addEventListener('click', () => reshape(() => {
-    Object.assign(S, { sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto' });
-    flash('上層打法回到練習預設');
-  }));
-
-  $('#playPart').addEventListener('change', (e) => { S.playPart = e.target.value; saveSettings(); });
-  $('#timerSel').addEventListener('change', (e) => { S.timer = +e.target.value; startedAt = performance.now(); saveSettings(); setReps(reps); });
-  $('#repsSel').addEventListener('change', (e) => { S.reps = +e.target.value; saveSettings(); setReps(reps); });
-  $('#autoNext').addEventListener('change', (e) => { S.autoNext = e.target.checked; saveSettings(); setReps(reps); });
-  $('#click').addEventListener('change', (e) => { S.click = e.target.checked; saveSettings(); });
-  $('#clickSub').addEventListener('change', (e) => { S.clickSub = e.target.value; saveSettings(); });
-  $('#countIn').addEventListener('change', (e) => { S.countIn = e.target.checked; saveSettings(); });
-  $('#trainer').addEventListener('change', (e) => { S.trainer = e.target.checked; $('#trainerOpts').hidden = !S.trainer; loops = 0; saveSettings(); });
-  $('#trainerEvery').addEventListener('change', (e) => { S.trainerEvery = +e.target.value; saveSettings(); });
-  $('#trainerStep').addEventListener('change', (e) => { S.trainerStep = +e.target.value; saveSettings(); });
-  $('#trainerMax').addEventListener('change', (e) => {
-    S.trainerMax = Math.max(30, Math.min(260, +e.target.value || DEFAULTS.trainerMax));
-    e.target.value = S.trainerMax;
-    saveSettings();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.target.matches('input, select, textarea')) return;
-    if (e.code === 'Space') { e.preventDefault(); playing ? stop() : play(); }
-    else if (e.key === 'ArrowRight') go(S.idx[S.cat] + 1);
-    else if (e.key === 'ArrowLeft') go(S.idx[S.cat] - 1);
-  });
-  document.addEventListener('visibilitychange', async () => {
-    if (playing && document.visibilityState === 'visible' && !wakeLock) {
-      try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* ignore */ }
-    }
-  });
-}
-
-/* ---------- Boot ---------- */
-// v2: the staff became the default view; switch settings saved before that over once.
-if (saved.v !== 2) { S.view = 'staff'; S.v = 2; }
-if (!CATS.includes(S.cat)) S.cat = 'chug';
-if (![2, 4, 8].includes(S.phrase)) S.phrase = 4;
-if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = 'soft';
-if (S.fillPick !== 'rand' && !FILLS.some((f) => f.id === S.fillPick)) S.fillPick = 'rand';
-$('#guide').hidden = !!S.seenGuide;
-$('#helpBtn').setAttribute('aria-expanded', String(!S.seenGuide));
-$('#fillPick').insertAdjacentHTML('beforeend', FILLS.map((f) => `<option value="${f.id}">${f.name}</option>`).join(''));
-syncControls();
-bind();
-renderAll();
-syncControls();
-
-if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-  try { navigator.serviceWorker?.register('sw.js').catch(() => {}); } catch { /* not allowed here */ }
-}

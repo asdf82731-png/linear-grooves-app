@@ -1,0 +1,34 @@
+// Offline cache for the app shell. Bump VERSION when shipping changes.
+// Cache names carry a "dj-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
+const VERSION = 'dj-v7';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
+
+// cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
+// The build gives JS/CSS hashed names, so read them from the fresh index.html and cache them too.
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(VERSION).then(async (c) => {
+    await c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })));
+    const html = await (await c.match('index.html')).text();
+    await c.addAll([...new Set(html.match(/\.\/assets\/[^"']+/g) || [])]);
+  }).then(() => self.skipWaiting()));
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(caches.keys()
+    .then((keys) => Promise.all(keys.filter((k) => k.startsWith('dj-') && k !== VERSION).map((k) => caches.delete(k))))
+    .then(() => self.clients.claim()));
+});
+
+// Stale-while-revalidate: answer from cache, refresh in the background.
+// Covers Google Fonts too, so the typefaces keep working offline after the first visit.
+self.addEventListener('fetch', (e) => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(caches.open(VERSION).then(async (cache) => {
+    const hit = await cache.match(e.request, { ignoreSearch: true });
+    const net = fetch(e.request).then((res) => {
+      if (res && (res.ok || res.type === 'opaque')) cache.put(e.request, res.clone());
+      return res;
+    }).catch(() => hit);
+    return hit || net;
+  }));
+});
