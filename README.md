@@ -17,10 +17,16 @@
 Settings → Pages → Source 選 `Deploy from a branch`，Branch 選 `main` / `(root)`。
 
 ## 本機開發
+介面正在改用 [Astryx](https://github.com/meta/astryx)（React 19）＋ Vite。已經換過的 App 原始碼在 `<app>/src/`，要先建置：
+
 ```sh
+npm install                    # 第一次
+npm run build                  # 建置所有有 src/ 的 App；或 npm run build -- double-pedal
 python3 -m http.server 8000
 # Linear Grooves: http://localhost:8000/linear-grooves/
 # Double Pedal:   http://localhost:8000/double-pedal/
 # Djent Grooves:  http://localhost:8000/djent/
 # Time Keeper:    http://localhost:8000/timekeeper/
 ```
+
+建置結果（`<app>/index.html`、`<app>/assets/`、`<app>/sw.js`…）要和 `src/` 一起 commit，GitHub Pages 直接提供它們。發佈新版前把 `<app>/src/public/sw.js` 的 `VERSION` 加一。
