@@ -37,7 +37,7 @@ export const BASIC = [
     RF: 'x.x. x... x.x. x...', LF: '.x.x .... .x.x ....',
     tip: '短短一串快速雙踏再停下來，練習「快速起停」，比一直連續踩更容易練出速度。' },
   { id: 'burst6', name: '6 音爆發', en: 'Burst · R L R L R L  R –', sub: 4,
-    RF: 'x.x. x.x. x... ....', LF: '.x.x .x.x .... ....',
+    RF: 'x.x. x.x. .... ....', LF: '.x.x .x.. .... ....',
     tip: '踩完一串一定要停得乾淨，休止也是練習的一部分。' },
   { id: '6-single', name: '六連音單擊', en: 'Sextuplet Singles', sub: 6,
     RF: 'x.x.x. x.x.x. x.x.x. x.x.x.', LF: '.x.x.x .x.x.x .x.x.x .x.x.x',

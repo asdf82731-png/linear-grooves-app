@@ -266,8 +266,8 @@ function DoublePedal() {
 function KitGrid({ex, lanes, hl}) {
   const beats = ex.len / ex.sub, per = beats > 5 ? 4 : beats;
   const bar = beats % 4 === 0 ? 4 : Infinity;   // multi-bar patterns count 1–4 in every bar
-  // Sextuplets are too narrow to spell out every syllable; keep the beat and the "&".
-  const count = (k, b) => (k === 0 ? (b % bar) + 1 : ex.sub === 6 ? (k === 3 ? '&' : '') : COUNTS[ex.sub][k]);
+  // Every syllable, sextuplets too (1 la li & la li); the dense grid sets them in a smaller type.
+  const count = (k, b) => (k === 0 ? (b % bar) + 1 : COUNTS[ex.sub][k]);
   const systems = [];
   for (let b0 = 0; b0 < beats; b0 += per) systems.push([b0, Math.min(beats, b0 + per)]);
   const row = (key, label, cls, b0, b1, cell) => (
