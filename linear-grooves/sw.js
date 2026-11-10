@@ -1,13 +1,16 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
-// Only "grooves-" caches are ours: the Double Pedal app in ../double-pedal/ shares this origin.
-const VERSION = 'grooves-v17';
-const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'sticking.html', 'sticking.js', '../shared/mini-staff.js', 'manifest.webmanifest',
-  'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
+// Only "grooves-" caches are ours: the other apps in ../ share this origin.
+const VERSION = 'grooves-v18';
+const SHELL = ['./', 'index.html', 'sticking.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
-// cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in an old app.js or sticking.js.
+// cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
+// The build gives JS/CSS hashed names (and splits off chunks the pages load later); assets/files.json lists them all.
 self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' }))))
-    .then(() => self.skipWaiting()));
+  e.waitUntil(caches.open(VERSION).then(async (c) => {
+    await c.addAll(SHELL.map((u) => new Request(u, { cache: 'reload' })));
+    const files = await (await fetch('assets/files.json', { cache: 'reload' })).json();
+    await c.addAll(files);
+  }).then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (e) => {

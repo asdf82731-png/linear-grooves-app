@@ -17,7 +17,7 @@
 Settings → Pages → Source 選 `Deploy from a branch`，Branch 選 `main` / `(root)`。
 
 ## 本機開發
-介面正在改用 [Astryx](https://github.com/meta/astryx)（React 19）＋ Vite。已經換過的 App 原始碼在 `<app>/src/`，要先建置：
+介面用 [Astryx](https://github.com/meta/astryx)（React 19）＋ Vite。原始碼在 `<app>/src/`，要先建置：
 
 ```sh
 npm install                    # 第一次

@@ -9,10 +9,19 @@ const app = process.env.APP || 'double-pedal';
 const src = resolve(app, 'src');
 const pages = readdirSync(src).filter(f => f.endsWith('.html'));
 
+// assets/files.json lists every built file, so a service worker can precache chunks no page names directly.
+const precacheList = {
+  name: 'precache-list',
+  generateBundle(_, bundle) {
+    const files = Object.keys(bundle).filter(f => f.startsWith('assets/'));
+    this.emitFile({type: 'asset', fileName: 'assets/files.json', source: JSON.stringify(files)});
+  },
+};
+
 export default defineConfig({
   root: src,
   base: './',
-  plugins: [react()],
+  plugins: [react(), precacheList],
   build: {
     outDir: '..', emptyOutDir: false, assetsDir: 'assets', chunkSizeWarningLimit: 2000,
     rollupOptions: {
