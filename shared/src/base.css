@@ -154,10 +154,14 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .tempo-top { display: flex; align-items: center; gap: 6px; }
 .bpm {
   font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; text-align: center;
-  width: 2.6ch; padding: 0 2px 1px; margin: 0; color: var(--ink); background: transparent;
+  width: 3.4ch; min-width: 3.4ch; padding: 0 2px 1px; margin: 0; color: var(--ink); background: transparent;
   border: 0; border-bottom: 2px dashed var(--line); border-radius: 0;
 }
 .bpm:focus { outline: none; border-bottom: 2px solid var(--accent); background: var(--color-background-muted); }
 .bpm-unit { font: 500 11px/1.15 var(--f-mono); color: var(--muted); letter-spacing: .08em; margin-right: auto; }
 .dock .play { flex: none; width: 56px; height: 56px; border-radius: 50%; }
+.tempo-top > button { flex: none; min-width: 34px; }
+.bpm-unit { white-space: nowrap; }
 @media (max-width: 380px) { .dock-in { gap: 8px; } .bpm { font-size: 28px; } }
+/* very narrow phones: the tempo number speaks for itself, give the room to − and + */
+@media (max-width: 360px) { .bpm-unit { display: none; } .tempo-top { justify-content: space-between; } }
