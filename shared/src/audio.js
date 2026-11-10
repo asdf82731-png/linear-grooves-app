@@ -89,6 +89,7 @@ export function createAudio({masterGain = 2.8, clickGain = 0.9} = {}) {
     o.connect(lp).connect(g).connect(A.clickBus);
     o.start(t);
     o.stop(t + 0.11);
+    return o;
   };
   return A;
 }
