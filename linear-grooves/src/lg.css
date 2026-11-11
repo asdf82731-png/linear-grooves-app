@@ -56,3 +56,8 @@
 /* favourites: sticking in mono, the mini staff above the details */
 .fav-mini { display: block; color: var(--color-text-primary); }
 .fav-stk { font: 600 13px var(--f-mono); overflow-wrap: anywhere; white-space: normal; }
+
+/* Tablet in landscape: the left column is wide, so a short staff would grow huge and push the buttons off screen */
+@media (min-width: 900px) {
+  .split .notation svg { max-height: 220px; }
+}

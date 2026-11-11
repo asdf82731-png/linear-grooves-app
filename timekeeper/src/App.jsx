@@ -10,7 +10,7 @@ import {HStack} from '@astryxdesign/core/HStack';
 import {Grid} from '@astryxdesign/core/Grid';
 import {Card} from '@astryxdesign/core/Card';
 import {
-  AppTheme, Choose, Dock, ExItems, Field, Group, Guide, Header, Hint, InfoItems, ModeList, Page, Pair, PracticeCard,
+  AppTheme, MainColumn, SideColumn, Choose, Dock, ExItems, Field, Group, Guide, Header, Hint, InfoItems, ModeList, Page, Pair, PracticeCard,
   SegChoice, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {MAX_BPM, MIN_BPM, MODE_NAME, PERFECT_MS, SHIFT_CELL, SHIFT_NAME, SUB_NAME, clampBpm, createKeeper, describeOff} from './core.js';
@@ -134,8 +134,8 @@ function TimeKeeper() {
   const logSvg = useMemo(() => logChart(log), [log]);
 
   return (
-    <Page className="tk">
-      <VStack gap={4} className="col-main">
+    <Page className="split tk">
+      <MainColumn>
         <Header title="Time Keeper"
           guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
         {showGuide && (
@@ -193,9 +193,9 @@ function TimeKeeper() {
             </Card>
           </section>
         )}
-      </VStack>
+      </MainColumn>
 
-      <VStack gap={4} className="col-side">
+      <SideColumn>
         <Group title="打什麼" id="h-play">
           <Hint>選一個動作，練習卡上會顯示一整小節的譜。麥克風會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</Hint>
           {groups.map(([g, qs]) => (
@@ -296,7 +296,7 @@ function TimeKeeper() {
             </div>
           )}
         </Group>
-      </VStack>
+      </SideColumn>
 
       <Dock actionLabel={mic ? '停止聽' : '開始聽'} onAction={() => keeper.micToggle()} bpm={S.bpm} setBpm={setBpm}
         min={MIN_BPM} max={MAX_BPM} playing={playing} onPlay={toggle} flash={flash} />

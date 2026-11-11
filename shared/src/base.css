@@ -118,3 +118,16 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 @media (max-width: 380px) { .dock-in { gap: 8px; } .bpm { font-size: 28px; } }
 /* very narrow phones: the tempo number speaks for itself, give the room to − and + */
 @media (max-width: 360px) { .bpm-unit { display: none; } .tempo-top { justify-content: space-between; } }
+
+/* Tablet in landscape (.app.split): practice on the left, kept in view while the lists and settings on the right scroll */
+.col-main, .col-side { min-width: 0; }
+@media (min-width: 900px) {
+  .app.split {
+    max-width: 1400px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start;
+    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+  }
+  .split .col-main { position: sticky; top: 12px; max-height: calc(100dvh - 112px); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
+  .split .col-side { padding-top: 6px; }
+  .split .col-side > .group:first-child > [role="separator"] { display: none; }
+  .split .dock-in { max-width: 1400px; }
+}
