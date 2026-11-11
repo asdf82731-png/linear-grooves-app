@@ -231,7 +231,7 @@ export function Page({children, className = ''}) {
 export function PracticeCard({children, cardRef, label = '目前的練習'}) {
   return (
     <section ref={cardRef} aria-label={label} className="practice">
-      <Card><VStack gap={3}>{children}</VStack></Card>
+      <Card className="practice-card"><VStack gap={3} className="practice-body">{children}</VStack></Card>
     </section>
   );
 }

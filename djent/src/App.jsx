@@ -2,9 +2,12 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
+import {VStack} from '@astryxdesign/core/VStack';
+import {HStack} from '@astryxdesign/core/HStack';
+import {Text} from '@astryxdesign/core/Text';
 import {
-  AppTheme, Choose, DoneButton, Dock, ExList, ExNav, Field, Fold, Glossary, Guide, Header, ModeGrid, Panel,
-  Seg, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
+  AppTheme, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
+  Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {CATS, FILLS, LIB, build, cycleText, describe, gridHtml, miniFor, pick, riffText, staffHtml} from './music.js';
 import {createEngine} from './engine.js';
@@ -150,8 +153,8 @@ function Djent() {
   const ghost = cur.slots.some(s => s.some(h => h.lvl === 'g'));
 
   return (
-    <div className={'app djent' + (S.basic ? ' basic' : '')}>
-      <div className="col-main">
+    <Page className={'djent' + (S.basic ? ' basic' : '')}>
+      <VStack gap={4} className="col-main">
         <Header title="Djent Grooves" tag="上面的鈸一直打 4/4，下面的大鼓跟著 riff 用奇數分組繞過小節線。"
           guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
         {showGuide && (
@@ -163,10 +166,10 @@ function Djent() {
           </Guide>
         )}
 
-        <section className="sheet" ref={practice} aria-label="目前的練習">
+        <PracticeCard cardRef={practice}>
           <SheetHead name={cur.name} en={cur.en} best={best[cur.key]} />
           <div className="meta">{describe(cur, S, idx, sheet.length)}</div>
-          <div className="sheet-bar">
+          <HStack gap={3} hAlign="between" vAlign="center" wrap="wrap">
             <div className="basic-tg">
               <Toggle label="基本練習" description="只有 Hi-hat、小鼓、大鼓" value={S.basic} onChange={v => reshape({basic: v})} />
             </div>
@@ -174,9 +177,9 @@ function Djent() {
               <SegmentedControlItem value="staff" label="五線譜" />
               <SegmentedControlItem value="grid" label="格子圖" />
             </SegmentedControl>
-          </div>
+          </HStack>
           <Status msg={msg} />
-          <p className="cycle">{cycleText(cur, S)}</p>
+          <Text as="p" className="cycle">{cycleText(cur, S)}</Text>
           <div className="legend">
             {['RH', 'LH', 'RF', 'LF'].filter(l => used.has(l)).map(l => <span key={l}><i className={'dot ' + l} />{LIMB_NAME[l]}</span>)}
             {ghost && <span className="lg-note">(S) Ghost note 很輕　&gt; 重音</span>}
@@ -201,35 +204,35 @@ function Djent() {
           {cur.tip && <p className="tip">{cur.tip}</p>}
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
           <DoneButton bpm={S.bpm} onClick={record} />
-        </section>
-      </div>
+        </PracticeCard>
+      </VStack>
 
-      <div className="col-side">
-        <Panel title="練什麼" id="h-what">
-          <ModeGrid label="練習類型" value={S.cat} options={CAT_OPTS} onChange={c => { if (engine.isPlaying()) stop(); update({cat: c}); }} />
-          <p className="hint">{CAT_HINT[S.cat]}</p>
-          <ExList cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
+      <VStack gap={4} className="col-side">
+        <Group title="練什麼" id="h-what">
+          <ModeList label="練習類型" value={S.cat} options={CAT_OPTS} onChange={c => { if (engine.isPlaying()) stop(); update({cat: c}); }} />
+          <Hint>{CAT_HINT[S.cat]}</Hint>
+          <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
             items={sheet.map(ex => ({
               key: ex.key, name: ex.name, best: best[ex.key], mini: miniFor(ex),
               stick: <span dangerouslySetInnerHTML={{__html: riffText(ex.def.fill ? FILLS.find(f => f.id === ex.def.fill).cells : ex.riff)}} />,
             }))} />
-        </Panel>
+        </Group>
 
-        <Panel title="怎麼打" id="h-how">
+        <Group title="怎麼打" id="h-how">
           <Field label="樂句長度">
-            <Seg label="樂句長度" value={S.phrase} onChange={v => reshape({phrase: v})}
+            <SegChoice label="樂句長度" value={S.phrase} onChange={v => reshape({phrase: v})}
               options={[{value: 2, label: '2 小節'}, {value: 4, label: '4 小節'}, {value: 8, label: '8 小節'}]} />
-            {S.end === 'full' && <p className="hint">「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</p>}
+            {S.end === 'full' && <Hint>「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</Hint>}
           </Field>
-          <div className="row2">
+          <Pair>
             <Choose label="樂句結尾" value={S.end} onChange={v => reshape({end: v})}
               options={[{value: 'cut', label: '截斷（預設）'}, {value: 'full', label: '跑完整個循環'}]} />
             <Field label="大鼓">
-              <Seg label="大鼓" value={S.pedal} onChange={v => reshape({pedal: v})}
+              <SegChoice label="大鼓" value={S.pedal} onChange={v => reshape({pedal: v})}
                 options={[{value: 'double', label: '雙踏'}, {value: 'single', label: '單踏'}]} />
             </Field>
-          </div>
-          <div className="row2">
+          </Pair>
+          <Pair>
             <Choose label="Fill 長度" value={S.fillLen} onChange={v => reshape({fillLen: v})}
               options={[{value: 'auto', label: '自動（1 小節；Fill 練習照它的長度）'}, {value: 'b1', label: '最後 1 拍'},
                 {value: 'b2', label: '最後 2 拍'}, {value: 'bar', label: '最後 1 小節'}, {value: 'none', label: '不要 Fill'}]} />
@@ -237,28 +240,28 @@ function Djent() {
               <Choose label="用哪一個 Fill" value={S.fillPick} onChange={v => reshape({fillPick: v})}
                 options={[{value: 'rand', label: '隨機（每個練習抽一個）'}, ...FILLS.map(f => ({value: f.id, label: f.name}))]} />
             )}
-          </div>
-          <div className="row2">
+          </Pair>
+          <Pair>
             <Choose label="鈸的拍點" value={S.pulse} onChange={v => reshape({pulse: v})}
               options={[{value: 'auto', label: '照練習預設'}, {value: 'q', label: '4 分音符（每拍）'}, {value: 'h', label: '2 分音符（1、3 拍）'},
                 {value: 'e', label: '8 分音符'}, {value: 's', label: '16 分音符（每一格）'}]} />
             <Choose label="小鼓位置" value={S.snare} onChange={v => reshape({snare: v})}
               options={[{value: 'auto', label: '照練習預設'}, {value: '3', label: '第 3 拍（Half-time）'}, {value: '24', label: '2、4 拍'}, {value: 'riff', label: '跟著 riff 走'}]} />
-          </div>
-          <div className="row2">
-            {S.basic ? <Field label="鈸的音色"><p className="hint">基本練習固定用 Hi-hat。</p></Field> : (
+          </Pair>
+          <Pair>
+            {S.basic ? <Field label="鈸的音色"><Hint>基本練習固定用 Hi-hat。</Hint></Field> : (
               <Choose label="鈸的音色" value={S.cym} onChange={v => reshape({cym: v})}
                 options={[{value: 'auto', label: '照練習預設'}, {value: 'ride', label: 'Ride'}, {value: 'crash', label: 'Crash'}, {value: 'china', label: 'China'}, {value: 'hh', label: 'Hi-hat'}]} />
             )}
             <Choose label="音符" value={S.sub} onChange={v => reshape({sub: v})}
               options={[{value: 'auto', label: '照練習預設'}, {value: '4', label: '16 分音符'}, {value: '6', label: '16 分六連音'}]} />
-          </div>
+          </Pair>
           <div>
             <Button size="sm" label="上層打法回到練習預設" onClick={() => { reshape({sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto'}); flash('上層打法回到練習預設'); }} />
           </div>
-        </Panel>
+        </Group>
 
-        <Fold title="練習設定" sub="聲音、次數、計時、節拍器">
+        <FoldGroup title="練習設定" sub="聲音、次數、計時、節拍器">
           <Choose label="App 幫你打哪些聲部" value={S.playPart} onChange={v => update({playPart: v})}
             options={[{value: 'all', label: '全部（手和腳）'}, {value: 'hands', label: '只播手的部分（你踩腳）'},
               {value: 'feet', label: '只播腳的部分（你打手）'}, {value: 'none', label: '都不播（只有節拍器）'}]} />
@@ -272,22 +275,22 @@ function Djent() {
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
           <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
           {S.trainer && (
-            <div className="row2">
+            <Pair>
               <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
               <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
               <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
                 onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
-            </div>
+            </Pair>
           )}
-        </Fold>
+        </FoldGroup>
 
-        <Fold title="Djent 小技巧" sub="怎麼不迷路、怎麼練快"><Glossary items={TIPS} /></Fold>
+        <FoldGroup title="Djent 小技巧" sub="怎麼不迷路、怎麼練快"><Glossary items={TIPS} /></FoldGroup>
 
         <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「安裝應用程式」就能像 App 一樣使用，沒網路也能練。</p>
-      </div>
+      </VStack>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />
-    </div>
+    </Page>
   );
 }

@@ -1,6 +1,5 @@
 /* Djent: staff and kit grid (rendered as HTML strings by music.js), group bars, ghost notes, and the tablet two-column layout. */
-.col-main, .col-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.sheet-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.col-main, .col-side { min-width: 0; }
 .basic-tg { flex: 1 1 220px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-element, 10px); background: var(--bg); }
 .basic .basic-tg { border-color: var(--accent); background: var(--hl); }
 .cycle { margin: 0; font-size: 13px; }
@@ -9,7 +8,7 @@
 .fill-row b { color: var(--ink); }
 .ex-st b.K { color: var(--k); } .ex-st b.S { color: var(--l); } .ex-st b.g { color: var(--l); opacity: .65; font-weight: 500; }
 .ex-st i { font-style: normal; color: var(--line); padding: 0 3px; }
-.ex.cur .ex-mini .ms .sl { stroke: var(--ink); }
+[aria-current="true"] .ex-mini .ms .sl { stroke: var(--ink); }
 
 /* Grid: hits coloured by limb, shaped by instrument (cymbals are diamonds, drums dots). */
 .kit { overflow-x: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
@@ -85,8 +84,8 @@
   }
   .col-main { position: sticky; top: 12px; max-height: calc(100dvh - 112px); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
   .col-side { padding-top: 6px; }
-  .col-side > .panel:first-child { border-top: 0; }
-  .sheet { gap: 8px; }
+  .col-side > .group:first-child > [role="separator"] { display: none; }
+  .practice-body { gap: 8px; }
   .kit { gap: 10px; }
   .kc { height: 24px; }
   .kr.gp .kc { height: 18px; }
@@ -99,7 +98,8 @@
 @media (min-width: 900px) and (max-height: 860px) {
   .top p, .tip, .legend { display: none; }
   .app.djent { padding-top: 10px; }
-  .sheet { padding: 10px 12px; gap: 6px; }
+  .practice-card { padding: 10px 12px; }
+  .practice-body { gap: 6px; }
   .kit { gap: 6px; }
   .kc { height: 20px; }
   .kr.gp .kc { height: 15px; }
