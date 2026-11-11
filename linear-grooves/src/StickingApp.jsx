@@ -14,7 +14,7 @@ const DEFAULTS = {
   mode: 'rud', rSub: 4, rRun: 2, aBase: 'single', aSub: 4,
   reps: 8, autoNext: false, leftLead: false,
   bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
-  seenGuide: false, polyMute: 'none', idx: {rud: 0, para: 0, rand: 0, acc: 0, poly: 0},
+  polyMute: 'none', idx: {rud: 0, para: 0, rand: 0, acc: 0, poly: 0},
 };
 const MODE_OPTS = [
   {value: 'rud', label: '基本手法', sub: 'Rudiments'},
@@ -111,21 +111,23 @@ function Sticking() {
     flash(S.bpm > prev ? `記錄 ${S.bpm} BPM！下次試試 ${S.bpm + 5}` : `已記錄，你的最佳是 ${prev} BPM`);
   };
   const repsTxt = playing ? `第 ${repsN + 1}${S.autoNext && S.reps ? ` / ${S.reps}` : ''} 次` : (S.autoNext && S.reps ? `每個練 ${S.reps} 次` : '重複練同一個');
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
   const many = S.leftLead ? '左' : '右', few = S.leftLead ? '右' : '左';
   const en = cur.poly ? `${many}手平均打 ${cur.poly.a} 下，${few}手同時平均打 ${cur.poly.b} 下`
     : cur.en ? (cur.en === cur.name ? '' : cur.en) : stickString(SL).replace(/(.{4})/g, '$1 ').trim();
 
   return (
     <Page>
-      <Header nav={<ToolsNav cur="sticking" />} title="Sticking" tag="練基本手法：單擊、雙擊、Paradiddle、Flam……跟著節拍器從慢練到快。"
-        guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+      <Header nav={<ToolsNav cur="sticking" />} title="Sticking"
+        guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
       {showGuide && (
-        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}>
-          <li><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</li>
-          <li><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</li>
-          <li><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</li>
-        </Guide>
+        <Guide tips={TIPS} onOk={() => setHelp(false)}
+        steps={[
+          <><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</>,
+          <><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</>,
+          <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
+        ]} />
       )}
 
       <PracticeCard cardRef={practice}>
@@ -221,8 +223,6 @@ function Sticking() {
           </Pair>
         )}
       </FoldGroup>
-
-      <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「加到主畫面」就能像 App 一樣使用。</p>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

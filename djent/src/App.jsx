@@ -6,7 +6,7 @@ import {VStack} from '@astryxdesign/core/VStack';
 import {HStack} from '@astryxdesign/core/HStack';
 import {Text} from '@astryxdesign/core/Text';
 import {
-  AppTheme, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
+  AppTheme, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
   Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {CATS, FILLS, LIB, build, cycleText, describe, gridHtml, miniFor, pick, riffText, staffHtml} from './music.js';
@@ -19,7 +19,6 @@ const DEFAULTS = {
   sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
   reps: 8, autoNext: false, playPart: 'all', timer: 0,
   bpm: 80, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false,
 };
 const CAT_OPTS = [
   {value: 'chug', label: '基本 Chug', sub: '一小節剛好湊滿'},
@@ -147,7 +146,8 @@ function Djent() {
     const left = Math.max(0, Math.ceil(S.timer * 60 - engine.elapsed() / 1000));
     repsTxt += ` · 剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   }
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
   const used = new Set();
   cur.slots.forEach(s => s.forEach(h => used.add(h.limb)));
   const ghost = cur.slots.some(s => s.some(h => h.lvl === 'g'));
@@ -155,15 +155,15 @@ function Djent() {
   return (
     <Page className={'djent' + (S.basic ? ' basic' : '')}>
       <VStack gap={4} className="col-main">
-        <Header title="Djent Grooves" tag="上面的鈸一直打 4/4，下面的大鼓跟著 riff 用奇數分組繞過小節線。"
-          guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+        <Header title="Djent Grooves"
+          guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
         {showGuide && (
-          <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}>
-            <li><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</li>
-            <li><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音；看不習慣可以在「顯示」改成格子圖（一行一小節）。
-              <span className="key R">R</span><span className="key L">L</span> 是手，<span className="key fR">R</span><span className="key fL">L</span> 是腳。</li>
-            <li><b>打順了就按「✓ 打順了」</b>，再把速度調快 5 BPM。</li>
-          </Guide>
+          <Guide tips={TERMS} onOk={() => setHelp(false)}
+          steps={[
+            <><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</>,
+            <><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音；看不習慣可以在「顯示」改成格子圖（一行一小節）。 <span className="key R">R</span><span className="key L">L</span> 是手，<span className="key fR">R</span><span className="key fL">L</span> 是腳。</>,
+            <><b>打順了就按「✓ 打順了」</b>，再把速度調快 5 BPM。</>,
+          ]} />
         )}
 
         <PracticeCard cardRef={practice}>
@@ -201,7 +201,7 @@ function Djent() {
               )}
             </div>
           )}
-          {cur.tip && <p className="tip">{cur.tip}</p>}
+          {cur.tip && <Tip>{cur.tip}</Tip>}
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
           <DoneButton bpm={S.bpm} onClick={record} />
         </PracticeCard>
@@ -285,8 +285,6 @@ function Djent() {
         </FoldGroup>
 
         <FoldGroup title="Djent 小技巧" sub="怎麼不迷路、怎麼練快"><Glossary items={TIPS} /></FoldGroup>
-
-        <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「安裝應用程式」就能像 App 一樣使用，沒網路也能練。</p>
       </VStack>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}

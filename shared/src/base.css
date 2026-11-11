@@ -32,10 +32,8 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 }
 
 /* header */
-.top { display: flex; flex-direction: column; gap: 4px; }
-.top-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.top .brand { font-size: 30px; letter-spacing: .01em; }
-.top p { margin: 0; }
+/* the page title: the same size and weight in all five apps (the metronome repeats this rule) */
+.top .brand { font-size: 28px; letter-spacing: .01em; }
 .tools-nav {
   display: flex; gap: 4px; padding: 4px; border-radius: 999px; align-self: flex-start;
   background: var(--surface); border: 1px solid var(--line); margin-bottom: 4px;
@@ -48,19 +46,18 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
   background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius-container, 12px);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
 }
-.steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; }
+/* guide steps wrap instead of being cut to one line */
+.guide .step, .gl-dd { white-space: normal; }
 .key {
   display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 4px;
   font: 600 13px var(--f-mono); color: var(--surface); vertical-align: 1px;
 }
 .key.R { background: var(--r); } .key.L { background: var(--l); } .key.K, .key.fR { background: var(--k); } .key.fL { background: var(--lf); }
-.glossary { margin: 8px 0 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 14px; }
-.glossary dt { font-weight: 600; }
-.glossary dd { margin: 0; color: var(--muted); }
-@media (max-width: 420px) { .glossary { grid-template-columns: 1fr; } .glossary dd { margin-bottom: 6px; } }
 
-/* practice card (an Astryx Card, see PracticeCard) */
+/* practice card (an Astryx Card, see PracticeCard). Cards in all five apps use the surface colour: in dark mode
+   Astryx's card colour equals the page, and the card would only show as a thin border. */
 .practice { min-width: 0; }
+.practice-card, .result-card { background-color: var(--surface); }
 .sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .ex-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .ex-en { font: 500 12px var(--f-mono); color: var(--muted); }
@@ -69,7 +66,7 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .meta { font: 500 12px var(--f-mono); color: var(--muted); letter-spacing: .04em; }
 .status { font: 600 13px var(--f-mono); color: var(--accent); min-height: 1.2em; }
 .status:empty { display: none; }
-.tip { margin: 0; font-size: 13px; color: var(--muted); border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+.tip { margin: 0; border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
 .ex-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .reps { font: 600 13px var(--f-mono); color: var(--accent); text-align: center; }
 .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
@@ -100,7 +97,6 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .ex-best { flex: none; font: 600 12px var(--f-mono); color: var(--muted); }
 .ex-best.has { color: var(--k); }
 
-.foot { color: var(--muted); font-size: 12px; padding-top: 8px; margin: 0; }
 
 /* transport dock */
 .dock {
@@ -121,6 +117,7 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .bpm:focus { outline: none; border-bottom: 2px solid var(--accent); background: var(--color-background-muted); }
 .bpm-unit { font: 500 11px/1.15 var(--f-mono); color: var(--muted); letter-spacing: .08em; margin-right: auto; }
 .dock .play { flex: none; width: 56px; height: 56px; border-radius: 50%; }
+.dock .play svg { fill: currentColor; }
 .tempo-top > button { flex: none; min-width: 34px; }
 .bpm-unit { white-space: nowrap; }
 @media (max-width: 380px) { .dock-in { gap: 8px; } .bpm { font-size: 28px; } }

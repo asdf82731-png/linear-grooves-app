@@ -1,6 +1,6 @@
 // Offline cache for the app shell. Bump VERSION when shipping changes.
 // Cache names carry a "dp-" prefix: this app shares its origin with others, so only our own caches are cleaned up.
-const VERSION = 'dp-v21';
+const VERSION = 'dp-v23';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png'];
 
 // cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.

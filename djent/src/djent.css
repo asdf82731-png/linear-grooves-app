@@ -96,7 +96,7 @@
   .notation svg { min-width: 0 !important; }
 }
 @media (min-width: 900px) and (max-height: 860px) {
-  .top p, .tip, .legend { display: none; }
+  .tip, .legend { display: none; }
   .app.djent { padding-top: 10px; }
   .practice-card { padding: 10px 12px; }
   .practice-body { gap: 6px; }
