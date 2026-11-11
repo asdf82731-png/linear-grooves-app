@@ -11,6 +11,14 @@ import {Selector} from '@astryxdesign/core/Selector';
 import {Collapsible} from '@astryxdesign/core/Collapsible';
 import {Heading} from '@astryxdesign/core/Heading';
 import {Text} from '@astryxdesign/core/Text';
+import {VStack} from '@astryxdesign/core/VStack';
+import {HStack} from '@astryxdesign/core/HStack';
+import {Grid} from '@astryxdesign/core/Grid';
+import {Card} from '@astryxdesign/core/Card';
+import {Divider} from '@astryxdesign/core/Divider';
+import {List, ListItem} from '@astryxdesign/core/List';
+import {RadioList, RadioListItem} from '@astryxdesign/core/RadioList';
+import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import '@astryxdesign/core/reset.css';
 import '@astryxdesign/core/astryx.css';
 import '@astryxdesign/theme-neutral/theme.css';
@@ -211,6 +219,94 @@ export function ExList({items, cur, onPick}) {
 // Colour-coded letters: [{c, cls}] → <b class=cls>c</b>
 export function Letters({items}) {
   return items.map((s, i) => <b key={i} className={s.cls}>{s.c}</b>);
+}
+
+/* ---------- Astryx layout and choices (apps move to these one at a time) ---------- */
+// Page column: Astryx spacing between sections; .app keeps the safe-area padding and the room for the dock.
+export function Page({children}) {
+  return <VStack gap={4} className="app">{children}</VStack>;
+}
+
+// The practice card at the top of the page.
+export function PracticeCard({children, cardRef}) {
+  return (
+    <section ref={cardRef} aria-label="目前的練習" className="practice">
+      <Card><VStack gap={3}>{children}</VStack></Card>
+    </section>
+  );
+}
+
+// A page region with a heading, separated from the one above by a divider.
+export function Group({title, id, children}) {
+  return (
+    <VStack gap={3} as="section" aria-labelledby={id}>
+      <Divider />
+      {title && <Heading level={2} id={id}>{title}</Heading>}
+      {children}
+    </VStack>
+  );
+}
+
+// Folding settings panel built from Astryx stacks.
+export function FoldGroup({title, sub, children}) {
+  return (
+    <VStack gap={1} as="section">
+      <Divider />
+      <Collapsible defaultIsOpen={false} trigger={
+        <VStack gap={0.5} paddingBlock={2}><Heading level={2}>{title}</Heading>{sub && <Text type="supporting">{sub}</Text>}</VStack>
+      }>
+        <VStack gap={4} paddingBlockEnd={3}>{children}</VStack>
+      </Collapsible>
+    </VStack>
+  );
+}
+
+// Two settings side by side; one column on a phone.
+export function Pair({children}) {
+  return <Grid columns={{minWidth: 200, max: 2}} gap={3}>{children}</Grid>;
+}
+
+export function Hint({children}) {
+  return <Text type="supporting" as="p">{children}</Text>;
+}
+
+// Single choice from a handful of options, each with a short second line (練什麼).
+// The options flow into as many columns as fit (2 on a phone, 3 or more on a tablet) so the list stays short.
+const MODE_GRID = {display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 'var(--spacing-3) var(--spacing-4)'};
+export function ModeList({label, value, options, onChange}) {
+  return (
+    <RadioList label={label} isLabelHidden value={value} onChange={onChange} controlStyle={MODE_GRID}>
+      {options.map(o => <RadioListItem key={o.value} value={o.value} label={o.label} description={o.sub} />)}
+    </RadioList>
+  );
+}
+
+// Segmented single choice; a second line joins the label (2 個・8 分).
+export function SegChoice({label, value, options, onChange}) {
+  return (
+    <SegmentedControl label={label} value={String(value)}
+      onChange={v => onChange(options.find(o => String(o.value) === v).value)}>
+      {options.map(o => <SegmentedControlItem key={o.value} value={String(o.value)} label={o.sub ? `${o.label}・${o.sub}` : o.label} />)}
+    </SegmentedControl>
+  );
+}
+
+// Exercise list as Astryx list rows: name and colour-coded sticking, then the mini staff and best tempo.
+export function ExItems({items, cur, onPick}) {
+  return (
+    <List hasDividers edge="flush">
+      {items.map((it, i) => (
+        <ListItem key={it.key} itemKey={it.key} isSelected={i === cur} onClick={() => onPick(i)}
+          label={it.name} description={it.stick && <span className="ex-st">{it.stick}</span>}
+          endContent={
+            <HStack gap={3} vAlign="center">
+              {it.mini && <span className="ex-mini" dangerouslySetInnerHTML={{__html: it.mini}} />}
+              <span className={'ex-best' + (it.best ? ' has' : '')}>{it.best ? it.best + ' BPM' : '—'}</span>
+            </HStack>
+          } />
+      ))}
+    </List>
+  );
 }
 
 /* ---------- transport dock ---------- */
