@@ -4,4 +4,3 @@
 .staff-big > div { width: 100%; max-width: 640px; }
 .staff-big .ms { width: 100%; height: auto; }
 .staff-big .ms .lt { font-size: 9.5px; }
-@media (prefers-reduced-motion: no-preference) { .big .n { transition: background-color 60ms linear; } }
