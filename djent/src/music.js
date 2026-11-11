@@ -115,8 +115,6 @@ export const INST_NAME = { china: 'China', crash: 'Crash', ride: 'Ride', hh: 'Hi
 export const FILL_LEN_NAME = { b1: '1 拍', b2: '2 拍', bar: '1 小節', none: '' };
 // Grid rows, top to bottom. 'gp' is the group bracket row of the riff.
 // Both feet share the kick row; the dot colour tells them apart (right green, left purple).
-export const ROWS = ['cy', 'tm', 'gp', 'sn', 'bd'];
-export const ROW_NAME = { cy: '鈸', tm: '筒鼓', gp: '分組', sn: '小鼓', bd: '大鼓' };
 export const PAN = { RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35 };
 export const AMP = 0.62;
 // Levels for the ghost-note grooves: g ghost, a accented backbeat, s hi-hat between the beats.
@@ -272,68 +270,9 @@ export function cycleText(ex, S) {
   return `${n}，${back}。這個樂句在第 ${ex.bars} 小節${ex.fill ? '的 Fill 前' : '結尾'}截斷（✂），下一輪從頭開始。`;
 }
 
-// Rows for one bar: cymbal, groups, snare and kick always; toms only where the fill uses them.
-function usedRows(ex, b) {
-  const used = new Set(['cy', 'gp', 'sn', 'bd']);
-  ex.slots.slice(b * ex.bar, (b + 1) * ex.bar).forEach((s) => s.forEach((h) => used.add(h.row)));
-  return ROWS.filter((r) => used.has(r));
-}
-
-function rowLabel(ex, r, S) {
-  if (r === 'cy') return `${ROW_NAME.cy}<small>${INST_NAME[ex.cym]}</small>`;
-  if (r === 'bd') return `${ROW_NAME.bd}<small>${S.pedal === 'single' ? '右腳' : '<em class="fR">右</em><em class="fL">左</em>腳'}</small>`;
-  return ROW_NAME[r];
-}
-
-// Kit grid: one bar per row of the page, so beat 1 of every bar lines up on the left
-// and you can see each group's start drift to the right.
-// Returns the grid's HTML; every slot cell carries data-i so the player can light it.
-export function gridHtml(ex, S) {
-  let html = '';
-  for (let b = 0; b < ex.bars; b++) {
-    const rows = usedRows(ex, b);
-    html += `<div class="ksys" data-bar="${b}">`;
-    for (const r of rows) {
-      html += `<div class="kr ${r}"><span class="kl">${rowLabel(ex, r, S)}</span>`;
-      for (let bt = 0; bt < 4; bt++) {
-        html += '<span class="kb">';
-        for (let k = 0; k < ex.sub; k++) {
-          const i = b * ex.bar + bt * ex.sub + k;
-          const fill = i >= ex.fillFrom ? ' fill' : '';
-          if (r === 'gp') {
-            const g = ex.grp[i];
-            const cls = ['gc', g.alt ? 'alt' : '', g.start ? 's' : '', g.end ? 'e' : '', g.fill ? 'f' : ''].join(' ');
-            const txt = g.start ? `${g.ret ? '↺' : ''}${g.n}${g.cut ? '✂' : ''}` : '';
-            const title = g.ret ? ' title="接回第 1 拍"' : g.cut ? ' title="截斷"' : '';
-            html += `<span class="kc${fill}" data-i="${i}"><span class="${cls}"${title}>${txt}</span></span>`;
-          } else {
-            const h = ex.slots[i].find((x) => x.row === r);
-            html += `<span class="kc${fill}" data-i="${i}">${h ? `<i class="hit ${h.inst} ${h.limb}${h.lvl ? ' lv-' + h.lvl : ''}"></i>` : ''}</span>`;
-          }
-        }
-        html += '</span>';
-      }
-      html += '</div>';
-    }
-    // Counting row; sextuplets keep just the beat and the "&".
-    html += `<div class="kr cnt"><span class="kl">第 ${b + 1} 小節</span>`;
-    for (let bt = 0; bt < 4; bt++) {
-      html += '<span class="kb">';
-      for (let k = 0; k < ex.sub; k++) {
-        const c = k === 0 ? bt + 1 : ex.sub === 6 ? (k === 3 ? '&' : '') : COUNTS[4][k];
-        html += `<span class="kc">${c}</span>`;
-      }
-      html += '</span>';
-    }
-    html += '</div></div>';
-  }
-  return html;
-}
-
 // Staff positions: offset from the top staff line in px (half a staff space = 4).
 const STAFF_Y = { china: -12, crash: -8, hh: -4, ride: 0, t1: 4, t2: 8, sn: 12, ft: 20, bd: 28 };
 const CYMBALS = new Set(['china', 'crash', 'hh', 'ride']);
-
 // Returns one SVG per bar; every slot carries data-i (highlight rect) and every bar data-bar.
 export function staffHtml(ex) {
   const slotW = ex.sub === 6 ? 16 : 22, beatGap = 10, top = 52, H = 140, beamY = 22;
