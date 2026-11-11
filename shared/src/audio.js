@@ -101,7 +101,14 @@ export const SUB_CLICK = 0.3;
 export function createWakeLock() {
   let lock = null, want = false;
   const get = async () => {
-    try { lock = await navigator.wakeLock?.request('screen'); lock?.addEventListener('release', () => { lock = null; }); } catch { lock = null; }
+    if (lock) return;
+    try {
+      const l = await navigator.wakeLock?.request('screen');
+      if (!l) return;
+      if (!want) { l.release(); return; }   // stopped while the request was on its way
+      lock = l;
+      l.addEventListener('release', () => { if (lock === l) lock = null; });
+    } catch { lock = null; }
   };
   document.addEventListener('visibilitychange', () => { if (want && document.visibilityState === 'visible' && !lock) get(); });
   return {

@@ -252,7 +252,7 @@ export function ExItems({items, cur, onPick, header}) {
           endContent={
             <HStack gap={3} vAlign="center">
               {it.mini && <span className="ex-mini" dangerouslySetInnerHTML={{__html: it.mini}} />}
-              {'best' in it && <span className={'ex-best' + (it.best ? ' has' : '')}>{it.best ? it.best + ' BPM' : '—'}</span>}
+              {'best' in it && <span className={'ex-best' + (it.best ? ' has' : '')} aria-label={it.best ? `打順了：${it.best} BPM` : '還沒記錄速度'}>{it.best ? `✓ ${it.best} BPM` : '未記錄'}</span>}
             </HStack>
           } />
       ))}
