@@ -4,9 +4,14 @@ import {Slider} from '@astryxdesign/core/Slider';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {Badge} from '@astryxdesign/core/Badge';
 import {Heading} from '@astryxdesign/core/Heading';
+import {Text} from '@astryxdesign/core/Text';
+import {VStack} from '@astryxdesign/core/VStack';
+import {HStack} from '@astryxdesign/core/HStack';
+import {Grid} from '@astryxdesign/core/Grid';
+import {Card} from '@astryxdesign/core/Card';
 import {
-  AppTheme, Choose, Dock, Field, Glossary, Guide, Header, ModeGrid, Panel, Seg, Status, Toggle,
-  load, save, useFlash, useKeys, useLatest, useStored,
+  AppTheme, Choose, Dock, ExItems, Field, Group, Guide, Header, Hint, InfoItems, ModeList, Page, Pair, PracticeCard,
+  SegChoice, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {MAX_BPM, MIN_BPM, MODE_NAME, PERFECT_MS, SHIFT_CELL, SHIFT_NAME, SUB_NAME, clampBpm, createKeeper, describeOff} from './core.js';
 import {PATTERNS, patternStaff} from './patterns.js';
@@ -128,8 +133,8 @@ function TimeKeeper() {
   const logSvg = useMemo(() => logChart(log), [log]);
 
   return (
-    <div className="app tk">
-      <div className="col-main">
+    <Page className="tk">
+      <VStack gap={4} className="col-main">
         <Header title="Time Keeper" tag="練時間感：節拍器消失幾小節再回來，你還對得上嗎？開麥克風就知道你快了還是慢了幾毫秒。"
           guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
         {showGuide && (
@@ -140,13 +145,13 @@ function TimeKeeper() {
           </Guide>
         )}
 
-        <section className="sheet" ref={practice} aria-label="目前的練習">
-          <div className="sheet-head">
-            <div className="ex-title"><Heading level={2}>{MODE_NAME[S.mode]}</Heading><span className="ex-en">{modeSub}</span></div>
+        <PracticeCard cardRef={practice}>
+          <HStack gap={2} hAlign="between" vAlign="start" wrap="wrap">
+            <VStack gap={0.5}><Heading level={2}>{MODE_NAME[S.mode]}</Heading><span className="ex-en">{modeSub}</span></VStack>
             <Button size="sm" label="點按測速" onClick={tap} />
-          </div>
+          </HStack>
           <div className="pat-now">
-            <span className="hint">打：<b>{p.name}</b></span>
+            <Text type="supporting">打：<Text weight="semibold" color="primary">{p.name}</Text></Text>
             <div className="pat-staff" dangerouslySetInnerHTML={{__html: patternStaff(p, 4, 1.7)}} />
           </div>
           <Status msg={msg} />
@@ -174,54 +179,49 @@ function TimeKeeper() {
               <div className="meter-last" aria-live="polite">{recent.length ? `這一下${describeOff(recent.at(-1))}` : '還沒有聽到打擊'}</div>
             </div>
           )}
-        </section>
+        </PracticeCard>
 
         {result && (
-          <section className="result" aria-labelledby="h-result">
-            <Heading level={2} id="h-result">這次的結果</Heading>
-            <Result r={result} latency={latency} chartBox={chartBox} chartW={chartW} />
+          <section aria-labelledby="h-result">
+            <Card>
+              <VStack gap={3}>
+                <Heading level={2} id="h-result">這次的結果</Heading>
+                <Result r={result} latency={latency} chartBox={chartBox} chartW={chartW} />
+              </VStack>
+            </Card>
           </section>
         )}
-      </div>
+      </VStack>
 
-      <div className="col-side">
-        <Panel title="打什麼" id="h-play">
-          <p className="hint">選一個動作，練習卡上會顯示一整小節的譜。麥克風會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</p>
-          <ol className="ex-list">
-            {groups.map(([g, qs]) => [
-              <li key={g} className="pat-group">{g}</li>,
-              ...qs.map(q => (
-                <li key={q.id}>
-                  <button type="button" className={'ex' + (q.id === p.id ? ' cur' : '')} onClick={() => {
-                    // the microphone checks the grid this pattern is played on
-                    set({pattern: q.id, detNote: q.det});
-                    practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
-                    flash(`打：${q.name}`);
-                  }}>
-                    <span className="ex-main"><span className="ex-name">{q.name}</span><span className="ex-en">偵測 {q.det === 'e' ? '8 分' : '4 分'}音符</span></span>
-                    <span className="ex-mini" dangerouslySetInnerHTML={{__html: patternStaff(q, 2)}} />
-                  </button>
-                </li>
-              )),
-            ])}
-          </ol>
-        </Panel>
+      <VStack gap={4} className="col-side">
+        <Group title="打什麼" id="h-play">
+          <Hint>選一個動作，練習卡上會顯示一整小節的譜。麥克風會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</Hint>
+          {groups.map(([g, qs]) => (
+            <ExItems key={g} header={g} cur={p.id} onPick={(i, it) => {
+              // the microphone checks the grid this pattern is played on
+              const q = qs[i];
+              set({pattern: q.id, detNote: q.det});
+              practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'});
+              flash(`打：${q.name}`);
+            }} items={qs.map(q => ({key: q.id, name: q.name, sub: `偵測 ${q.det === 'e' ? '8 分' : '4 分'}音符`, mini: patternStaff(q, 2)}))} />
+          ))}
+        </Group>
 
-        <Panel title="怎麼練" id="h-what">
-          <ModeGrid label="練習模式" value={S.mode} options={MODE_OPTS} onChange={m => set({mode: m})} />
-          {S.mode === 'metro' && <p className="hint">最基本的節拍器。細分音、拍號在下面的「節拍器」設定。</p>}
+        <Group title="怎麼練" id="h-what">
+          <ModeList label="練習模式" value={S.mode} options={MODE_OPTS} onChange={m => set({mode: m})} />
+          {S.mode === 'metro' && <Hint>最基本的節拍器。細分音、拍號在下面的「節拍器」設定。</Hint>}
           {S.mode === 'gap' && (
             <>
-              <div className="row2">
+              <Pair>
                 <Choose label="響幾小節" value={S.gapPlay} onChange={v => set({gapPlay: +v})} options={[1, 2, 4].map(n => ({value: n, label: `${n} 小節`}))} />
                 <Choose label="安靜幾小節" value={S.gapMute} onChange={v => set({gapMute: +v})} options={[1, 2, 4, 8].map(n => ({value: n, label: `${n} 小節`}))} />
-              </div>
+              </Pair>
               <Toggle label="安靜時畫面繼續標示拍子" description="關掉才是真的在練內在時間" value={S.gapShow} onChange={v => set({gapShow: v})} />
               <Toggle label="漸進：每成功一輪，安靜就多 1 小節" value={S.gapGrow} onChange={v => set({gapGrow: v})} />
               {S.gapGrow && (
                 <>
                   <Choose label="最多安靜幾小節" value={S.gapMax} onChange={v => set({gapMax: +v})} options={[4, 8, 16]} />
-                  <p className="hint">開麥克風時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</p>
+                  <Hint>開麥克風時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</Hint>
                 </>
               )}
             </>
@@ -231,65 +231,59 @@ function TimeKeeper() {
               <Choose label="click 響在哪裡" value={S.shiftPos} onChange={v => set({shiftPos: v})}
                 options={[{value: '24', label: '2、4 拍（偶數拍）'}, {value: 'and', label: '每拍的 &（反拍）'}, {value: 'e', label: '每拍的 e'},
                   {value: 'a', label: '每拍的 a'}, {value: 'bar', label: '每小節只有第 1 拍'}, {value: '2bar', label: '每 2 小節只有第 1 拍'}]} />
-              <p className="hint">你還是照拍點打，click 落在別的位置。畫面上方的小格子標出 click 在一拍裡的哪裡。</p>
+              <Hint>你還是照拍點打，click 落在別的位置。畫面上方的小格子標出 click 在一拍裡的哪裡。</Hint>
             </>
           )}
           {S.mode === 'ramp' && (
             <>
               <Field label="怎麼變">
-                <Seg label="怎麼變速" value={S.rampKind} onChange={v => set({rampKind: v})}
+                <SegChoice label="怎麼變速" value={S.rampKind} onChange={v => set({rampKind: v})}
                   options={[{value: 'linear', label: '一路變到終點', sub: '到了就維持'}, {value: 'ladder', label: '速度梯', sub: '到頂再回到起點'}]} />
               </Field>
-              <div className="row2">
+              <Pair>
                 <NumberInput label="終點 BPM" isIntegerOnly min={30} max={300} value={S.rampEnd}
                   onChange={v => set({rampEnd: clampBpm(Math.round(v) || DEFAULTS.rampEnd)})} />
                 <Choose label="每幾小節變一次" value={S.rampEvery} onChange={v => set({rampEvery: +v})} options={[1, 2, 4, 8]} />
                 <Choose label="每次變多少 BPM" value={S.rampStep} onChange={v => set({rampStep: +v})} options={[1, 2, 5, 10]} />
-              </div>
-              <p className="hint">起點就是下方播放列的速度。終點比起點快就是加速，比較慢就是減速。</p>
+              </Pair>
+              <Hint>起點就是下方播放列的速度。終點比起點快就是加速，比較慢就是減速。</Hint>
             </>
           )}
-        </Panel>
+        </Group>
 
-        <Panel title="節拍器" id="h-click">
-          <div className="row2">
+        <Group title="節拍器" id="h-click">
+          <Pair>
             <Choose label="拍號" value={S.meter} onChange={v => set({meter: +v})} options={[2, 3, 4, 5, 6, 7].map(n => ({value: n, label: `${n}/4`}))} />
             <Choose label="細分音" value={S.subGrid} onChange={v => set({subGrid: +v})} options={[2, 3, 4, 6].map(n => ({value: n, label: SUB_NAME[n]}))} />
-          </div>
+          </Pair>
           <Choose label="細分音的音量" value={S.subLevel} onChange={v => set({subLevel: v})}
             options={[{value: 'off', label: '不打，只有拍點'}, {value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}]} />
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => set({countIn: v})} />
-        </Panel>
+        </Group>
 
-        <Panel title={<>麥克風偵測 <Badge label="Beta" /></>} id="h-mic">
-          <p className="hint">用平板的麥克風聽鼓棒打在 pad 上的聲音。只在這台裝置上即時處理，不錄音、不上傳。平板請放在鼓架上，靠近小鼓。</p>
+        <Group title={<>麥克風偵測 <Badge label="Beta" /></>} id="h-mic">
+          <Hint>用平板的麥克風聽鼓棒打在 pad 上的聲音。只在這台裝置上即時處理，不錄音、不上傳。平板請放在鼓架上，靠近小鼓。</Hint>
           <Field label="你打的音符">
-            <Seg label="你打的音符" value={S.detNote} onChange={v => set({detNote: v})}
+            <SegChoice label="你打的音符" value={S.detNote} onChange={v => set({detNote: v})}
               options={[{value: 'q', label: '4 分音符', sub: '每拍一下'}, {value: 'e', label: '8 分音符', sub: '每拍兩下'}]} />
           </Field>
-          <div className="field">
+          <VStack gap={1.5}>
             <Slider label={`靈敏度：${S.sens}（抓不到就調高，雜音也被算進去就調低）`} valueDisplay="none" min={1} max={10} value={S.sens}
               onChange={v => { update({sens: v}); keeper.setSensitivity(v); }} />
             <div className="level" aria-hidden="true"><span className="level-bar" style={{width: `${mic ? level.bar : 0}%`}} /><span className="level-thr" style={{left: `${level.thr}%`}} /></div>
-            <span className="hint">{level.note}</span>
-          </div>
-          <div className="calib">
+            <Text type="supporting">{level.note}</Text>
+          </VStack>
+          <HStack gap={3} vAlign="center" wrap="wrap">
             <Button size="sm" label={calibbing ? '取消校正' : '延遲校正'} onClick={() => keeper.calibToggle()} />
-            <span className="hint">{calibText ?? (latency ? `延遲 ${latency.ms} 毫秒（${latency.date} 校正）；換了平板位置或接線請重做` : '還沒校正')}</span>
-          </div>
-        </Panel>
+            <Text type="supporting">{calibText ?? (latency ? `延遲 ${latency.ms} 毫秒（${latency.date} 校正）；換了平板位置或接線請重做` : '還沒校正')}</Text>
+          </HStack>
+        </Group>
 
-        <Panel title="練習紀錄" id="h-log">
+        <Group title="練習紀錄" id="h-log">
           <div className="chart" dangerouslySetInnerHTML={{__html: logSvg}} />
-          <ol className="log">
-            {log.length ? log.slice(0, 20).map((e, i) => (
-              <li key={e.d + i}>
-                <span className="lg-when">{fmt(e.d)}</span>
-                <span className="lg-what">{MODE_NAME[e.mode] || e.mode} · {e.bpm} BPM · {mmss(e.dur)}</span>
-                <span className="lg-num">{e.sd != null ? `${e.mean > 0 ? '+' : ''}${e.mean} ms · ±${e.sd}` : '—'}</span>
-              </li>
-            )) : <li className="empty">還沒有紀錄。練超過 10 秒、按停止後會記在這裡。</li>}
-          </ol>
+          <InfoItems empty="還沒有紀錄。練超過 10 秒、按停止後會記在這裡。"
+            items={log.slice(0, 20).map((e, i) => ({key: e.d + i, label: `${MODE_NAME[e.mode] || e.mode} · ${e.bpm} BPM · ${mmss(e.dur)}`,
+              sub: fmt(e.d), end: e.sd != null ? `${e.mean > 0 ? '+' : ''}${e.mean} ms · ±${e.sd}` : '—'}))} />
           {!!log.length && (
             <div>
               <Button size="sm" variant={armed ? 'destructive' : 'secondary'} label={armed ? '確定清除全部紀錄？' : '清除紀錄'} onClick={() => {
@@ -299,14 +293,14 @@ function TimeKeeper() {
               }} />
             </div>
           )}
-        </Panel>
+        </Group>
 
         <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「安裝應用程式」就能像 App 一樣使用，沒網路也能練。</p>
-      </div>
+      </VStack>
 
       <Dock actionLabel={mic ? '停止聽' : '開始聽'} onAction={() => keeper.micToggle()} bpm={S.bpm} setBpm={setBpm}
         min={MIN_BPM} max={MAX_BPM} playing={playing} onPlay={toggle} flash={flash} />
-    </div>
+    </Page>
   );
 }
 
@@ -317,16 +311,26 @@ function Result({r, latency, chartBox, chartW}) {
   const rate = e.due ? e.n / e.due : 1;
   return (
     <>
-      <div className="stats">
-        <div className="stat"><span>平均偏差</span><b>{e.mean > 0 ? '+' : ''}{e.mean} ms</b><small>{lean}</small></div>
-        <div className="stat"><span>穩定度</span><b>±{e.sd} ms</b><small>{steady}</small></div>
-        <div className="stat"><span>速度飄移</span>
-          {e.gap == null ? <><b>—</b><small>Gap click 開麥克風才有</small></>
-            : <><b>{e.gap > 0 ? '+' : ''}{e.gap} BPM</b><small>安靜時比設定{Math.abs(e.gap) < 1 ? '幾乎一樣' : e.gap > 0 ? '快' : '慢'}</small></>}
-        </div>
-      </div>
+      <Grid columns={3} gap={2}>
+        <Stat label="平均偏差" value={`${e.mean > 0 ? '+' : ''}${e.mean} ms`} note={lean} />
+        <Stat label="穩定度" value={`±${e.sd} ms`} note={steady} />
+        {e.gap == null ? <Stat label="速度飄移" value="—" note="Gap click 開麥克風才有" />
+          : <Stat label="速度飄移" value={`${e.gap > 0 ? '+' : ''}${e.gap} BPM`} note={`安靜時比設定${Math.abs(e.gap) < 1 ? '幾乎一樣' : e.gap > 0 ? '快' : '慢'}`} />}
+      </Grid>
       <div className="chart" ref={chartBox} dangerouslySetInnerHTML={{__html: hitChart(r.hits, r.dur, chartW)}} />
-      <p className="hint">抓到 {e.n} / {e.due} 下{rate < 0.9 ? '：抓不到的太多，數字可能不準，試著調高靈敏度或把平板放近一點' : ''}。{latency ? '' : '還沒做延遲校正，平均偏差會包含裝置延遲。'}</p>
+      <Hint>抓到 {e.n} / {e.due} 下{rate < 0.9 ? '：抓不到的太多，數字可能不準，試著調高靈敏度或把平板放近一點' : ''}。{latency ? '' : '還沒做延遲校正，平均偏差會包含裝置延遲。'}</Hint>
     </>
+  );
+}
+
+function Stat({label, value, note}) {
+  return (
+    <Card variant="muted" padding={2}>
+      <VStack gap={0.5} className="stat">
+        <Text type="supporting">{label}</Text>
+        <b>{value}</b>
+        <Text type="supporting">{note}</Text>
+      </VStack>
+    </Card>
   );
 }

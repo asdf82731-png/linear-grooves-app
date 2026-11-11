@@ -223,14 +223,14 @@ export function Letters({items}) {
 
 /* ---------- Astryx layout and choices (apps move to these one at a time) ---------- */
 // Page column: Astryx spacing between sections; .app keeps the safe-area padding and the room for the dock.
-export function Page({children}) {
-  return <VStack gap={4} className="app">{children}</VStack>;
+export function Page({children, className = ''}) {
+  return <VStack gap={4} className={('app ' + className).trim()}>{children}</VStack>;
 }
 
 // The practice card at the top of the page.
-export function PracticeCard({children, cardRef}) {
+export function PracticeCard({children, cardRef, label = '目前的練習'}) {
   return (
-    <section ref={cardRef} aria-label="目前的練習" className="practice">
+    <section ref={cardRef} aria-label={label} className="practice">
       <Card><VStack gap={3}>{children}</VStack></Card>
     </section>
   );
@@ -239,7 +239,7 @@ export function PracticeCard({children, cardRef}) {
 // A page region with a heading, separated from the one above by a divider.
 export function Group({title, id, children}) {
   return (
-    <VStack gap={3} as="section" aria-labelledby={id}>
+    <VStack gap={3} as="section" aria-labelledby={id} className="group">
       <Divider />
       {title && <Heading level={2} id={id}>{title}</Heading>}
       {children}
@@ -291,20 +291,31 @@ export function SegChoice({label, value, options, onChange}) {
   );
 }
 
-// Exercise list as Astryx list rows: name and colour-coded sticking, then the mini staff and best tempo.
-export function ExItems({items, cur, onPick}) {
+// Exercise list as Astryx list rows: name and colour-coded sticking (or a plain second line), then the mini staff
+// and, when the app keeps one, the best tempo. `cur` is the index of the current item, or its key.
+export function ExItems({items, cur, onPick, header}) {
   return (
-    <List hasDividers edge="flush">
+    <List hasDividers edge="flush" header={header && <Text type="supporting" weight="semibold">{header}</Text>}>
       {items.map((it, i) => (
-        <ListItem key={it.key} itemKey={it.key} isSelected={i === cur} onClick={() => onPick(i)}
-          label={it.name} description={it.stick && <span className="ex-st">{it.stick}</span>}
+        <ListItem key={it.key} itemKey={it.key} isSelected={i === cur || it.key === cur} onClick={() => onPick(i, it)}
+          label={it.name} description={it.stick ? <span className="ex-st">{it.stick}</span> : it.sub}
           endContent={
             <HStack gap={3} vAlign="center">
               {it.mini && <span className="ex-mini" dangerouslySetInnerHTML={{__html: it.mini}} />}
-              <span className={'ex-best' + (it.best ? ' has' : '')}>{it.best ? it.best + ' BPM' : '—'}</span>
+              {'best' in it && <span className={'ex-best' + (it.best ? ' has' : '')}>{it.best ? it.best + ' BPM' : '—'}</span>}
             </HStack>
           } />
       ))}
+    </List>
+  );
+}
+
+// Read-only rows (practice log): label, a second line, and a value at the end.
+export function InfoItems({items, empty}) {
+  if (!items.length) return <Hint>{empty}</Hint>;
+  return (
+    <List hasDividers edge="flush" density="compact">
+      {items.map(it => <ListItem key={it.key} itemKey={it.key} label={it.label} description={it.sub} endContent={<span className="lg-num">{it.end}</span>} />)}
     </List>
   );
 }
