@@ -52,7 +52,7 @@ function Sticking() {
   const [repsN, setRepsN] = useState(0);
   const [msg, flash, setMsg] = useFlash();
   const [help, setHelp] = useState(false);
-  const restart = useRef(false), practice = useRef(null), big = useRef(null), notation = useRef(null);
+  const restart = useRef(false), practice = useRef(null), notation = useRef(null);
 
   useEffect(() => save('sc.best', best), [best]);
   useEffect(() => save('sc.random', rand), [rand]);
@@ -66,11 +66,11 @@ function Sticking() {
   const SL = useMemo(() => swapped(cur.notes, S.leftLead), [cur, S.leftLead]);
   const html = useMemo(() => notationHtml(cur, SL), [cur, SL]);
 
-  // Slot highlighting goes straight to the DOM (big letters and the staff).
+  // Slot highlighting goes straight to the DOM (the staff).
   const hl = useRef({map: [], last: -1});
   useLayoutEffect(() => {
     const map = SL.map(() => []);
-    [big.current, notation.current].forEach(box => box?.querySelectorAll('[data-i]').forEach(el => map[+el.dataset.i]?.push(el)));
+    [notation.current].forEach(box => box?.querySelectorAll('[data-i]').forEach(el => map[+el.dataset.i]?.push(el)));
     // a re-render that rebuilt the elements keeps the slot that is sounding lit
     const last = hl.current.last;
     if (last >= 0) map[last]?.forEach(el => el?.classList.add('on'));
@@ -138,23 +138,6 @@ function Sticking() {
               : `${SUB_NAME[cur.sub]} · ${cur.notes.length / cur.sub} 拍一循環 · 第 ${idx + 1} / ${sheet.length} 個`}
           </div>
           <Status msg={msg} />
-          {!cur.poly && (
-            <div className="big" ref={big} aria-label="手順">
-              {Array.from({length: SL.length / cur.sub}, (_, b) => (
-                <span className="bt" key={b}>
-                  {Array.from({length: cur.sub}, (_, k) => {
-                    const i = b * cur.sub + k, n = SL[i];
-                    return (
-                      <span key={k} className={`n ${n.h === '-' ? 'rest' : n.h}${n.acc ? ' acc' : ''}`} data-i={i}>
-                        {!!n.g && <sup>{(n.h === 'R' ? 'l' : 'r').repeat(n.g)}</sup>}
-                        {n.h === 'B' ? <><b className="R">R</b><b className="L">L</b></> : n.h === '-' ? '·' : n.h}
-                      </span>
-                    );
-                  })}
-                </span>
-              ))}
-            </div>
-          )}
           <div className="notation" ref={notation} dangerouslySetInnerHTML={{__html: html}} />
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
           <DoneButton bpm={S.bpm} onClick={record} />
