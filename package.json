@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "dev": "vite"
+    "dev": "vite",
+    "check": "node scripts/check.mjs"
   },
   "dependencies": {
     "@astryxdesign/core": "0.7.12",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.0.0",
+    "playwright": "1.63.0",
     "vite": "^7.1.0"
   }
 }

@@ -30,3 +30,13 @@ python3 -m http.server 8000
 ```
 
 建置結果（`<app>/index.html`、`<app>/assets/`、`<app>/sw.js`…）要和 `src/` 一起 commit，GitHub Pages 直接提供它們。發佈新版前把 `<app>/src/public/sw.js` 的 `VERSION` 加一。
+
+### 自動檢查
+建置完、commit 之前跑一次：
+
+```sh
+npx playwright install chromium   # 第一次
+npm run check                     # 或 npm run check -- djent
+```
+
+每個頁面在手機直向、手機橫向、平板直向、平板橫向（TCL NXTPAPER 11）各開一次，檢查：打開沒有錯誤、播放鍵完整出現在畫面上（不用捲動）、BPM 輸入 240 時三位數沒有被截斷、頁面不會左右捲動。沒通過的會列出原因。
