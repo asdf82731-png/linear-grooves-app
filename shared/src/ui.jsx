@@ -99,56 +99,6 @@ export function Glossary({items}) {
   );
 }
 
-// Folding settings panel (「練習設定」 and friends).
-export function Fold({title, sub, children}) {
-  return (
-    <section className="panel fold">
-      <Collapsible defaultIsOpen={false} trigger={
-        <span className="fold-head"><Heading level={2}>{title}</Heading>{sub && <Text type="supporting">{sub}</Text>}</span>
-      }>
-        <div className="fold-body">{children}</div>
-      </Collapsible>
-    </section>
-  );
-}
-
-export function Panel({title, children, id}) {
-  return (
-    <section className="panel" aria-labelledby={id}>
-      {title && <Heading level={2} id={id}>{title}</Heading>}
-      {children}
-    </section>
-  );
-}
-
-// Big single-choice tiles (練什麼).
-export function ModeGrid({label, value, options, onChange}) {
-  return (
-    <div className="modes" role="radiogroup" aria-label={label}>
-      {options.map(o => (
-        <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="mode"
-          onClick={() => onChange(o.value)}>
-          <span className="mode-name">{o.label}</span>
-          {o.sub && <span className="mode-sub">{o.sub}</span>}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-// Segmented single choice with an optional small second line (一拍幾個音 and the like).
-export function Seg({label, value, options, onChange}) {
-  return (
-    <div className="seg" role="radiogroup" aria-label={label}>
-      {options.map(o => (
-        <button key={o.value} type="button" role="radio" aria-checked={o.value === value} onClick={() => onChange(o.value)}>
-          {o.label}{o.sub && <small>{o.sub}</small>}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function Field({label, children}) {
   return <div className="field"><Text type="label">{label}</Text>{children}</div>;
 }
@@ -194,26 +144,6 @@ export function ExNav({onPrev, onNext, reps}) {
 
 export function DoneButton({bpm, onClick}) {
   return <Button width="100%" label={`✓ 打順了，記錄 ${bpm} BPM`} onClick={onClick} />;
-}
-
-// Exercise list: name, colour-coded sticking, a half-bar mini staff and the best tempo.
-export function ExList({items, cur, onPick}) {
-  return (
-    <ol className="ex-list">
-      {items.map((it, i) => (
-        <li key={it.key}>
-          <button type="button" className={'ex' + (i === cur ? ' cur' : '')} onClick={() => onPick(i)}>
-            <span className="ex-main">
-              <span className="ex-name">{it.name}</span>
-              {it.stick && <span className="ex-st">{it.stick}</span>}
-            </span>
-            {it.mini && <span className="ex-mini" dangerouslySetInnerHTML={{__html: it.mini}} />}
-            <span className={'ex-best' + (it.best ? ' has' : '')}>{it.best ? it.best + ' BPM' : '—'}</span>
-          </button>
-        </li>
-      ))}
-    </ol>
-  );
 }
 
 // Colour-coded letters: [{c, cls}] → <b class=cls>c</b>

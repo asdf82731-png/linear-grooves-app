@@ -3,9 +3,12 @@ import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {CheckboxInput} from '@astryxdesign/core/CheckboxInput';
 import {
-  AppTheme, Choose, Dock, ExList, Field, Fold, Glossary, Guide, Header, ModeGrid, Panel, Seg, SheetHead, Status, Toggle,
-  load, save, useFlash, useKeys, useLatest, useStored,
+  AppTheme, Choose, Dock, ExItems, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList, Page, Pair, PracticeCard,
+  SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
+import {HStack} from '@astryxdesign/core/HStack';
+import {Text} from '@astryxdesign/core/Text';
+import {List, ListItem} from '@astryxdesign/core/List';
 import {
   DJENT_CELLS, LEVELS, LIBRARY, LIB_CATS, LIB_NAME, SUB_NAME, VOICES, buildLib, catItems, cycleText, detectLevel,
   displayIndex, editGroup, expand, favMini, flatten, generate, makeGroup, notationHtml, pool, rotations, setGroup, shiftLabel,
@@ -145,7 +148,7 @@ function Grooves() {
   const shiftBy = d => edit(p => { const n = SL.length; p.shift = (((p.shift || 0) + d) % n + n) % n; });
 
   return (
-    <div className="app">
+    <Page>
       <Header nav={<ToolsNav cur="grooves" />} title="Linear Grooves" tag="練習「線性」鼓組節奏：任何時刻只打一個鼓，手和腳輪流出現。"
         guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
       {showGuide && (
@@ -156,37 +159,37 @@ function Grooves() {
         </Guide>
       )}
 
-      <Seg label="節奏從哪裡來" value={S.src} onChange={v => {
+      <ModeList label="節奏從哪裡來" value={S.src} onChange={v => {
         update({src: v});
         if (v === 'lib') apply(buildLib(LIBRARY[S.libIdx], S), true); else regen();
       }} options={[{value: 'lib', label: '精選節奏', sub: '固定清單・記錄最佳速度'}, {value: 'gen', label: '隨機產生', sub: '每次都不一樣'}]} />
 
-      <section className="sheet" ref={practice} aria-label="目前的節奏">
+      <PracticeCard cardRef={practice} label="目前的節奏">
         {lib && <SheetHead name={def.name} en={def.en} best={best[def.id]} />}
-        <div className="sheet-head">
+        <HStack gap={2} hAlign="between" vAlign="center" wrap="wrap">
           <div className="meta">
             {pattern.cell
               ? `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · Djent：${pattern.cell.map(g => g.stick.length).join('+')} 個一組`
               : `${SUB_NAME[pattern.sub]} · ${pattern.beats}/4 · ${pattern.bars} 小節 · ${pattern.groups.length} 組`}
           </div>
-          <div className="sheet-tools">
+          <HStack gap={1.5}>
             <Button size="sm" variant="ghost" label="☆ 收藏" onClick={() => { setFavs([{p: clone(pattern), bpm: S.bpm}, ...favs].slice(0, 50)); flash('已加入「我的收藏」'); }} />
             <Button size="sm" variant="ghost" label="複製" onClick={async () => {
               const text = `${stickingText(pattern)}  (${SUB_NAME[pattern.sub]}, ${pattern.beats}/4, ${S.bpm} BPM)`;
               try { await navigator.clipboard.writeText(text); flash('已複製，可以貼到筆記或傳給別人'); } catch { flash(text); }
             }} />
-          </div>
-        </div>
+          </HStack>
+        </HStack>
         <Status msg={msg} />
-        {pattern.cell && <p className="cycle">{cycleText(pattern)}</p>}
+        {pattern.cell && <Text as="p" className="cycle">{cycleText(pattern)}</Text>}
         <div className="notation" ref={notation} dangerouslySetInnerHTML={{__html: html}} />
         <div className="legend" aria-hidden="true">
           <span><i className="dot R" />R 右手</span><span><i className="dot L" />L 左手</span><span><i className="dot K" />K 大鼓（右腳）</span>
         </div>
-        <div className="strip-head">
-          <span className="strip-title">{pattern.cell ? 'Riff 由這幾組組成（一直重複）' : '節奏由這幾組組成'}</span>
-          <span className="hint">點一組可以換掉它</span>
-        </div>
+        <HStack gap={2} hAlign="between" vAlign="end" wrap="wrap">
+          <Text weight="semibold">{pattern.cell ? 'Riff 由這幾組組成（一直重複）' : '節奏由這幾組組成'}</Text>
+          <Text type="supporting">點一組可以換掉它</Text>
+        </HStack>
         <Strip ref={strip} pattern={pattern} S={S} picker={picker} n={SL.length} onPick={gi => setPicker(picker === gi ? -1 : gi)} />
         {picker >= 0 && pattern.groups[picker] && (
           <Picker pattern={pattern} gi={picker} S={S}
@@ -195,58 +198,58 @@ function Grooves() {
             onClose={() => setPicker(-1)} />
         )}
         {lib && <Button width="100%" label={`✓ 打順了，記錄 ${S.bpm} BPM`} onClick={record} />}
-      </section>
+      </PracticeCard>
 
       {lib ? (
-        <Panel title="精選節奏" id="h-lib">
-          <ModeGrid label="節奏分類" value={def.cat} onChange={cat => {
+        <Group title="精選節奏" id="h-lib">
+          <ModeList label="節奏分類" value={def.cat} onChange={cat => {
             const items = catItems(cat);
             loadLib(items.includes(S.libLast[cat]) ? S.libLast[cat] : items[0]);
           }} options={Object.entries(LIB_CATS).map(([cat, name]) => ({value: cat, label: name, sub: `${catItems(cat).length} 個`}))} />
-          <p className="hint">點一個開始練，右邊是前 2 拍的譜。練熟了按「✓ 打順了」記下速度，清單上就看得到哪些練過、練到多快。</p>
-          <ExList cur={catItems(def.cat).indexOf(S.libIdx)}
+          <Hint>點一個開始練，右邊是前 2 拍的譜。練熟了按「✓ 打順了」記下速度，清單上就看得到哪些練過、練到多快。</Hint>
+          <ExItems cur={catItems(def.cat).indexOf(S.libIdx)}
             onPick={k => { loadLib(catItems(def.cat)[k]); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
             items={catItems(def.cat).map(i => {
               const d = LIBRARY[i];
-              return {key: d.id, name: d.name, stick: <span className="ex-en">{d.en}</span>, mini: favMini(buildLib(d, S), S), best: best[d.id]};
+              return {key: d.id, name: d.name, sub: d.en, mini: favMini(buildLib(d, S), S), best: best[d.id]};
             })} />
-        </Panel>
+        </Group>
       ) : (
-        <Panel title="難度" id="h-level">
+        <Group title="難度" id="h-level">
           <Field label="節奏類型">
-            <Seg label="節奏類型" value={S.type} onChange={v => regen({type: v})}
+            <ModeList label="節奏類型" value={S.type} onChange={v => regen({type: v})}
               options={[{value: 'normal', label: '一般', sub: '剛好湊滿小節'}, {value: 'djent', label: 'Djent 線性', sub: '分組跨過小節線'}]} />
           </Field>
           {S.type === 'djent' && (
             <>
-              <p className="hint">固定的一組（或幾組）一直重複，像 Djent 的吉他 riff 一樣繞過小節線。點節奏裡任一組可以換掉它，每次重複都會一起換。</p>
-              <div className="row2">
+              <Hint>固定的一組（或幾組）一直重複，像 Djent 的吉他 riff 一樣繞過小節線。點節奏裡任一組可以換掉它，每次重複都會一起換。</Hint>
+              <Pair>
                 <Choose label="每組長度" value={S.dCell} onChange={v => regen({dCell: v})}
                   options={[{value: '3', label: '3 個一組'}, {value: '5', label: '5 個一組'}, {value: '7', label: '7 個一組'},
                     {value: '4+5', label: '4 + 5（9 個一循環）'}, {value: '5+6', label: '5 + 6（11 個）'}, {value: '5+7', label: '5 + 7（12 個）'},
                     {value: '6+7', label: '6 + 7（13 個）'}, {value: '3+3+5', label: '3 + 3 + 5（11 個）'}]} />
                 <Choose label="樂句結尾" value={S.dEnd} onChange={v => regen({dEnd: v})}
                   options={[{value: 'cut', label: '截斷（預設）'}, {value: 'full', label: '跑完整個循環'}]} />
-              </div>
+              </Pair>
               <Field label="樂句長度">
-                <Seg label="樂句長度" value={S.dPhrase} onChange={v => regen({dPhrase: v})}
+                <SegChoice label="樂句長度" value={S.dPhrase} onChange={v => regen({dPhrase: v})}
                   options={[{value: 2, label: '2 小節'}, {value: 4, label: '4 小節'}, {value: 8, label: '8 小節'}]} />
-                <span className="hint">選「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</span>
+                <Text type="supporting">選「跑完整個循環」時，會自動延長到分組接回第 1 拍為止。</Text>
               </Field>
             </>
           )}
-          <Seg label="難度" value={level} onChange={v => { const L = LEVELS[v]; regen({sizes: L.sizes.slice(), lib: L.lib, doubleKick: L.doubleKick}); }}
+          <SegChoice label="難度" value={level} onChange={v => { const L = LEVELS[v]; regen({sizes: L.sizes.slice(), lib: L.lib, doubleKick: L.doubleKick}); }}
             options={[{value: 'easy', label: '入門'}, {value: 'mid', label: '中等'}, {value: 'hard', label: '進階'}]} />
-          <p className="hint">{level === 'custom' ? '目前使用你在「進階規則」裡的自訂設定。選一個難度可以回到預設。' : LEVELS[level].hint}</p>
+          <Hint>{level === 'custom' ? '目前使用你在「進階規則」裡的自訂設定。選一個難度可以回到預設。' : LEVELS[level].hint}</Hint>
           <Field label="一拍打幾個音">
-            <Seg label="一拍打幾個音" value={S.sub} onChange={v => regen({sub: v})}
+            <SegChoice label="一拍打幾個音" value={S.sub} onChange={v => regen({sub: v})}
               options={[{value: 4, label: '4 個', sub: '16 分音符'}, {value: 3, label: '3 個', sub: '三連音'}, {value: 6, label: '6 個', sub: '六連音'}]} />
           </Field>
-        </Panel>
+        </Group>
       )}
 
-      <Fold title="修改這個節奏" sub="挪動、換順序、左右對調">
-        <div className="tools">
+      <FoldGroup title="修改這個節奏" sub="挪動、換順序、左右對調">
+        <List hasDividers edge="flush">
           <Tool title="整段往前／往後挪" text="每按一下挪一個音，練習從不同位置開始。"
             ctl={<><Button label="◀" tooltip="往前挪一個音" onClick={() => shiftBy(-1)} /><Button label="▶" tooltip="往後挪一個音" onClick={() => shiftBy(1)} /></>}
             state={<>{shiftLabel(pattern)} {!!pattern.shift && <Button size="sm" variant="ghost" label="回到原位" onClick={() => edit(p => { p.shift = 0; })} />}</>} />
@@ -271,71 +274,72 @@ function Grooves() {
             flash('左右手已對調');
           }} />} />
           <Tool title="換打的鼓" text="手順不變，重新分配要打的鼓（選「Fill」配器時最明顯）。" ctl={<Button label="換鼓" onClick={() => revoice()} />} />
-        </div>
-      </Fold>
+        </List>
+      </FoldGroup>
 
-      <Fold title="練習設定" sub="節拍器、預備拍、自動加速">
+      <FoldGroup title="練習設定" sub="節拍器、預備拍、自動加速">
         <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
         <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
           options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
         <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
         <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
         {S.trainer && (
-          <div className="row2">
+          <Pair>
             <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
             <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
             <NumberInput label="最快到（BPM）" isIntegerOnly min={40} max={260} value={S.trainerMax}
               onChange={v => update({trainerMax: Math.max(40, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
-          </div>
+          </Pair>
         )}
-      </Fold>
+      </FoldGroup>
 
       {!lib && (
-        <Fold title="進階規則" sub="自己決定怎麼產生節奏">
-          <div className="row2">
+        <FoldGroup title="進階規則" sub="自己決定怎麼產生節奏">
+          <Pair>
             <Choose label="拍號（一小節幾拍）" value={S.beats} onChange={v => regen({beats: +v})} options={[2, 3, 4, 5, 6, 7].map(n => ({value: n, label: `${n}/4`}))} />
             {S.type !== 'djent' && (
               <Field label="幾個小節">
-                <Seg label="幾個小節" value={S.bars} onChange={v => regen({bars: v})} options={[{value: 1, label: '1'}, {value: 2, label: '2'}]} />
+                <SegChoice label="幾個小節" value={S.bars} onChange={v => regen({bars: v})} options={[{value: 1, label: '1'}, {value: 2, label: '2'}]} />
               </Field>
             )}
-          </div>
+          </Pair>
           <Field label="每組長度（幾個音）">
-            <div className="chips">
+            <HStack gap={4} wrap="wrap">
               {[2, 3, 4, 5, 6, 7, 8].map(n => (
                 <CheckboxInput key={n} label={String(n)} value={S.sizes.includes(n)}
                   onChange={on => regen({sizes: [2, 3, 4, 5, 6, 7, 8].filter(k => (k === n ? on : S.sizes.includes(k)))})} />
               ))}
-            </div>
+            </HStack>
           </Field>
           <Field label="打法變化">
-            <Seg label="打法變化" value={S.lib} onChange={v => { regen({lib: v}); flash(`打法變化：${LIB_NAME[v]}`); }}
+            <SegChoice label="打法變化" value={S.lib} onChange={v => { regen({lib: v}); flash(`打法變化：${LIB_NAME[v]}`); }}
               options={[{value: 'classic', label: '常見'}, {value: 'ext', label: '較多'}, {value: 'all', label: '全部'}]} />
-            <span className="hint">常見：鼓手常用的打法。較多：同一隻手最多連打 2 下的所有打法。全部：沒有限制。</span>
+            <Text type="supporting">常見：鼓手常用的打法。較多：同一隻手最多連打 2 下的所有打法。全部：沒有限制。</Text>
           </Field>
-          <div className="row2">
+          <Pair>
             <Field label="大鼓在每組的">
-              <Seg label="大鼓位置" value={S.kickPos} onChange={v => regen({kickPos: v})} options={[{value: 'end', label: '最後'}, {value: 'start', label: '最前'}]} />
+              <SegChoice label="大鼓位置" value={S.kickPos} onChange={v => regen({kickPos: v})} options={[{value: 'end', label: '最後'}, {value: 'start', label: '最前'}]} />
             </Field>
             <Choose label="手打哪些鼓" value={S.orch} onChange={v => { update({orch: v}); revoice({...S, orch: v}); }}
               options={[{value: 'hh', label: '右手 Hi-hat、左手小鼓'}, {value: 'ride', label: '右手 Ride、左手小鼓'}, {value: 'china', label: '右手 China、左手小鼓'},
                 {value: 'crash', label: '右手 Crash、左手小鼓'}, {value: 'toms', label: 'Fill：加入中鼓、落地鼓'}]} />
-          </div>
+          </Pair>
           <Toggle label="可以連踩兩下大鼓（K K）" value={S.doubleKick} onChange={v => regen({doubleKick: v})} />
           <Toggle label="每組第一個音打重音（大鼓不打重音）" value={S.accents} onChange={v => update({accents: v})} />
-        </Fold>
+        </FoldGroup>
       )}
 
-      <Panel title="我的收藏" id="h-fav">
-        <ul className="favs">
-          {!favs.length && <li className="empty">還沒有收藏。遇到喜歡的節奏，按樂譜右上角的「☆ 收藏」。</li>}
+      <Group title="我的收藏" id="h-fav">
+        {!favs.length && <Hint>還沒有收藏。遇到喜歡的節奏，按樂譜右上角的「☆ 收藏」。</Hint>}
+        {!!favs.length && <List hasDividers edge="flush">
           {favs.map((f, i) => (
-            <li className="fav" key={i + stickingText(f.p)}>
-              <div className="fav-main">
-                <div className="fav-mini" dangerouslySetInnerHTML={{__html: favMini(f.p, S)}} />
-                <div className="fav-stk">{stickingText(f.p)}</div>
-                <div className="fav-meta">{SUB_NAME[f.p.sub]} · {f.p.beats}/4 · {f.p.bars} 小節 · {f.bpm} BPM</div>
-              </div>
+            <ListItem key={i + stickingText(f.p)} itemKey={i + stickingText(f.p)}
+              label={<span className="fav-stk">{stickingText(f.p)}</span>}
+              description={<>
+                <span className="fav-mini" dangerouslySetInnerHTML={{__html: favMini(f.p, S)}} />
+                {SUB_NAME[f.p.sub]} · {f.p.beats}/4 · {f.p.bars} 小節 · {f.bpm} BPM
+              </>}
+              endContent={<HStack gap={1.5}>
               <Button size="sm" label="載入" onClick={() => {
                 // a favourite is a groove of your own, not one from the curated list
                 const p = clone(f.p);
@@ -349,26 +353,24 @@ function Grooves() {
                 setArmedFav(-1);
                 setFavs(favs.filter((_, j) => j !== i));
               }} />
-            </li>
+              </HStack>} />
           ))}
-        </ul>
-      </Panel>
+        </List>}
+      </Group>
 
       <p className="foot">在 Chrome 選單選「加到主畫面」就能像 App 一樣使用，沒網路也能練。</p>
 
       <Dock actionLabel={lib ? '下一個' : '換一個'} onAction={nextGroove} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />
-    </div>
+    </Page>
   );
 }
 
+// One edit tool as a list row: what it does, its buttons at the end, and its current state under the text.
 function Tool({title, text, ctl, state}) {
   return (
-    <div className="tool">
-      <div className="tool-txt"><b>{title}</b><span>{text}</span></div>
-      <div className="tool-ctl">{ctl}</div>
-      {state && <div className="tool-state">{state}</div>}
-    </div>
+    <ListItem label={title} description={<>{text}{state && <span className="tool-state">{state}</span>}</>}
+      endContent={<HStack gap={1.5}>{ctl}</HStack>} />
   );
 }
 
