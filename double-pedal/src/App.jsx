@@ -3,8 +3,8 @@ import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {CheckboxInput} from '@astryxdesign/core/CheckboxInput';
 import {
-  AppTheme, Choose, DoneButton, Dock, ExList, ExNav, Field, Fold, Glossary, Guide, Header, Letters, ModeGrid, Panel,
-  Seg, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
+  AppTheme, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, Letters,
+  ModeList, Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {
   BASIC, COMBO, COUNTS, GROOVE, HEEL, HIHAT, INST_NAME, LIMB_NAME, MODES, SUB_NAME,
@@ -158,7 +158,7 @@ function DoublePedal() {
   const showGuide = help || !S.seenGuide;
 
   return (
-    <div className="app">
+    <Page>
       <Header title="Double Pedal" tag="練雙踏與雙腳技巧：單擊、雙擊、Gallop、手腳組合、腳踩鈸獨立……跟著節拍器從慢練到快。"
         guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
 
@@ -170,7 +170,7 @@ function DoublePedal() {
         </Guide>
       )}
 
-      <section className="sheet" ref={practice} aria-label="目前的練習">
+      <PracticeCard cardRef={practice}>
         <SheetHead name={cur.name} en={cur.en || st.map(s => s.c).join('').replace(/(.{4})/g, '$1 ').trim()} best={best[cur.key]} />
         <div className="meta">{SUB_NAME[cur.sub]} · {cur.len / cur.sub} 拍一循環 · 第 {idx + 1} / {sheet.length} 個</div>
         <Status msg={msg} />
@@ -193,21 +193,21 @@ function DoublePedal() {
         {cur.tip && <p className="tip">{cur.tip}</p>}
         <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
         <DoneButton bpm={S.bpm} onClick={record} />
-      </section>
+      </PracticeCard>
 
-      <Panel title="練什麼" id="h-what">
-        <ModeGrid label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
-        <p className="hint">{MODE_HINT[S.mode]}</p>
+      <Group title="練什麼" id="h-what">
+        <ModeList label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
+        <Hint>{MODE_HINT[S.mode]}</Hint>
         {S.mode === 'rand' && (
           <>
-            <div className="row2">
+            <Pair>
               <Field label="一拍踩幾個音">
-                <Seg label="一拍踩幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})}
+                <SegChoice label="一拍踩幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})}
                   options={[{value: 2, label: '2 個', sub: '8 分'}, {value: 3, label: '3 個', sub: '三連音'}, {value: 4, label: '4 個', sub: '16 分'}]} />
               </Field>
               <Choose label="同一隻腳最多連踩" value={S.rRun} onChange={v => rebuild({rRun: +v})}
                 options={[{value: 1, label: '1 下（左右交替）'}, {value: 2, label: '2 下'}, {value: 3, label: '3 下'}, {value: 4, label: '4 下'}]} />
-            </div>
+            </Pair>
             <CheckboxInput label="加入休止（空拍）" value={S.rRest} onChange={v => rebuild({rRest: v})} />
             <div>
               <Button size="sm" label="換一組新的" onClick={() => {
@@ -219,16 +219,16 @@ function DoublePedal() {
             </div>
           </>
         )}
-        <ExList cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
+        <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
           items={sheet.map(ex => {
             const lanes = swapped(ex, S.leftLead);
             return {key: ex.key, name: ex.name, best: best[ex.key], stick: <Letters items={sticking(ex, lanes)} />, mini: miniFor(ex, lanes)};
           })} />
-      </Panel>
+      </Group>
 
-      <Fold title="腳法技巧" sub="踩法、設定、常見問題"><Glossary items={TECHNIQUE} /></Fold>
+      <FoldGroup title="腳法技巧" sub="踩法、設定、常見問題"><Glossary items={TECHNIQUE} /></FoldGroup>
 
-      <Fold title="練習設定" sub="聲音、次數、左腳開始、計時、節拍器">
+      <FoldGroup title="練習設定" sub="聲音、次數、左腳開始、計時、節拍器">
         <Choose label="App 幫你打哪些聲部" value={S.playPart} onChange={v => update({playPart: v})}
           options={[{value: 'all', label: '全部（手和腳）'}, {value: 'hands', label: '只播手的部分（你踩腳）'},
             {value: 'feet', label: '只播腳的部分（你打手）'}, {value: 'none', label: '都不播（只有節拍器）'}]} />
@@ -244,20 +244,20 @@ function DoublePedal() {
         <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
         <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
         {S.trainer && (
-          <div className="row2">
+          <Pair>
             <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
             <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
             <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
               onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
-          </div>
+          </Pair>
         )}
-      </Fold>
+      </FoldGroup>
 
       <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「加到主畫面」就能像 App 一樣使用。</p>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />
-    </div>
+    </Page>
   );
 }
 
