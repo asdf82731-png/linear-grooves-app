@@ -177,18 +177,6 @@ function DoublePedal() {
           <SheetHead name={cur.name} en={cur.en || st.map(s => s.c).join('').replace(/(.{4})/g, '$1 ').trim()} best={best[cur.key]} />
           <div className="meta">{SUB_NAME[cur.sub]} · {cur.len / cur.sub} 拍一循環 · 第 {idx + 1} / {sheet.length} 個</div>
           <Status msg={msg} />
-          {S.mode !== 'hh' && (
-            <div className="big" aria-label="腳順">
-              {Array.from({length: cur.len / cur.sub}, (_, b) => (
-                <span className="bt" key={b}>
-                  {Array.from({length: cur.sub}, (_, k) => {
-                    const i = b * cur.sub + k, s = st[i];
-                    return <span key={k} className={`n ${s.cls}${hl === i ? ' on' : ''}`}>{s.c}</span>;
-                  })}
-                </span>
-              ))}
-            </div>
-          )}
           <Staff ex={cur} lanes={CL} hl={hl} />
           {cur.tip && <Tip>{cur.tip}</Tip>}
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
