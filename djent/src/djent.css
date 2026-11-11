@@ -1,5 +1,5 @@
-/* Djent: staff and kit grid (rendered as HTML strings by music.js), group bars, ghost notes, and the tablet two-column layout. */
-.basic-tg { flex: 1 1 220px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-element, 10px); background: var(--color-background-body); }
+/* Djent: the staff (rendered as an SVG string by music.js), group bars, ghost notes, and the tablet layout. */
+.basic-tg { padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-element, 10px); background: var(--color-background-body); }
 .basic .basic-tg { border-color: var(--color-accent); background: var(--hl); }
 .cycle { margin: 0; font-size: 13px; }
 .lg-note { color: var(--color-text-secondary); }
@@ -8,46 +8,6 @@
 .ex-st b.K { color: var(--k); } .ex-st b.S { color: var(--l); } .ex-st b.g { color: var(--l); opacity: .65; font-weight: 500; }
 .ex-st i { font-style: normal; color: var(--color-border); padding: 0 3px; }
 [aria-current="true"] .ex-mini .ms .sl { stroke: var(--color-text-primary); }
-
-/* Grid: hits coloured by limb, shaped by instrument (cymbals are diamonds, drums dots). */
-.kit { overflow-x: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
-.ksys { display: flex; flex-direction: column; gap: 2px; scroll-margin: 12px; }
-.kr { display: flex; align-items: stretch; gap: 6px; min-width: calc(58px + var(--slots, 16) * 15px); }
-.kit.dense .kr { min-width: calc(58px + var(--slots, 24) * 11px); }
-.kit.dense .hit { width: 8px; height: 8px; }
-.kl { flex: none; width: 52px; display: flex; flex-direction: column; justify-content: center; font-size: 12px; font-weight: 600; line-height: 1.15; }
-.kl small { font-size: 10px; font-weight: 500; color: var(--color-text-secondary); }
-.kb { flex: 1; display: flex; border-left: 1px solid var(--color-border); }
-.kc { flex: 1; min-width: 0; height: 28px; display: grid; place-items: center; border-radius: 3px; }
-.kc.fill { background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
-.kc.on, .kc.fill.on { background: var(--hl); }
-.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--color-text-secondary); }
-.kr.cnt .kb { border-left-color: transparent; }
-.kr.cnt .kl { font-size: 10px; color: var(--color-text-secondary); font-weight: 500; }
-.hit { display: block; width: 11px; height: 11px; border-radius: 50%; }
-.kr .hit.RH { background: var(--r); } .kr .hit.LH { background: var(--l); }
-.kr .hit.RF { background: var(--k); } .kr .hit.LF { background: var(--lf); }
-.hit.hh, .hit.ride { border-radius: 2px; transform: rotate(45deg); width: 9px; height: 9px; }
-.hit.china, .hit.crash { border-radius: 2px; transform: rotate(45deg); width: 10px; height: 10px; }
-.hit.china { background: transparent !important; border: 2.5px solid var(--r); }
-.hit.lv-g { width: 6px; height: 6px; opacity: .6; }
-.hit.lv-a { box-shadow: 0 0 0 2px var(--color-background-surface), 0 0 0 3.5px var(--l); }
-.hit.lv-s { opacity: .55; }
-.kc.on .hit.lv-a { box-shadow: 0 0 0 2px var(--hl), 0 0 0 3.5px var(--l); }
-.kr.cy .kl, .kr.tm .kl { color: var(--r); } .kr.sn .kl { color: var(--l); }
-.kr.gp .kl { color: var(--color-text-secondary); font-weight: 500; }
-.kr.bd .kl { color: var(--color-text-primary); }
-.kr.bd .kl small em { font-style: normal; font-weight: 600; }
-.kr.bd .kl .fR { color: var(--k); } .kr.bd .kl .fL { color: var(--lf); }
-.kr.gp .kc { height: 20px; place-items: stretch; padding: 0; border-radius: 0; }
-.kc .gc { position: relative; display: block; width: 100%; height: 100%; font: 600 10px/1 var(--f-mono); color: var(--color-text-secondary); white-space: nowrap; overflow: visible; }
-.kc .gc::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; background: var(--color-text-secondary); opacity: .55; }
-.kc .gc.alt::after { background: var(--color-accent); opacity: .85; }
-.kc .gc.f::after { background: var(--r); opacity: .6; }
-.kc .gc.f.alt::after { background: var(--l); opacity: .6; }
-.kc .gc.s::after { left: 2px; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
-.kc .gc.e::after { right: 2px; border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
-.kc .gc.s { padding: 1px 0 0 2px; color: var(--color-text-primary); z-index: 1; }
 
 /* Staff */
 .notation { overflow-x: auto; display: flex; flex-direction: column; gap: 4px; }
@@ -73,15 +33,11 @@
 .staff .ph { fill: transparent; }
 .staff .ph.fill { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 .staff .ph.on { fill: var(--hl); }
-@media (prefers-reduced-motion: no-preference) { .kc, .staff .ph { transition: background-color 60ms linear, fill 60ms linear; } }
+@media (prefers-reduced-motion: no-preference) { .staff .ph { transition: background-color 60ms linear, fill 60ms linear; } }
 
 /* Tablet: score on the left, settings on the right */
 @media (min-width: 900px) {
   .practice-body { gap: 8px; }
-  .kit { gap: 10px; }
-  .kc { height: 24px; }
-  .kr.gp .kc { height: 18px; }
-  .kr { min-width: 0; }
   /* Staff: two bars per line, so a 4-bar phrase fits on one screen. */
   .notation { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
   .notation svg { min-width: 0 !important; }
@@ -91,13 +47,8 @@
   .app.djent { padding-top: 10px; }
   .practice-card { padding: 10px 12px; }
   .practice-body { gap: 6px; }
-  .kit { gap: 6px; }
-  .kc { height: 20px; }
-  .kr.gp .kc { height: 15px; }
-  .kr.cnt .kc { height: 13px; }
 }
 /* Tablet in portrait: still one column, but use the extra width. */
 @media (min-width: 760px) and (max-width: 899px) {
   .app.djent, .dock-in { max-width: 860px; }
-  .kc { height: 30px; }
 }

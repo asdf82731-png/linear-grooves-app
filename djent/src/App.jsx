@@ -1,20 +1,19 @@
 import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
-import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
 import {HStack} from '@astryxdesign/core/HStack';
 import {Text} from '@astryxdesign/core/Text';
 import {
   AppTheme, MainColumn, SideColumn, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
   Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
-import {CATS, FILLS, LIB, build, cycleText, describe, gridHtml, miniFor, pick, riffText, staffHtml} from './music.js';
+import {CATS, FILLS, LIB, build, cycleText, describe, miniFor, pick, riffText, staffHtml} from './music.js';
 import {createEngine} from './engine.js';
 
 const MIN_BPM = 30, MAX_BPM = 240;
 const DEFAULTS = {
   cat: 'chug', idx: {chug: 0, odd: 0, snare: 0, sext: 0, ghost: 0, fill: 0},
-  basic: false, view: 'staff', phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
+  basic: false, phrase: 4, fillLen: 'auto', fillPick: 'rand', end: 'cut',
   sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
   reps: 8, autoNext: false, playPart: 'all', timer: 0,
   bpm: 80, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
@@ -36,11 +35,11 @@ const CAT_HINT = {
   fill: '前面是簡單的 Djent 節奏，最後是這個 Fill。每個 Fill 都會剛好結束在下一輪的第 1 拍。',
 };
 const TERMS = [
-  ['分組', '格子圖的「分組」那一排，一段色條是一組，數字是這組有幾個音。'],
+  ['分組', '譜下方的色條，一段是一組，數字是這組有幾個音。'],
   ['↺ 接回第 1 拍', '奇數分組繞了幾小節以後，剛好又從第 1 拍開始。'],
   ['✂ 截斷', '樂句結束（或 Fill 開始）時，這一組還沒打完就切掉，下一輪從頭開始。'],
   ['基本練習', '只用 Hi-hat、小鼓、大鼓，Fill 也一樣。先用它把手腳配合打穩，再關掉練完整的音色和筒鼓 Fill。'],
-  ['Ghost note', '小鼓上很輕的音，譜上寫在括號裡 (S)，格子圖是比較小、比較淡的點。棒子離鼓皮 1～2 公分輕輕落下。'],
+  ['Ghost note', '小鼓上很輕的音，譜上寫在括號裡 (S)。棒子離鼓皮 1～2 公分輕輕落下。'],
   ['Gospel chops', '手、手、腳輪流的快速線性 Fill，例如 R L K。'],
 ];
 const TIPS = [
@@ -51,11 +50,10 @@ const TIPS = [
   ['手腳一樣大聲', '線性 Fill 最常見的問題是腳比手小聲。先慢速，聽每一下是不是一樣大。'],
   ['放鬆', '速度上不去時先降 10 BPM，肩膀和腳踝放鬆，比硬撐更快進步。'],
 ];
-const LIMB_NAME = {RH: '右手', LH: '左手', RF: '右腳', LF: '左腳'};
 
 function migrate(S) {
   S.idx = {...DEFAULTS.idx, ...S.idx};
-  if (S.v !== 2) { S.view = 'staff'; S.v = 2; }   // v2: the staff became the default view
+  delete S.view; delete S.v;   // the grid view was removed: the staff is the only view
   if (!CATS.includes(S.cat)) S.cat = 'chug';
   if (![2, 4, 8].includes(S.phrase)) S.phrase = 4;
   if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = 'soft';
@@ -87,7 +85,7 @@ function Djent() {
     [S.cat, S.sub, S.end, S.phrase, S.snare, S.pulse, S.cym, S.basic, S.pedal, S.fillLen, S.fillPick, fillVer]); // eslint-disable-line react-hooks/exhaustive-deps
   const idx = Math.min(S.idx[S.cat] || 0, sheet.length - 1);
   const cur = sheet[idx];
-  const html = useMemo(() => (S.view === 'grid' ? gridHtml(cur, S) : staffHtml(cur)), [cur, S.view, S.pedal]); // eslint-disable-line react-hooks/exhaustive-deps
+  const html = useMemo(() => staffHtml(cur), [cur]);
 
   // Slot highlighting goes straight to the DOM: the notation is a big SVG/HTML block, re-rendering it per 16th would be wasteful.
   const hl = useRef({map: [], bars: [], last: -1});
@@ -147,8 +145,6 @@ function Djent() {
   }
   // the guide stays closed until 「? 使用說明」 is tapped
   const showGuide = help;
-  const used = new Set();
-  cur.slots.forEach(s => s.forEach(h => used.add(h.limb)));
   const ghost = cur.slots.some(s => s.some(h => h.lvl === 'g'));
 
   return (
@@ -160,7 +156,7 @@ function Djent() {
           <Guide tips={TERMS} onOk={() => setHelp(false)}
           steps={[
             <><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</>,
-            <><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音；看不習慣可以在「顯示」改成格子圖（一行一小節）。 <span className="key R">R</span><span className="key L">L</span> 是手，<span className="key fR">R</span><span className="key fL">L</span> 是腳。</>,
+            <><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音。<span className="key R">R</span><span className="key L">L</span> 是手，<span className="key fR">R</span><span className="key fL">L</span> 是腳。</>,
             <><b>打順了就按「✓ 打順了」</b>，再把速度調快 5 BPM。</>,
           ]} />
         )}
@@ -168,24 +164,16 @@ function Djent() {
         <PracticeCard cardRef={practice}>
           <SheetHead name={cur.name} en={cur.en} best={best[cur.key]} />
           <div className="meta">{describe(cur, S, idx, sheet.length)}</div>
-          <HStack gap={3} hAlign="between" vAlign="center" wrap="wrap">
-            <div className="basic-tg">
-              <Toggle label="基本練習" description="只有 Hi-hat、小鼓、大鼓" value={S.basic} onChange={v => reshape({basic: v})} />
-            </div>
-            <SegmentedControl label="顯示方式" size="sm" value={S.view} onChange={v => update({view: v})}>
-              <SegmentedControlItem value="staff" label="五線譜" />
-              <SegmentedControlItem value="grid" label="格子圖" />
-            </SegmentedControl>
-          </HStack>
+          <div className="basic-tg">
+            <Toggle label="基本練習" description="只有 Hi-hat、小鼓、大鼓" value={S.basic} onChange={v => reshape({basic: v})} />
+          </div>
           <Status msg={msg} />
           <Text as="p" className="cycle">{cycleText(cur, S)}</Text>
           <div className="legend">
-            {['RH', 'LH', 'RF', 'LF'].filter(l => used.has(l)).map(l => <span key={l}><i className={'dot ' + l} />{LIMB_NAME[l]}</span>)}
             {ghost && <span className="lg-note">(S) Ghost note 很輕　&gt; 重音</span>}
             <span className="lg-note">↺ 接回第 1 拍　✂ 截斷</span>
           </div>
-          <div ref={notation} className={S.view === 'grid' ? 'kit' + (cur.sub >= 6 ? ' dense' : '') : 'notation'}
-            style={S.view === 'grid' ? {'--slots': cur.bar} : undefined} role="img" aria-label={`${cur.name}：${cur.bars} 小節`}
+          <div ref={notation} className="notation" role="img" aria-label={`${cur.name}：${cur.bars} 小節`}
             dangerouslySetInnerHTML={{__html: html}} />
           {cur.fill && (
             <div className="fill-row">
