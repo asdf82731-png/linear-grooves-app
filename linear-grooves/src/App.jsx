@@ -186,9 +186,6 @@ function Grooves() {
           <Status msg={msg} />
           {pattern.cell && <Text as="p" className="cycle">{cycleText(pattern)}</Text>}
           <div className="notation" ref={notation} dangerouslySetInnerHTML={{__html: html}} />
-          <div className="legend" aria-hidden="true">
-            <span><i className="dot R" />R 右手</span><span><i className="dot L" />L 左手</span><span><i className="dot K" />K 大鼓（右腳）</span>
-          </div>
           <HStack gap={2} hAlign="between" vAlign="end" wrap="wrap">
             <Text weight="semibold">{pattern.cell ? 'Riff 由這幾組組成（一直重複）' : '節奏由這幾組組成'}</Text>
             <Text type="supporting">點一組可以換掉它</Text>
