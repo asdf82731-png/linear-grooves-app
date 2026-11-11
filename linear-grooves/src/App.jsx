@@ -19,7 +19,7 @@ import {ToolsNav} from './nav.jsx';
 
 const MIN_BPM = 40, MAX_BPM = 240;
 const DEFAULTS = {
-  sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic', seenGuide: false,
+  sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic',
   orch: 'hh', accents: true, bpm: 80, src: 'lib', libIdx: 0, libLast: {}, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut',
   click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
@@ -139,7 +139,8 @@ function Grooves() {
   });
 
   const lib = S.src === 'lib', def = LIBRARY[S.libIdx], level = detectLevel(S);
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
   const record = () => {
     const prev = best[def.id] || 0;
     setBest({...best, [def.id]: Math.max(prev, S.bpm)});
@@ -150,9 +151,9 @@ function Grooves() {
   return (
     <Page>
       <Header nav={<ToolsNav cur="grooves" />} title="Linear Grooves"
-        guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+        guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
       {showGuide && (
-        <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+        <Guide tips={TERMS} onOk={() => setHelp(false)}
         steps={[
           <><b>按下方的 ▶</b> 先聽一遍這個節奏。</>,
           <><b>看譜或看下面的色塊</b>跟著打：<span className="key R">R</span> 右手打 Hi-hat、<span className="key L">L</span> 左手打小鼓、<span className="key K">K</span> 右腳踩大鼓。</>,

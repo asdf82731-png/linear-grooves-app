@@ -17,7 +17,7 @@ const DEFAULTS = {
   mode: 'basic', rSub: 4, rRun: 2, rRest: false,
   reps: 8, autoNext: false, leftLead: false, playPart: 'all', timer: 0,
   bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false, idx: {basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, rand: 0},
+  idx: {basic: 0, heel: 0, groove: 0, combo: 0, hh: 0, rand: 0},
 };
 const LISTS = {basic: BASIC, heel: HEEL, groove: GROOVE, combo: COMBO, hh: HIHAT};
 const MODE_OPTS = [
@@ -155,15 +155,16 @@ function DoublePedal() {
     const left = Math.max(0, Math.ceil(S.timer * 60 - engine.elapsed() / 1000));
     repsTxt += ` · 剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   }
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
 
   return (
     <Page>
       <Header title="Double Pedal"
-        guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+        guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
 
       {showGuide && (
-        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+        <Guide tips={TIPS} onOk={() => setHelp(false)}
         steps={[
           <><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</>,
           <><b>按 ▶</b>，跟著大字母踩：<span className="key fR">R</span> 右腳（主踏板）、<span className="key fL">L</span> 左腳（副踏板或腳踩鈸）。下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</>,

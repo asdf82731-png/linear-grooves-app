@@ -22,7 +22,7 @@ const DEFAULTS = {
   mode: 'gap', bpm: 80, meter: 4, subGrid: 2, subLevel: 'off', countIn: true,
   gapPlay: 2, gapMute: 2, gapShow: false, gapGrow: false, gapMax: 8,
   shiftPos: '24', rampKind: 'linear', rampEnd: 120, rampEvery: 4, rampStep: 5,
-  detNote: 'q', sens: 6, seenGuide: false, pattern: 'q-single',
+  detNote: 'q', sens: 6, pattern: 'q-single',
 };
 const MODE_OPTS = [
   {value: 'metro', label: '節拍器', sub: '一般的 click'},
@@ -124,7 +124,8 @@ function TimeKeeper() {
     shift: `click 在 ${SHIFT_NAME[S.shiftPos]}`,
     ramp: `${S.bpm} → ${S.rampEnd} BPM · 每 ${S.rampEvery} 小節 ${S.rampEnd >= S.bpm ? '+' : '−'}${S.rampStep}${S.rampKind === 'ladder' ? ' · 速度梯' : ''}`,
   }[S.mode];
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
   const shiftOn = (b, k) => (S.shiftPos === '24' ? b % 2 === 1 && k === 0 : SHIFT_CELL[S.shiftPos] != null ? k === SHIFT_CELL[S.shiftPos] : b === 0 && k === 0);
   const fmt = iso => { const d = new Date(iso); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
   const mmss = s => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
@@ -136,9 +137,9 @@ function TimeKeeper() {
     <Page className="tk">
       <VStack gap={4} className="col-main">
         <Header title="Time Keeper"
-          guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+          guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
         {showGuide && (
-          <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+          <Guide tips={TERMS} onOk={() => setHelp(false)}
           steps={[
             <><b>在「打什麼」選一個動作、「怎麼練」選一種練法</b>，第一次建議「4 分音符 R L R L」配「Gap click」（響 2 小節、安靜 2 小節）。</>,
             <><b>按 ▶</b>，照練習卡上的譜跟著 click 打；安靜的時候繼續打，心裡數拍。</>,

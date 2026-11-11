@@ -19,7 +19,6 @@ const DEFAULTS = {
   sub: 'auto', pulse: 'auto', snare: 'auto', cym: 'auto', pedal: 'double',
   reps: 8, autoNext: false, playPart: 'all', timer: 0,
   bpm: 80, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 160,
-  seenGuide: false,
 };
 const CAT_OPTS = [
   {value: 'chug', label: '基本 Chug', sub: '一小節剛好湊滿'},
@@ -147,7 +146,8 @@ function Djent() {
     const left = Math.max(0, Math.ceil(S.timer * 60 - engine.elapsed() / 1000));
     repsTxt += ` · 剩 ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`;
   }
-  const showGuide = help || !S.seenGuide;
+  // the guide stays closed until 「? 使用說明」 is tapped
+  const showGuide = help;
   const used = new Set();
   cur.slots.forEach(s => s.forEach(h => used.add(h.limb)));
   const ghost = cur.slots.some(s => s.some(h => h.lvl === 'g'));
@@ -156,9 +156,9 @@ function Djent() {
     <Page className={'djent' + (S.basic ? ' basic' : '')}>
       <VStack gap={4} className="col-main">
         <Header title="Djent Grooves"
-          guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
+          guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
         {showGuide && (
-          <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+          <Guide tips={TERMS} onOk={() => setHelp(false)}
           steps={[
             <><b>在「練什麼」選一個練習</b>，第一次建議從「基本 Chug」的「3-3-2 Chug」開始，並打開「基本練習」。</>,
             <><b>按 ▶</b>，跟著五線譜打，亮起來的那一欄就是現在要打的音；看不習慣可以在「顯示」改成格子圖（一行一小節）。 <span className="key R">R</span><span className="key L">L</span> 是手，<span className="key fR">R</span><span className="key fL">L</span> 是腳。</>,
