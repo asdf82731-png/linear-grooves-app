@@ -7,7 +7,7 @@ import {
   ModeList, Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {
-  BASIC, COMBO, COUNTS, GROOVE, HEEL, HIHAT, INST_NAME, LIMB_NAME, MODES, SUB_NAME,
+  BASIC, COMBO, GROOVE, HEEL, HIHAT, INST_NAME, LIMB_NAME, MODES, SUB_NAME,
   build, feetFrom, randomFeet, sticking, swapped,
 } from './data.js';
 import {createEngine} from './engine.js';
@@ -189,10 +189,7 @@ function DoublePedal() {
               ))}
             </div>
           )}
-          <div className="legend">
-            {CL.map(l => <span key={l.limb}><i className={'dot ' + l.limb} />{LIMB_NAME[l.limb]}・{INST_NAME[l.inst]}</span>)}
-          </div>
-          <KitGrid ex={cur} lanes={CL} hl={hl} />
+          <Staff ex={cur} lanes={CL} hl={hl} />
           {cur.tip && <Tip>{cur.tip}</Tip>}
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
           <DoneButton bpm={S.bpm} onClick={record} />
@@ -265,34 +262,23 @@ function DoublePedal() {
   );
 }
 
-// Kit grid: one row per limb, one column per slot, beats separated by a line.
-// Patterns longer than 5 beats wrap into systems of 4 beats, like bars on a page.
-function KitGrid({ex, lanes, hl}) {
+// The whole exercise as drum notation, 4 beats per line like bars on a page, with the R / L of each foot under
+// the notes. The note being played gets a bronze background.
+function Staff({ex, lanes, hl}) {
   const beats = ex.len / ex.sub, per = beats > 5 ? 4 : beats;
-  const bar = beats % 4 === 0 ? 4 : Infinity;   // multi-bar patterns count 1–4 in every bar
-  // Every syllable, sextuplets too (1 la li & la li); the dense grid sets them in a smaller type.
-  const count = (k, b) => (k === 0 ? (b % bar) + 1 : COUNTS[ex.sub][k]);
-  const systems = [];
-  for (let b0 = 0; b0 < beats; b0 += per) systems.push([b0, Math.min(beats, b0 + per)]);
-  const row = (key, label, cls, b0, b1, cell) => (
-    <div className={'kr ' + cls} key={key}>
-      <span className="kl">{label}</span>
-      {Array.from({length: b1 - b0}, (_, j) => {
-        const b = b0 + j;
-        return <span className="kb" key={b}>{Array.from({length: ex.sub}, (_, k) => cell(b * ex.sub + k, k, b))}</span>;
-      })}
-    </div>
-  );
+  const letters = sticking(ex, lanes);
+  const lines = [];
+  for (let b0 = 0; b0 < beats; b0 += per) {
+    const from = b0 * ex.sub, to = Math.min(beats, b0 + per) * ex.sub, slots = [];
+    for (let i = from; i < to; i++) slots.push(lanes.filter(l => l.hits[i] !== '.').map(l => ({inst: l.inst, limb: l.limb})));
+    lines.push({from, html: window.MiniStaff ? window.MiniStaff.svg({
+      sub: ex.sub, slots, letters: letters.slice(from, to), scale: 1, on: hl >= from && hl < to ? hl - from : -1,
+      label: `${ex.name}：第 ${b0 + 1}–${Math.min(beats, b0 + per)} 拍`,
+    }) : ''});
+  }
   return (
-    <div className={'kit' + (ex.sub >= 6 ? ' dense' : '')} style={{'--slots': per * ex.sub}} role="img"
-      aria-label={`${ex.name}：` + lanes.map(l => `${LIMB_NAME[l.limb]}${INST_NAME[l.inst]}`).join('、')}>
-      {systems.map(([b0, b1]) => (
-        <div className="ksys" key={b0}>
-          {lanes.map(l => row(l.limb, <>{LIMB_NAME[l.limb]}<small>{INST_NAME[l.inst]}</small></>, l.limb, b0, b1,
-            i => <span key={i} className={'kc' + (hl === i ? ' on' : '')}>{l.hits[i] !== '.' && <i className={'hit ' + l.inst} />}</span>))}
-          {row('cnt', '', 'cnt', b0, b1, (i, k, b) => <span key={i} className="kc">{count(k, b)}</span>)}
-        </div>
-      ))}
+    <div className="staff-big" aria-label={`${ex.name}：` + lanes.map(l => `${LIMB_NAME[l.limb]}${INST_NAME[l.inst]}`).join('、')}>
+      {lines.map(l => <div key={l.from} dangerouslySetInnerHTML={{__html: l.html}} />)}
     </div>
   );
 }

@@ -2,7 +2,8 @@
 
 /* Half-bar mini staff for exercise lists, shared by all four apps.
  * Each app turns its own exercise format into slots and calls MiniStaff.svg():
- *   { sub, slots: [[{ inst, limb, acc, ghost, grace }]], letters: [{ c, cls }], line, label }
+ *   { sub, slots: [[{ inst, limb, acc, ghost, grace }]], letters: [{ c, cls }], line, label, on }
+ * on: index of the slot being played, drawn with a bronze background (for a full-size practice staff).
  * inst: china crash hh ride t1 t2 sn ft bd hf (hi-hat foot) pad (sticking on a single line)
  * limb colours the letter row: R / L (hands), K, fR / fL (feet), rest.
  * The same drum notation as the big staff in each app, drawn small: cymbals are x heads,
@@ -31,7 +32,8 @@
 .ms .lt { font: 600 8.5px var(--f-mono, ui-monospace, monospace); fill: var(--color-text-secondary); }
 .ms .lt.R { fill: var(--r); } .ms .lt.L { fill: var(--l); }
 .ms .lt.K, .ms .lt.fR { fill: var(--k); } .ms .lt.fL { fill: var(--lf, #7A4FB0); }
-.ms .lt.rest { fill: var(--color-border); }`;
+.ms .lt.rest { fill: var(--color-border); }
+.ms .hl { fill: var(--hl); }`;
 
   function injectCss() {
     if (document.getElementById('mini-staff-css')) return;
@@ -51,6 +53,8 @@
     const H = TOP + (o.line ? 20 : 30) + (letters ? 14 : 0);
     const X = (i) => x0 + Math.floor(i / sub) * beatW + (i % sub) * sw + sw / 2;
     const body = [], beams = [];
+    const on = o.on == null ? -1 : o.on;
+    const hl = on >= 0 && on < n ? `<rect class="hl" x="${X(on) - sw / 2}" y="0" width="${sw}" height="${H}" rx="2"/>` : '';
 
     // Staff: five lines, or one line for sticking exercises.
     let s = '';
@@ -106,7 +110,7 @@
       });
     }
     const scale = o.scale || 1.2;
-    return `<svg class="ms" viewBox="0 0 ${W} ${H}" width="${Math.round(W * scale)}" height="${Math.round(H * scale)}" role="img" aria-label="${o.label || '半小節譜例'}">${s}${beams.join('')}${body.join('')}</svg>`;
+    return `<svg class="ms" viewBox="0 0 ${W} ${H}" width="${Math.round(W * scale)}" height="${Math.round(H * scale)}" role="img" aria-label="${o.label || '半小節譜例'}">${hl}${s}${beams.join('')}${body.join('')}</svg>`;
   }
 
   const api = { svg };

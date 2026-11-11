@@ -1,22 +1,7 @@
-/* Double Pedal's kit grid: one row per limb, cymbals and the hi-hat foot as diamonds, drums as dots. */
-.kit { overflow-x: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
-.ksys { display: flex; flex-direction: column; gap: 2px; }
-.kr { display: flex; align-items: stretch; gap: 6px; min-width: calc(58px + var(--slots, 16) * 15px); }
-.kit.dense .kr { min-width: calc(58px + var(--slots, 24) * 11px); }
-.kit.dense .hit { width: 8px; height: 8px; }
-.kl { flex: none; width: 52px; display: flex; flex-direction: column; justify-content: center; font-size: 12px; font-weight: 600; line-height: 1.15; }
-.kl small { font-size: 10px; font-weight: 500; color: var(--color-text-secondary); }
-.kb { flex: 1; display: flex; border-left: 1px solid var(--color-border); }
-.kc { flex: 1; min-width: 0; height: 28px; display: grid; place-items: center; border-radius: 3px; }
-.kc.on { background: var(--hl); }
-.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--color-text-secondary); }
-.kr.cnt .kb { border-left-color: transparent; }
-.kit.dense .kr.cnt .kc { font-size: 8px; letter-spacing: -.02em; }
-.kit.dense .kr.cnt .kc:first-child { font-size: 10px; }
-.kr.RH .kl { color: var(--r); } .kr.LH .kl { color: var(--l); }
-.kr.RF .kl { color: var(--k); } .kr.LF .kl { color: var(--lf); }
-.hit { display: block; width: 11px; height: 11px; border-radius: 50%; }
-.kr.RH .hit { background: var(--r); } .kr.LH .hit { background: var(--l); }
-.kr.RF .hit { background: var(--k); } .kr.LF .hit { background: var(--lf); }
-.hit.hh, .hit.ride, .hit.hf { border-radius: 2px; transform: rotate(45deg); width: 9px; height: 9px; }
-@media (prefers-reduced-motion: no-preference) { .kc, .big .n { transition: background-color 60ms linear; } }
+/* Double Pedal's practice staff: the whole exercise in drum notation (drawn by shared/mini-staff.js), one line per
+   4 beats, with the R / L of each foot under the notes. */
+.staff-big { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.staff-big > div { width: 100%; max-width: 640px; }
+.staff-big .ms { width: 100%; height: auto; }
+.staff-big .ms .lt { font-size: 9.5px; }
+@media (prefers-reduced-motion: no-preference) { .big .n { transition: background-color 60ms linear; } }
