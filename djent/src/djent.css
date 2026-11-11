@@ -1,14 +1,14 @@
 /* Djent: staff and kit grid (rendered as HTML strings by music.js), group bars, ghost notes, and the tablet two-column layout. */
 .col-main, .col-side { min-width: 0; }
-.basic-tg { flex: 1 1 220px; padding: 6px 12px; border: 1px solid var(--line); border-radius: var(--radius-element, 10px); background: var(--bg); }
-.basic .basic-tg { border-color: var(--accent); background: var(--hl); }
+.basic-tg { flex: 1 1 220px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-element, 10px); background: var(--color-background-body); }
+.basic .basic-tg { border-color: var(--color-accent); background: var(--hl); }
 .cycle { margin: 0; font-size: 13px; }
-.lg-note { color: var(--muted); }
-.fill-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
-.fill-row b { color: var(--ink); }
+.lg-note { color: var(--color-text-secondary); }
+.fill-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--color-text-secondary); }
+.fill-row b { color: var(--color-text-primary); }
 .ex-st b.K { color: var(--k); } .ex-st b.S { color: var(--l); } .ex-st b.g { color: var(--l); opacity: .65; font-weight: 500; }
-.ex-st i { font-style: normal; color: var(--line); padding: 0 3px; }
-[aria-current="true"] .ex-mini .ms .sl { stroke: var(--ink); }
+.ex-st i { font-style: normal; color: var(--color-border); padding: 0 3px; }
+[aria-current="true"] .ex-mini .ms .sl { stroke: var(--color-text-primary); }
 
 /* Grid: hits coloured by limb, shaped by instrument (cymbals are diamonds, drums dots). */
 .kit { overflow-x: auto; display: flex; flex-direction: column; gap: 14px; padding-bottom: 2px; }
@@ -17,14 +17,14 @@
 .kit.dense .kr { min-width: calc(58px + var(--slots, 24) * 11px); }
 .kit.dense .hit { width: 8px; height: 8px; }
 .kl { flex: none; width: 52px; display: flex; flex-direction: column; justify-content: center; font-size: 12px; font-weight: 600; line-height: 1.15; }
-.kl small { font-size: 10px; font-weight: 500; color: var(--muted); }
-.kb { flex: 1; display: flex; border-left: 1px solid var(--line); }
+.kl small { font-size: 10px; font-weight: 500; color: var(--color-text-secondary); }
+.kb { flex: 1; display: flex; border-left: 1px solid var(--color-border); }
 .kc { flex: 1; min-width: 0; height: 28px; display: grid; place-items: center; border-radius: 3px; }
-.kc.fill { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+.kc.fill { background: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 .kc.on, .kc.fill.on { background: var(--hl); }
-.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--muted); }
+.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--color-text-secondary); }
 .kr.cnt .kb { border-left-color: transparent; }
-.kr.cnt .kl { font-size: 10px; color: var(--muted); font-weight: 500; }
+.kr.cnt .kl { font-size: 10px; color: var(--color-text-secondary); font-weight: 500; }
 .hit { display: block; width: 11px; height: 11px; border-radius: 50%; }
 .kr .hit.RH { background: var(--r); } .kr .hit.LH { background: var(--l); }
 .kr .hit.RF { background: var(--k); } .kr .hit.LF { background: var(--lf); }
@@ -32,47 +32,47 @@
 .hit.china, .hit.crash { border-radius: 2px; transform: rotate(45deg); width: 10px; height: 10px; }
 .hit.china { background: transparent !important; border: 2.5px solid var(--r); }
 .hit.lv-g { width: 6px; height: 6px; opacity: .6; }
-.hit.lv-a { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--l); }
+.hit.lv-a { box-shadow: 0 0 0 2px var(--color-background-surface), 0 0 0 3.5px var(--l); }
 .hit.lv-s { opacity: .55; }
 .kc.on .hit.lv-a { box-shadow: 0 0 0 2px var(--hl), 0 0 0 3.5px var(--l); }
 .kr.cy .kl, .kr.tm .kl { color: var(--r); } .kr.sn .kl { color: var(--l); }
-.kr.gp .kl { color: var(--muted); font-weight: 500; }
-.kr.bd .kl { color: var(--ink); }
+.kr.gp .kl { color: var(--color-text-secondary); font-weight: 500; }
+.kr.bd .kl { color: var(--color-text-primary); }
 .kr.bd .kl small em { font-style: normal; font-weight: 600; }
 .kr.bd .kl .fR { color: var(--k); } .kr.bd .kl .fL { color: var(--lf); }
 .kr.gp .kc { height: 20px; place-items: stretch; padding: 0; border-radius: 0; }
-.kc .gc { position: relative; display: block; width: 100%; height: 100%; font: 600 10px/1 var(--f-mono); color: var(--muted); white-space: nowrap; overflow: visible; }
-.kc .gc::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; background: var(--muted); opacity: .55; }
-.kc .gc.alt::after { background: var(--accent); opacity: .85; }
+.kc .gc { position: relative; display: block; width: 100%; height: 100%; font: 600 10px/1 var(--f-mono); color: var(--color-text-secondary); white-space: nowrap; overflow: visible; }
+.kc .gc::after { content: ""; position: absolute; left: 0; right: 0; bottom: 3px; height: 4px; background: var(--color-text-secondary); opacity: .55; }
+.kc .gc.alt::after { background: var(--color-accent); opacity: .85; }
 .kc .gc.f::after { background: var(--r); opacity: .6; }
 .kc .gc.f.alt::after { background: var(--l); opacity: .6; }
 .kc .gc.s::after { left: 2px; border-top-left-radius: 2px; border-bottom-left-radius: 2px; }
 .kc .gc.e::after { right: 2px; border-top-right-radius: 2px; border-bottom-right-radius: 2px; }
-.kc .gc.s { padding: 1px 0 0 2px; color: var(--ink); z-index: 1; }
+.kc .gc.s { padding: 1px 0 0 2px; color: var(--color-text-primary); z-index: 1; }
 
 /* Staff */
 .notation { overflow-x: auto; display: flex; flex-direction: column; gap: 4px; }
 .notation svg { display: block; width: 100%; height: auto; }
-.staff .sl { stroke: var(--muted); stroke-width: 1; }
-.staff .bl, .staff .nh, .staff .bm { fill: var(--ink); }
-.staff .xh { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
-.staff .xo { fill: none; stroke: var(--ink); stroke-width: 1.2; }
-.staff .st { stroke: var(--ink); stroke-width: 1.2; }
-.staff .ac { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
-.staff .ts { fill: var(--ink); font: 800 17px var(--f-display); }
-.staff .tup { fill: var(--muted); font: italic 600 11px var(--font-family-body); }
-.staff .cnt, .staff .bnum { fill: var(--muted); font: 500 10px var(--f-mono); }
+.staff .sl { stroke: var(--color-text-secondary); stroke-width: 1; }
+.staff .bl, .staff .nh, .staff .bm { fill: var(--color-text-primary); }
+.staff .xh { stroke: var(--color-text-primary); stroke-width: 1.6; stroke-linecap: round; }
+.staff .xo { fill: none; stroke: var(--color-text-primary); stroke-width: 1.2; }
+.staff .st { stroke: var(--color-text-primary); stroke-width: 1.2; }
+.staff .ac { fill: none; stroke: var(--color-text-primary); stroke-width: 1.4; stroke-linejoin: round; }
+.staff .ts { fill: var(--color-text-primary); font: 800 17px var(--f-display); }
+.staff .tup { fill: var(--color-text-secondary); font: italic 600 11px var(--font-family-body); }
+.staff .cnt, .staff .bnum { fill: var(--color-text-secondary); font: 500 10px var(--f-mono); }
 .staff .stk { font: 600 12px var(--f-mono); }
 .staff .stk.RH { fill: var(--r); } .staff .stk.LH { fill: var(--l); }
 .staff .stk.RF { fill: var(--k); } .staff .stk.LF { fill: var(--lf); }
 .staff .stk.gh { opacity: .55; font-weight: 500; }
-.staff .gb { stroke: var(--muted); stroke-width: 3; stroke-linecap: round; opacity: .55; }
-.staff .gb.alt { stroke: var(--accent); opacity: .85; }
+.staff .gb { stroke: var(--color-text-secondary); stroke-width: 3; stroke-linecap: round; opacity: .55; }
+.staff .gb.alt { stroke: var(--color-accent); opacity: .85; }
 .staff .gb.f { stroke: var(--r); opacity: .6; }
-.staff .gn { fill: var(--ink); font: 600 10px var(--f-mono); }
-.staff .gp { fill: var(--ink); font: 400 13px var(--font-family-body); }
+.staff .gn { fill: var(--color-text-primary); font: 600 10px var(--f-mono); }
+.staff .gp { fill: var(--color-text-primary); font: 400 13px var(--font-family-body); }
 .staff .ph { fill: transparent; }
-.staff .ph.fill { fill: color-mix(in srgb, var(--accent) 7%, transparent); }
+.staff .ph.fill { fill: color-mix(in srgb, var(--color-accent) 7%, transparent); }
 .staff .ph.on { fill: var(--hl); }
 @media (prefers-reduced-motion: no-preference) { .kc, .staff .ph { transition: background-color 60ms linear, fill 60ms linear; } }
 

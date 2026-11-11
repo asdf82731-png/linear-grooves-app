@@ -7,34 +7,34 @@
 .beat { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .beat b {
   display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
-  border: 2px solid var(--line); color: var(--muted); font: 800 24px var(--f-display);
+  border: 2px solid var(--color-border); color: var(--color-text-secondary); font: 800 24px var(--f-display);
   transition: background-color 60ms linear, border-color 60ms linear;
 }
 .beat.one b { width: 64px; height: 64px; }
-.beat.on b { background: var(--accent); border-color: var(--accent); color: var(--color-on-accent); }
+.beat.on b { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-on-accent); }
 .beats.quiet .beat b { border-style: dashed; }
 .beats.many { gap: 8px; }
 .beats.many .beat b { width: 44px; height: 44px; font-size: 20px; }
 .beats.many .beat.one b { width: 50px; height: 50px; }
 .cells { display: flex; gap: 2px; }
-.cells i { width: 9px; height: 6px; border-radius: 2px; background: var(--line); }
-.cells i.c { background: var(--accent); }
-.info { text-align: center; font: 600 14px var(--f-mono); color: var(--muted); min-height: 1.4em; }
+.cells i { width: 9px; height: 6px; border-radius: 2px; background: var(--color-border); }
+.cells i.c { background: var(--color-accent); }
+.info { text-align: center; font: 600 14px var(--f-mono); color: var(--color-text-secondary); min-height: 1.4em; }
 
 /* Accuracy meter: early on the left, late on the right, the last 8 hits as dots. */
 .meter { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; }
-.meter-track { position: relative; height: 34px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.meter-track { position: relative; height: 34px; border-radius: 8px; background: var(--color-background-body); border: 1px solid var(--color-border); overflow: hidden; }
 .meter-zone { position: absolute; left: 40%; width: 20%; top: 0; bottom: 0; background: color-mix(in srgb, var(--k) 18%, transparent); }
 .meter-mid { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--k); }
 .meter-dots i { position: absolute; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; }
 .meter-dots i.ok { background: var(--k); } .meter-dots i.early { background: var(--r); } .meter-dots i.late { background: var(--l); }
-.meter-scale { display: flex; justify-content: space-between; font: 500 11px var(--f-mono); color: var(--muted); }
+.meter-scale { display: flex; justify-content: space-between; font: 500 11px var(--f-mono); color: var(--color-text-secondary); }
 .meter-last { text-align: center; font-weight: 600; }
 
 /* Microphone level with the detection threshold. */
-.level { position: relative; height: 10px; border-radius: 5px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.level { position: relative; height: 10px; border-radius: 5px; background: var(--color-background-body); border: 1px solid var(--color-border); overflow: hidden; }
 .level-bar { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--k); transition: width 50ms linear; }
-.level-thr { position: absolute; top: -2px; bottom: -2px; width: 2px; left: 50%; background: var(--accent); }
+.level-thr { position: absolute; top: -2px; bottom: -2px; width: 2px; left: 50%; background: var(--color-accent); }
 .calib { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 
 /* Results: the three numbers in muted Astryx cards */
@@ -43,22 +43,22 @@
 @media (max-width: 420px) { .stat b { font-size: 21px; } }
 .chart svg { display: block; width: 100%; height: auto; }
 .chart .band { fill: color-mix(in srgb, var(--k) 14%, transparent); }
-.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .grid { stroke: var(--color-border); stroke-width: 1; }
 .chart .zero { stroke: var(--k); stroke-width: 1.2; }
-.chart .ax { fill: var(--muted); font: 500 11px var(--f-mono); }
-.chart .pt { fill: var(--accent); }
+.chart .ax { fill: var(--color-text-secondary); font: 500 11px var(--f-mono); }
+.chart .pt { fill: var(--color-accent); }
 .chart .pt.ok { fill: var(--k); } .chart .pt.early { fill: var(--r); } .chart .pt.late { fill: var(--l); }
-.chart .pt.mute { fill: var(--surface); stroke-width: 1.5; }
+.chart .pt.mute { fill: var(--color-background-surface); stroke-width: 1.5; }
 .chart .pt.mute.ok { stroke: var(--k); } .chart .pt.mute.early { stroke: var(--r); } .chart .pt.mute.late { stroke: var(--l); }
-.chart .line { fill: none; stroke: var(--accent); stroke-width: 2; }
-.chart .pt.last { fill: var(--accent); stroke: var(--surface); stroke-width: 2; }
+.chart .line { fill: none; stroke: var(--color-accent); stroke-width: 2; }
+.chart .pt.last { fill: var(--color-accent); stroke: var(--color-background-surface); stroke-width: 2; }
 
 /* Practice log: the accuracy at the end of each row */
 .lg-num { font: 600 12px var(--f-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 /* What to play: the current pattern on the card, and the list with half-bar mini staves */
 .pat-now { display: flex; flex-direction: column; gap: 4px; align-items: center; }
-.pat-staff { color: var(--ink); max-width: 100%; overflow-x: auto; }
+.pat-staff { color: var(--color-text-primary); max-width: 100%; overflow-x: auto; }
 
 /* Tablet: practice on the left, settings on the right */
 @media (min-width: 900px) {

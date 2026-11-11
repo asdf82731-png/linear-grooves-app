@@ -5,11 +5,11 @@
 .kit.dense .kr { min-width: calc(58px + var(--slots, 24) * 11px); }
 .kit.dense .hit { width: 8px; height: 8px; }
 .kl { flex: none; width: 52px; display: flex; flex-direction: column; justify-content: center; font-size: 12px; font-weight: 600; line-height: 1.15; }
-.kl small { font-size: 10px; font-weight: 500; color: var(--muted); }
-.kb { flex: 1; display: flex; border-left: 1px solid var(--line); }
+.kl small { font-size: 10px; font-weight: 500; color: var(--color-text-secondary); }
+.kb { flex: 1; display: flex; border-left: 1px solid var(--color-border); }
 .kc { flex: 1; min-width: 0; height: 28px; display: grid; place-items: center; border-radius: 3px; }
 .kc.on { background: var(--hl); }
-.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--muted); }
+.kr.cnt .kc { height: 16px; font: 500 10px var(--f-mono); color: var(--color-text-secondary); }
 .kr.cnt .kb { border-left-color: transparent; }
 .kit.dense .kr.cnt .kc { font-size: 8px; letter-spacing: -.02em; }
 .kit.dense .kr.cnt .kc:first-child { font-size: 10px; }
