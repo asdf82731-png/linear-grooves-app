@@ -11,6 +11,8 @@ import {Selector} from '@astryxdesign/core/Selector';
 import {Collapsible} from '@astryxdesign/core/Collapsible';
 import {Heading} from '@astryxdesign/core/Heading';
 import {Text} from '@astryxdesign/core/Text';
+import {Icon} from '@astryxdesign/core/Icon';
+import {Pause, Play} from 'lucide-react';
 import {VStack} from '@astryxdesign/core/VStack';
 import {HStack} from '@astryxdesign/core/HStack';
 import {Grid} from '@astryxdesign/core/Grid';
@@ -63,24 +65,27 @@ export function useFlash() {
 }
 
 /* ---------- page pieces ---------- */
-export function Header({title, tag, nav, guideOpen, onHelp}) {
+// Page header: the title (same size in all five apps), the help button, and the app switcher above when there is one.
+export function Header({title, nav, guideOpen, onHelp}) {
   return (
-    <header className="top">
+    <VStack gap={1} as="header" className="top">
       {nav}
-      <div className="top-row">
+      <HStack gap={3} hAlign="between" vAlign="center">
         <Heading level={1} type="display-3" className="brand">{title}</Heading>
         {onHelp && <Button size="sm" variant={guideOpen ? 'primary' : 'secondary'} label="? 使用說明" onClick={onHelp} />}
-      </div>
-      {tag && <Text type="supporting" as="p">{tag}</Text>}
-    </header>
+      </HStack>
+    </VStack>
   );
 }
 
-export function Guide({title = '三步開始練習', children, tips, onOk}) {
+// First-run guide: numbered steps as an Astryx list, tips folded away.
+export function Guide({title = '三步開始練習', steps, tips, onOk}) {
   return (
     <section className="guide" aria-label="使用說明">
       <Heading level={2}>{title}</Heading>
-      <ol className="steps">{children}</ol>
+      <List listStyle="decimal" density="compact">
+        {steps.map((st, i) => <ListItem key={i} label={<span className="step">{st}</span>} />)}
+      </List>
       {tips && (
         <Collapsible trigger={<Text weight="semibold" color="accent">小技巧</Text>} defaultIsOpen={false}>
           <Glossary items={tips} />
@@ -91,12 +96,18 @@ export function Guide({title = '三步開始練習', children, tips, onOk}) {
   );
 }
 
+// Terms and tips: the term on the first line, its explanation under it.
 export function Glossary({items}) {
   return (
-    <dl className="glossary">
-      {items.map(([dt, dd]) => [<dt key={dt + 't'}>{dt}</dt>, <dd key={dt + 'd'}>{dd}</dd>])}
-    </dl>
+    <List density="compact">
+      {items.map(([dt, dd]) => <ListItem key={dt} label={dt} description={<span className="gl-dd">{dd}</span>} />)}
+    </List>
   );
+}
+
+// A short tip under the practice card, marked with a bronze bar.
+export function Tip({children}) {
+  return <Text type="supporting" as="p" className="tip">{children}</Text>;
 }
 
 export function Field({label, children}) {
@@ -277,8 +288,6 @@ export function BpmField({bpm, min, max, onCommit, onOutOfRange}) {
   );
 }
 
-const PLAY = 'M7 4.5v15l13-7.5z', PAUSE = 'M6 5h4.5v14H6zM13.5 5H18v14h-4.5z';
-
 // Bottom bar like a hardware metronome: main action on the left, tempo in the middle, ▶ on the right for the thumb.
 export function Dock({actionLabel, onAction, bpm, setBpm, min = 30, max = 240, step = 5, playing, onPlay, flash, extra}) {
   return (
@@ -297,7 +306,7 @@ export function Dock({actionLabel, onAction, bpm, setBpm, min = 30, max = 240, s
         </div>
         {extra}
         <IconButton className="play" variant="primary" size="lg" label={playing ? '停止' : '播放'} onClick={onPlay}
-          icon={<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true" fill="currentColor"><path d={playing ? PAUSE : PLAY} /></svg>} />
+          icon={<Icon icon={playing ? Pause : Play} size="lg" />} />
       </div>
     </nav>
   );

@@ -118,14 +118,15 @@ function Sticking() {
 
   return (
     <Page>
-      <Header nav={<ToolsNav cur="sticking" />} title="Sticking" tag="練基本手法：單擊、雙擊、Paradiddle、Flam……跟著節拍器從慢練到快。"
+      <Header nav={<ToolsNav cur="sticking" />} title="Sticking"
         guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
       {showGuide && (
-        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}>
-          <li><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</li>
-          <li><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</li>
-          <li><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</li>
-        </Guide>
+        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+        steps={[
+          <><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</>,
+          <><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</>,
+          <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
+        ]} />
       )}
 
       <PracticeCard cardRef={practice}>
@@ -221,8 +222,6 @@ function Sticking() {
           </Pair>
         )}
       </FoldGroup>
-
-      <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「加到主畫面」就能像 App 一樣使用。</p>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

@@ -149,14 +149,15 @@ function Grooves() {
 
   return (
     <Page>
-      <Header nav={<ToolsNav cur="grooves" />} title="Linear Grooves" tag="練習「線性」鼓組節奏：任何時刻只打一個鼓，手和腳輪流出現。"
+      <Header nav={<ToolsNav cur="grooves" />} title="Linear Grooves"
         guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
       {showGuide && (
-        <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}>
-          <li><b>按下方的 ▶</b> 先聽一遍這個節奏。</li>
-          <li><b>看譜或看下面的色塊</b>跟著打：<span className="key R">R</span> 右手打 Hi-hat、<span className="key L">L</span> 左手打小鼓、<span className="key K">K</span> 右腳踩大鼓。</li>
-          <li><b>選「精選節奏」從清單挑一個</b>，或選「隨機產生」按「換一個」產生新的節奏；太難就把速度調慢。</li>
-        </Guide>
+        <Guide tips={TERMS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+        steps={[
+          <><b>按下方的 ▶</b> 先聽一遍這個節奏。</>,
+          <><b>看譜或看下面的色塊</b>跟著打：<span className="key R">R</span> 右手打 Hi-hat、<span className="key L">L</span> 左手打小鼓、<span className="key K">K</span> 右腳踩大鼓。</>,
+          <><b>選「精選節奏」從清單挑一個</b>，或選「隨機產生」按「換一個」產生新的節奏；太難就把速度調慢。</>,
+        ]} />
       )}
 
       <ModeList label="節奏從哪裡來" value={S.src} onChange={v => {
@@ -357,8 +358,6 @@ function Grooves() {
           ))}
         </List>}
       </Group>
-
-      <p className="foot">在 Chrome 選單選「加到主畫面」就能像 App 一樣使用，沒網路也能練。</p>
 
       <Dock actionLabel={lib ? '下一個' : '換一個'} onAction={nextGroove} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

@@ -3,7 +3,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {CheckboxInput} from '@astryxdesign/core/CheckboxInput';
 import {
-  AppTheme, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, Letters,
+  AppTheme, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, Letters,
   ModeList, Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {
@@ -159,15 +159,16 @@ function DoublePedal() {
 
   return (
     <Page>
-      <Header title="Double Pedal" tag="練雙踏與雙腳技巧：單擊、雙擊、Gallop、手腳組合、腳踩鈸獨立……跟著節拍器從慢練到快。"
+      <Header title="Double Pedal"
         guideOpen={showGuide} onHelp={() => (showGuide ? (setHelp(false), update({seenGuide: true})) : setHelp(true))} />
 
       {showGuide && (
-        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}>
-          <li><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</li>
-          <li><b>按 ▶</b>，跟著大字母踩：<span className="key fR">R</span> 右腳（主踏板）、<span className="key fL">L</span> 左腳（副踏板或腳踩鈸）。下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</li>
-          <li><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</li>
-        </Guide>
+        <Guide tips={TIPS} onOk={() => { setHelp(false); update({seenGuide: true}); }}
+        steps={[
+          <><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</>,
+          <><b>按 ▶</b>，跟著大字母踩：<span className="key fR">R</span> 右腳（主踏板）、<span className="key fL">L</span> 左腳（副踏板或腳踩鈸）。下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</>,
+          <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
+        ]} />
       )}
 
       <PracticeCard cardRef={practice}>
@@ -190,7 +191,7 @@ function DoublePedal() {
           {CL.map(l => <span key={l.limb}><i className={'dot ' + l.limb} />{LIMB_NAME[l.limb]}・{INST_NAME[l.inst]}</span>)}
         </div>
         <KitGrid ex={cur} lanes={CL} hl={hl} />
-        {cur.tip && <p className="tip">{cur.tip}</p>}
+        {cur.tip && <Tip>{cur.tip}</Tip>}
         <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
         <DoneButton bpm={S.bpm} onClick={record} />
       </PracticeCard>
@@ -252,8 +253,6 @@ function DoublePedal() {
           </Pair>
         )}
       </FoldGroup>
-
-      <p className="foot">練習紀錄存在這台裝置上。在 Chrome 選單選「加到主畫面」就能像 App 一樣使用。</p>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />
