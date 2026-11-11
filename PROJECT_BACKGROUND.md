@@ -20,7 +20,7 @@
 
 - **介面用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，四個 App 都已換過：
   - 原始碼在 `<app>/src/`，`npm run build`（或 `npm run build -- <app>`）把結果寫到 `<app>/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
-  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入、模式格子、練習清單…）、`audio.js`（輸出鏈、合成積木、節拍器 click、Wake Lock）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
+  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入，以及用 Astryx 元件組成的版面和選項：`Page`、`PracticeCard`（Card）、`Group`／`FoldGroup`（VStack＋Divider／Collapsible）、`Pair`（Grid）、`ModeList`（RadioList）、`SegChoice`（SegmentedControl）、`ExItems`／`InfoItems`（List／ListItem）…）、`audio.js`（輸出鏈、合成積木、節拍器 click、Wake Lock）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
   - Linear Grooves 有兩個頁面（`index.html`、`sticking.html`），建置會拆出共用的檔案。Astryx 的手機底部選單等部分是需要時才載入，也會拆成獨立檔案。`assets/files.json` 列出全部建置檔案，四個 App 的 `sw.js` 都照它預先快取。
   - `scripts/purge-css.mjs` 在建置後刪掉 `astryx.css` 裡沒被用到的 StyleX class（CSS 約 300 KB → 160 KB），並依新內容重算 CSS 檔名。
 - **聲音全部用 Web Audio API 即時合成**，不用任何音檔。
