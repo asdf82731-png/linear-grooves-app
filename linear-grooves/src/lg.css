@@ -1,21 +1,21 @@
 /* Linear Grooves and Sticking: staff, group strip and chips, group picker, edit tools, favourites, polyrhythm lanes. */
 .notation { overflow-x: auto; display: flex; flex-direction: column; gap: 4px; }
 .notation svg { display: block; width: 100%; height: auto; }
-.staff .sl { stroke: var(--muted); stroke-width: 1; }
-.staff .bl, .staff .nh, .staff .bm { fill: var(--ink); }
-.staff .xh { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
-.staff .st { stroke: var(--ink); stroke-width: 1.2; }
-.staff .ac { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linejoin: round; }
-.staff .ts { fill: var(--ink); font: 800 17px var(--f-display); }
-.staff .tup { fill: var(--muted); font: italic 600 11px var(--font-family-body); }
-.staff .cnt, .staff .bnum { fill: var(--muted); font: 500 10px var(--f-mono); }
+.staff .sl { stroke: var(--color-text-secondary); stroke-width: 1; }
+.staff .bl, .staff .nh, .staff .bm { fill: var(--color-text-primary); }
+.staff .xh { stroke: var(--color-text-primary); stroke-width: 1.6; stroke-linecap: round; }
+.staff .st { stroke: var(--color-text-primary); stroke-width: 1.2; }
+.staff .ac { fill: none; stroke: var(--color-text-primary); stroke-width: 1.4; stroke-linejoin: round; }
+.staff .ts { fill: var(--color-text-primary); font: 800 17px var(--f-display); }
+.staff .tup { fill: var(--color-text-secondary); font: italic 600 11px var(--font-family-body); }
+.staff .cnt, .staff .bnum { fill: var(--color-text-secondary); font: 500 10px var(--f-mono); }
 .staff .stk { font: 600 12px var(--f-mono); }
 .staff .stk.R { fill: var(--r); } .staff .stk.L { fill: var(--l); } .staff .stk.K { fill: var(--k); }
-.staff .gb { stroke: var(--line); stroke-width: 2; stroke-linecap: round; }
-.staff .mk { fill: var(--accent); font: 600 12px var(--f-mono); }
+.staff .gb { stroke: var(--color-border); stroke-width: 2; stroke-linecap: round; }
+.staff .mk { fill: var(--color-accent); font: 600 12px var(--f-mono); }
 .staff .ph { fill: transparent; }
 .staff .ph.on { fill: var(--hl); }
-.staff .beat { stroke: var(--line); stroke-width: 1; stroke-dasharray: 3 3; }
+.staff .beat { stroke: var(--color-border); stroke-width: 1; stroke-dasharray: 3 3; }
 .staff .hit.R { fill: var(--r); } .staff .hit.L { fill: var(--l); }
 .lanes .stk { font: 600 13px var(--f-mono); }
 .notation .lanes { padding-block: 8px; }
@@ -28,31 +28,31 @@
 
 /* group strip */
 .strip { display: flex; flex-wrap: wrap; gap: 6px; }
-.grp { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
-.grp:hover { border-color: var(--accent); }
-.grp.sel { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.grp { display: flex; gap: 2px; padding: 3px; border: 1px solid var(--color-border); border-radius: 7px; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.grp:hover { border-color: var(--color-accent); }
+.grp.sel { border-color: var(--color-accent); box-shadow: inset 0 0 0 1px var(--color-accent); }
 .chip { display: flex; flex-direction: column; align-items: center; min-width: 28px; padding: 2px 3px; border-radius: 4px; font: 600 15px/1.1 var(--f-mono); }
-.chip small { font: 500 9px/1.2 var(--f-mono); color: var(--muted); letter-spacing: .03em; }
+.chip small { font: 500 9px/1.2 var(--f-mono); color: var(--color-text-secondary); letter-spacing: .03em; }
 .chip.R { color: var(--r); } .chip.L { color: var(--l); } .chip.K { color: var(--k); }
 .chip.acc { text-decoration: underline; text-underline-offset: 3px; }
 .chip.on { background: var(--hl); }
 
 /* group picker */
-.picker { border: 1px solid var(--accent); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.picker { border: 1px solid var(--color-accent); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pk-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .pk-head strong { margin-right: auto; font-size: 14px; }
-.pk-lbl { font-size: 12px; color: var(--muted); }
+.pk-lbl { font-size: 12px; color: var(--color-text-secondary); }
 .pk-sub { font-size: 13px; font-weight: 600; }
 .pk-opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .pk-scroll { max-height: 220px; overflow-y: auto; }
-.opt { border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 6px; padding: 4px 7px; font: 600 14px/1.2 var(--f-mono); letter-spacing: .06em; cursor: pointer; }
+.opt { border: 1px solid var(--color-border); background: var(--color-background-surface); color: inherit; border-radius: 6px; padding: 4px 7px; font: 600 14px/1.2 var(--f-mono); letter-spacing: .06em; cursor: pointer; }
 .opt b { font-weight: 600; }
 .opt b.R { color: var(--r); } .opt b.L { color: var(--l); } .opt b.K { color: var(--k); }
-.opt.cur { border-color: var(--accent); background: var(--hl); }
+.opt.cur { border-color: var(--color-accent); background: var(--hl); }
 
 /* edit tools: where the groove is shifted to, under the tool's text */
-.tool-state { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 4px; color: var(--accent); }
+.tool-state { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; padding-top: 4px; color: var(--color-accent); }
 
 /* favourites: sticking in mono, the mini staff above the details */
-.fav-mini { display: block; color: var(--ink); }
+.fav-mini { display: block; color: var(--color-text-primary); }
 .fav-stk { font: 600 13px var(--f-mono); overflow-wrap: anywhere; white-space: normal; }

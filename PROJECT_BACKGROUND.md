@@ -95,22 +95,22 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 - 由上到下依序是：工具切換膠囊（只有 Linear Grooves 有）→ 大標題＋「? 使用說明」→ 第一次開啟的「三步開始練習」說明卡 → **練習卡（sheet）** → 「練什麼」選擇區 → 可折疊的設定面板（`<details class="fold">`）→ 頁尾。
 - **底部固定播放列**：像硬體節拍器。由左到右是：主要動作按鈕（「下一個」或「換一個」）、速度（大字 BPM，可以點一下直接輸入數字、− / ＋ 每次 5、滑桿）、**圓形播放鍵（在最右邊，方便右手拇指按）**。
 
-### 色彩 token（定義在 `:root`，自動支援深色模式）
+### 色彩 token
+介面顏色直接用 Astryx neutral 主題的 token，深色模式由主題自動切換；`shared/src/base.css` 只蓋掉強調色，另外定義四肢顏色和播放中的底色。
+
 | Token | 淺色 | 深色 | 用途 |
 | --- | --- | --- | --- |
-| `--bg` | #E9EDF0 | #0F1215 | 練習室灰 |
-| `--surface` | #FFFFFF | #181D22 | 譜紙 |
-| `--ink` | #15191E | #E6EAEE | 文字 |
-| `--muted` | #5A6470 | #96A1AC | 次要文字 |
-| `--line` | #CDD4DA | #2B333B | 線條 |
-| `--accent` | #A9611B | #D8913F | 銅鈸色，主要按鈕、重音、標示 |
+| `--color-background-body` | Astryx | Astryx | 頁面底色 |
+| `--color-background-surface` | Astryx | Astryx | 卡片底色（五個 App 一致，深色模式下和頁面分得開） |
+| `--color-text-primary` | Astryx | Astryx | 文字 |
+| `--color-text-secondary` | Astryx | Astryx | 次要文字 |
+| `--color-border` | Astryx | Astryx | 線條 |
+| `--color-accent` | #A9611B | #D8913F | 銅鈸色（蓋掉主題的黑白），主要按鈕、重音、標示 |
 | `--r` | #2C67A8 | #74A9E4 | **右手（藍）** |
 | `--l` | #BE3F33 | #EE7A6C | **左手（紅）** |
 | `--k` | #2C7A4E | #62C08B | **大鼓／右腳（綠）** |
 | `--lf` | #7A4FB0 | #B497E8 | **左腳（紫）**，只在 Double Pedal |
-| `--hl` | 銅色 16% | 銅色 22% | 播放中目前音符的底色 |
-
-深色模式寫在 `@media (prefers-color-scheme: dark)` 底下的 `:root:not([data-theme="light"])`，另外也支援 `:root[data-theme="dark"]`。
+| `--hl` | 銅色 20% | 銅色 20% | 播放中目前音符的底色（Astryx 沒有對應的 token） |
 
 ### 字型
 - 標題、BPM 數字：**Big Shoulders Display**（窄體、大寫）
@@ -142,7 +142,7 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 - 每個 App 的練習清單，每一列都顯示**名稱＋前 2 拍的小譜**（Djent 的 Fill 類顯示最後 2 拍），下面一排是手腳字母。
 - 各 App 把自己的資料轉成 `{ sub, slots: [[{ inst, limb, acc, ghost, grace }]], letters, line }` 再呼叫 `MiniStaff.svg()`；手順練習用單線譜（`line: true`），複節奏不畫小譜。
 - 用到的地方：Linear Grooves 手順練習清單與「我的收藏」、Double Pedal、Djent Grooves、Time Keeper「打什麼」。
-- 顏色用各 App 自己的 token（`--ink`、`--muted`、`--r`、`--l`、`--k`、`--lf`），CSS 由這個檔自己插入。
+- 顏色用 Astryx 的 `--color-text-primary`、`--color-text-secondary` 和四肢顏色（`--r`、`--l`、`--k`、`--lf`），CSS 由這個檔自己插入。
 - **改這個檔時，四個 App 的 `sw.js` 版本都要加一**，因為每個 App 都把 `../shared/mini-staff.js` 放在自己的快取清單裡。
 
 ### 文案語氣

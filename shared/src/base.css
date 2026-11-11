@@ -1,15 +1,10 @@
-/* Shared layout for the drum apps on top of Astryx. Colours come from the Astryx theme; the accent is overridden
+/* Shared layout for the drum apps on top of Astryx. Colours are Astryx theme tokens (--color-*), used directly; the accent is overridden
    to the cymbal bronze the apps always had, and the limb colours (R/L hands, R/L feet) stay fixed in every app. */
 :root, [data-astryx-theme] {
   --color-accent: light-dark(#A9611B, #D8913F);
   --color-accent-muted: light-dark(#F2E2D0, #3A2A17);
   --color-on-accent: light-dark(#FFFFFF, #1A1206);
-  --ink: var(--color-text-primary);
-  --muted: var(--color-text-secondary);
-  --line: var(--color-border);
-  --bg: var(--color-background-body);
-  --surface: var(--color-background-surface);
-  --accent: var(--color-accent);
+  /* the highlight behind the note being played: Astryx has no token for it, so it is mixed from the accent */
   --hl: color-mix(in srgb, var(--color-accent) 20%, transparent);
   --r: light-dark(#2C67A8, #74A9E4);    /* right hand */
   --l: light-dark(#BE3F33, #EE7A6C);    /* left hand */
@@ -19,10 +14,10 @@
   --f-display: "Figtree", var(--font-family-body), sans-serif;
   color-scheme: light dark;
 }
-html, body { margin: 0; background: var(--bg); color: var(--ink); }
+html, body { margin: 0; background: var(--color-background-body); color: var(--color-text-primary); }
 body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; }
 [hidden] { display: none !important; }
-:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
 
 .app {
   max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 16px;
@@ -36,40 +31,40 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .top .brand { font-size: 28px; letter-spacing: .01em; }
 .tools-nav {
   display: flex; gap: 4px; padding: 4px; border-radius: 999px; align-self: flex-start;
-  background: var(--surface); border: 1px solid var(--line); margin-bottom: 4px;
+  background: var(--color-background-surface); border: 1px solid var(--color-border); margin-bottom: 4px;
 }
-.tools-nav a { padding: 6px 16px; border-radius: 999px; text-decoration: none; color: var(--muted); font-size: 14px; font-weight: 600; }
-.tools-nav a[aria-current="page"] { background: var(--ink); color: var(--surface); }
+.tools-nav a { padding: 6px 16px; border-radius: 999px; text-decoration: none; color: var(--color-text-secondary); font-size: 14px; font-weight: 600; }
+.tools-nav a[aria-current="page"] { background: var(--color-text-primary); color: var(--color-background-surface); }
 
 /* first-run guide */
 .guide {
-  background: var(--surface); border: 2px solid var(--accent); border-radius: var(--radius-container, 12px);
+  background: var(--color-background-surface); border: 2px solid var(--color-accent); border-radius: var(--radius-container, 12px);
   padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
 }
 /* guide steps wrap instead of being cut to one line */
 .guide .step, .gl-dd { white-space: normal; }
 .key {
   display: inline-grid; place-items: center; width: 1.5em; height: 1.5em; border-radius: 4px;
-  font: 600 13px var(--f-mono); color: var(--surface); vertical-align: 1px;
+  font: 600 13px var(--f-mono); color: var(--color-background-surface); vertical-align: 1px;
 }
 .key.R { background: var(--r); } .key.L { background: var(--l); } .key.K, .key.fR { background: var(--k); } .key.fL { background: var(--lf); }
 
 /* practice card (an Astryx Card, see PracticeCard). Cards in all five apps use the surface colour: in dark mode
    Astryx's card colour equals the page, and the card would only show as a thin border. */
 .practice { min-width: 0; }
-.practice-card, .result-card { background-color: var(--surface); }
+.practice-card, .result-card { background-color: var(--color-background-surface); }
 .sheet-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
 .ex-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.ex-en { font: 500 12px var(--f-mono); color: var(--muted); }
-.best-pill { flex: none; font: 600 12px var(--f-mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--line); color: var(--muted); }
+.ex-en { font: 500 12px var(--f-mono); color: var(--color-text-secondary); }
+.best-pill { flex: none; font: 600 12px var(--f-mono); padding: 4px 10px; border-radius: 999px; border: 1px solid var(--color-border); color: var(--color-text-secondary); }
 .best-pill.has { color: var(--k); border-color: var(--k); }
-.meta { font: 500 12px var(--f-mono); color: var(--muted); letter-spacing: .04em; }
-.status { font: 600 13px var(--f-mono); color: var(--accent); min-height: 1.2em; }
+.meta { font: 500 12px var(--f-mono); color: var(--color-text-secondary); letter-spacing: .04em; }
+.status { font: 600 13px var(--f-mono); color: var(--color-accent); min-height: 1.2em; }
 .status:empty { display: none; }
-.tip { margin: 0; border-left: 3px solid var(--accent); padding: 2px 0 2px 10px; }
+.tip { margin: 0; border-left: 3px solid var(--color-accent); padding: 2px 0 2px 10px; }
 .ex-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.reps { font: 600 13px var(--f-mono); color: var(--accent); text-align: center; }
-.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--muted); }
+.reps { font: 600 13px var(--f-mono); color: var(--color-accent); text-align: center; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--color-text-secondary); }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
 .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 .dot.R, .dot.RH { background: var(--r); } .dot.L, .dot.LH { background: var(--l); }
@@ -80,7 +75,7 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .big .bt { display: flex; gap: 2px; }
 .big .n { position: relative; padding: 8px 5px 10px; border-radius: 6px; min-width: 1em; text-align: center; }
 .big .n.R { color: var(--r); } .big .n.L { color: var(--l); } .big .n.K, .big .n.fR { color: var(--k); } .big .n.fL { color: var(--lf); }
-.big .n.B { color: var(--accent); } .big .n.rest { color: var(--line); }
+.big .n.B { color: var(--color-accent); } .big .n.rest { color: var(--color-border); }
 .big .n.acc { text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
 .big .n.on { background: var(--hl); }
 @media (max-width: 420px) { .big { font-size: 26px; gap: 6px 10px; } }
@@ -92,16 +87,16 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .ex-st { font: 600 13px var(--f-mono); letter-spacing: .05em; overflow-wrap: anywhere; }
 .ex-st b { font-weight: 600; }
 .ex-st b.R { color: var(--r); } .ex-st b.L { color: var(--l); } .ex-st b.K, .ex-st b.fR { color: var(--k); } .ex-st b.fL { color: var(--lf); }
-.ex-st b.B { color: var(--accent); } .ex-st b.rest { color: var(--line); } .ex-st b.acc { text-decoration: underline; text-underline-offset: 3px; }
-.ex-mini { flex: none; display: flex; align-items: center; color: var(--ink); }
-.ex-best { flex: none; font: 600 12px var(--f-mono); color: var(--muted); }
+.ex-st b.B { color: var(--color-accent); } .ex-st b.rest { color: var(--color-border); } .ex-st b.acc { text-decoration: underline; text-underline-offset: 3px; }
+.ex-mini { flex: none; display: flex; align-items: center; color: var(--color-text-primary); }
+.ex-best { flex: none; font: 600 12px var(--f-mono); color: var(--color-text-secondary); }
 .ex-best.has { color: var(--k); }
 
 
 /* transport dock */
 .dock {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
-  background: var(--surface); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px rgb(0 0 0 / .06);
+  background: var(--color-background-surface); border-top: 1px solid var(--color-border); box-shadow: 0 -4px 16px rgb(0 0 0 / .06);
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 10px calc(10px + env(safe-area-inset-bottom, 0px));
 }
@@ -111,11 +106,11 @@ body { font-family: var(--font-family-body); -webkit-tap-highlight-color: transp
 .tempo-top { display: flex; align-items: center; gap: 6px; }
 .bpm {
   font: 800 32px/1 var(--f-display); font-variant-numeric: tabular-nums; text-align: center;
-  width: 3.4ch; min-width: 3.4ch; padding: 0 2px 1px; margin: 0; color: var(--ink); background: transparent;
-  border: 0; border-bottom: 2px dashed var(--line); border-radius: 0;
+  width: 3.4ch; min-width: 3.4ch; padding: 0 2px 1px; margin: 0; color: var(--color-text-primary); background: transparent;
+  border: 0; border-bottom: 2px dashed var(--color-border); border-radius: 0;
 }
-.bpm:focus { outline: none; border-bottom: 2px solid var(--accent); background: var(--color-background-muted); }
-.bpm-unit { font: 500 11px/1.15 var(--f-mono); color: var(--muted); letter-spacing: .08em; margin-right: auto; }
+.bpm:focus { outline: none; border-bottom: 2px solid var(--color-accent); background: var(--color-background-muted); }
+.bpm-unit { font: 500 11px/1.15 var(--f-mono); color: var(--color-text-secondary); letter-spacing: .08em; margin-right: auto; }
 .dock .play { flex: none; width: 56px; height: 56px; border-radius: 50%; }
 .dock .play svg { fill: currentColor; }
 .tempo-top > button { flex: none; min-width: 34px; }

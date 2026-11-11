@@ -7,7 +7,7 @@
  * limb colours the letter row: R / L (hands), K, fR / fL (feet), rest.
  * The same drum notation as the big staff in each app, drawn small: cymbals are x heads,
  * drums are note heads, accents are > above the beam, ghost notes sit in parentheses.
- * Colours come from each app's own tokens (--ink, --muted, --r, --l, --k, --lf), so both themes work.
+ * Colours are Astryx tokens (--color-text-primary, --color-text-secondary) and the limb colours (--r, --l, --k, --lf), so both themes work.
  */
 (function () {
   // Positions from the top staff line, in px; one staff space is 6.
@@ -18,20 +18,20 @@
 
   const CSS = `
 .ms { display: block; max-width: 100%; height: auto; overflow: visible; }
-.ms .sl { stroke: var(--muted); stroke-width: 0.8; }
-.ms .ld { stroke: var(--ink); stroke-width: 0.8; }
-.ms .nh, .ms .bm, .ms .gp { fill: var(--ink); }
-.ms .gn { fill: var(--ink); opacity: 0.8; }
-.ms .xh { stroke: var(--ink); stroke-width: 1.3; stroke-linecap: round; fill: none; }
-.ms .xo { fill: none; stroke: var(--ink); stroke-width: 0.9; }
-.ms .st, .ms .gs { stroke: var(--ink); stroke-width: 1; }
-.ms .ac { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linejoin: round; }
+.ms .sl { stroke: var(--color-text-secondary); stroke-width: 0.8; }
+.ms .ld { stroke: var(--color-text-primary); stroke-width: 0.8; }
+.ms .nh, .ms .bm, .ms .gp { fill: var(--color-text-primary); }
+.ms .gn { fill: var(--color-text-primary); opacity: 0.8; }
+.ms .xh { stroke: var(--color-text-primary); stroke-width: 1.3; stroke-linecap: round; fill: none; }
+.ms .xo { fill: none; stroke: var(--color-text-primary); stroke-width: 0.9; }
+.ms .st, .ms .gs { stroke: var(--color-text-primary); stroke-width: 1; }
+.ms .ac { fill: none; stroke: var(--color-text-primary); stroke-width: 1.1; stroke-linejoin: round; }
 .ms .gp { font: 9px sans-serif; }
-.ms .tp { font: italic 600 7px sans-serif; fill: var(--muted); }
-.ms .lt { font: 600 8.5px var(--f-mono, ui-monospace, monospace); fill: var(--muted); }
+.ms .tp { font: italic 600 7px sans-serif; fill: var(--color-text-secondary); }
+.ms .lt { font: 600 8.5px var(--f-mono, ui-monospace, monospace); fill: var(--color-text-secondary); }
 .ms .lt.R { fill: var(--r); } .ms .lt.L { fill: var(--l); }
 .ms .lt.K, .ms .lt.fR { fill: var(--k); } .ms .lt.fL { fill: var(--lf, #7A4FB0); }
-.ms .lt.rest { fill: var(--line); }`;
+.ms .lt.rest { fill: var(--color-border); }`;
 
   function injectCss() {
     if (document.getElementById('mini-staff-css')) return;
