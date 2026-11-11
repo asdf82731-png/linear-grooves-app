@@ -3,7 +3,7 @@ import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {CheckboxInput} from '@astryxdesign/core/CheckboxInput';
 import {
-  AppTheme, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, Letters,
+  AppTheme, MainColumn, SideColumn, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, Letters,
   ModeList, Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {
@@ -159,101 +159,105 @@ function DoublePedal() {
   const showGuide = help;
 
   return (
-    <Page>
-      <Header title="Double Pedal"
-        guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
+    <Page className="split">
+      <MainColumn>
+        <Header title="Double Pedal"
+          guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
 
-      {showGuide && (
-        <Guide tips={TIPS} onOk={() => setHelp(false)}
-        steps={[
-          <><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</>,
-          <><b>按 ▶</b>，跟著大字母踩：<span className="key fR">R</span> 右腳（主踏板）、<span className="key fL">L</span> 左腳（副踏板或腳踩鈸）。下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</>,
-          <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
-        ]} />
-      )}
-
-      <PracticeCard cardRef={practice}>
-        <SheetHead name={cur.name} en={cur.en || st.map(s => s.c).join('').replace(/(.{4})/g, '$1 ').trim()} best={best[cur.key]} />
-        <div className="meta">{SUB_NAME[cur.sub]} · {cur.len / cur.sub} 拍一循環 · 第 {idx + 1} / {sheet.length} 個</div>
-        <Status msg={msg} />
-        {S.mode !== 'hh' && (
-          <div className="big" aria-label="腳順">
-            {Array.from({length: cur.len / cur.sub}, (_, b) => (
-              <span className="bt" key={b}>
-                {Array.from({length: cur.sub}, (_, k) => {
-                  const i = b * cur.sub + k, s = st[i];
-                  return <span key={k} className={`n ${s.cls}${hl === i ? ' on' : ''}`}>{s.c}</span>;
-                })}
-              </span>
-            ))}
-          </div>
+        {showGuide && (
+          <Guide tips={TIPS} onOk={() => setHelp(false)}
+          steps={[
+            <><b>在下方「練什麼」選一個練習</b>，第一次建議從「雙踏基本功」的「4 分音符交替」開始。</>,
+            <><b>按 ▶</b>，跟著大字母踩：<span className="key fR">R</span> 右腳（主踏板）、<span className="key fL">L</span> 左腳（副踏板或腳踩鈸）。下方的格子圖一排是一個肢體，亮起來的那一欄就是現在要打的音。</>,
+            <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
+          ]} />
         )}
-        <div className="legend">
-          {CL.map(l => <span key={l.limb}><i className={'dot ' + l.limb} />{LIMB_NAME[l.limb]}・{INST_NAME[l.inst]}</span>)}
-        </div>
-        <KitGrid ex={cur} lanes={CL} hl={hl} />
-        {cur.tip && <Tip>{cur.tip}</Tip>}
-        <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
-        <DoneButton bpm={S.bpm} onClick={record} />
-      </PracticeCard>
 
-      <Group title="練什麼" id="h-what">
-        <ModeList label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
-        <Hint>{MODE_HINT[S.mode]}</Hint>
-        {S.mode === 'rand' && (
-          <>
-            <Pair>
-              <Field label="一拍踩幾個音">
-                <SegChoice label="一拍踩幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})}
-                  options={[{value: 2, label: '2 個', sub: '8 分'}, {value: 3, label: '3 個', sub: '三連音'}, {value: 4, label: '4 個', sub: '16 分'}]} />
-              </Field>
-              <Choose label="同一隻腳最多連踩" value={S.rRun} onChange={v => rebuild({rRun: +v})}
-                options={[{value: 1, label: '1 下（左右交替）'}, {value: 2, label: '2 下'}, {value: 3, label: '3 下'}, {value: 4, label: '4 下'}]} />
-            </Pair>
-            <CheckboxInput label="加入休止（空拍）" value={S.rRest} onChange={v => rebuild({rRest: v})} />
-            <div>
-              <Button size="sm" label="換一組新的" onClick={() => {
-                if (engine.isPlaying()) stop();
-                setRand(makeRandom(S));
-                update(s => ({idx: {...s.idx, rand: 0}}));
-                flash('換了一組新的隨機腳順');
-              }} />
+        <PracticeCard cardRef={practice}>
+          <SheetHead name={cur.name} en={cur.en || st.map(s => s.c).join('').replace(/(.{4})/g, '$1 ').trim()} best={best[cur.key]} />
+          <div className="meta">{SUB_NAME[cur.sub]} · {cur.len / cur.sub} 拍一循環 · 第 {idx + 1} / {sheet.length} 個</div>
+          <Status msg={msg} />
+          {S.mode !== 'hh' && (
+            <div className="big" aria-label="腳順">
+              {Array.from({length: cur.len / cur.sub}, (_, b) => (
+                <span className="bt" key={b}>
+                  {Array.from({length: cur.sub}, (_, k) => {
+                    const i = b * cur.sub + k, s = st[i];
+                    return <span key={k} className={`n ${s.cls}${hl === i ? ' on' : ''}`}>{s.c}</span>;
+                  })}
+                </span>
+              ))}
             </div>
-          </>
-        )}
-        <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
-          items={sheet.map(ex => {
-            const lanes = swapped(ex, S.leftLead);
-            return {key: ex.key, name: ex.name, best: best[ex.key], stick: <Letters items={sticking(ex, lanes)} />, mini: miniFor(ex, lanes)};
-          })} />
-      </Group>
+          )}
+          <div className="legend">
+            {CL.map(l => <span key={l.limb}><i className={'dot ' + l.limb} />{LIMB_NAME[l.limb]}・{INST_NAME[l.inst]}</span>)}
+          </div>
+          <KitGrid ex={cur} lanes={CL} hl={hl} />
+          {cur.tip && <Tip>{cur.tip}</Tip>}
+          <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
+          <DoneButton bpm={S.bpm} onClick={record} />
+        </PracticeCard>
+      </MainColumn>
 
-      <FoldGroup title="腳法技巧" sub="踩法、設定、常見問題"><Glossary items={TECHNIQUE} /></FoldGroup>
+      <SideColumn>
+        <Group title="練什麼" id="h-what">
+          <ModeList label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
+          <Hint>{MODE_HINT[S.mode]}</Hint>
+          {S.mode === 'rand' && (
+            <>
+              <Pair>
+                <Field label="一拍踩幾個音">
+                  <SegChoice label="一拍踩幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})}
+                    options={[{value: 2, label: '2 個', sub: '8 分'}, {value: 3, label: '3 個', sub: '三連音'}, {value: 4, label: '4 個', sub: '16 分'}]} />
+                </Field>
+                <Choose label="同一隻腳最多連踩" value={S.rRun} onChange={v => rebuild({rRun: +v})}
+                  options={[{value: 1, label: '1 下（左右交替）'}, {value: 2, label: '2 下'}, {value: 3, label: '3 下'}, {value: 4, label: '4 下'}]} />
+              </Pair>
+              <CheckboxInput label="加入休止（空拍）" value={S.rRest} onChange={v => rebuild({rRest: v})} />
+              <div>
+                <Button size="sm" label="換一組新的" onClick={() => {
+                  if (engine.isPlaying()) stop();
+                  setRand(makeRandom(S));
+                  update(s => ({idx: {...s.idx, rand: 0}}));
+                  flash('換了一組新的隨機腳順');
+                }} />
+              </div>
+            </>
+          )}
+          <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
+            items={sheet.map(ex => {
+              const lanes = swapped(ex, S.leftLead);
+              return {key: ex.key, name: ex.name, best: best[ex.key], stick: <Letters items={sticking(ex, lanes)} />, mini: miniFor(ex, lanes)};
+            })} />
+        </Group>
 
-      <FoldGroup title="練習設定" sub="聲音、次數、左腳開始、計時、節拍器">
-        <Choose label="App 幫你打哪些聲部" value={S.playPart} onChange={v => update({playPart: v})}
-          options={[{value: 'all', label: '全部（手和腳）'}, {value: 'hands', label: '只播手的部分（你踩腳）'},
-            {value: 'feet', label: '只播腳的部分（你打手）'}, {value: 'none', label: '都不播（只有節拍器）'}]} />
-        <Toggle label="練完自動換下一個" value={S.autoNext} onChange={v => update({autoNext: v})} />
-        <Choose label="每個練習重複幾次" value={S.reps} onChange={v => update({reps: +v})} options={[4, 8, 16, 32]} />
-        <Toggle label="左腳開始" description="雙踏的左右腳對調；單腳連踩改練左腳" value={S.leftLead}
-          onChange={v => { update({leftLead: v}); replay(); }} />
-        <Choose label="練習計時（時間到自動停止）" value={S.timer} onChange={v => { update({timer: +v}); engine.resetTimer(); }}
-          options={[{value: 0, label: '不計時'}, {value: 1, label: '1 分鐘'}, {value: 2, label: '2 分鐘'}, {value: 5, label: '5 分鐘'}, {value: 10, label: '10 分鐘'}]} />
-        <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
-        <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
-          options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
-        <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
-        <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
-        {S.trainer && (
-          <Pair>
-            <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
-            <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
-            <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
-              onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
-          </Pair>
-        )}
-      </FoldGroup>
+        <FoldGroup title="腳法技巧" sub="踩法、設定、常見問題"><Glossary items={TECHNIQUE} /></FoldGroup>
+
+        <FoldGroup title="練習設定" sub="聲音、次數、左腳開始、計時、節拍器">
+          <Choose label="App 幫你打哪些聲部" value={S.playPart} onChange={v => update({playPart: v})}
+            options={[{value: 'all', label: '全部（手和腳）'}, {value: 'hands', label: '只播手的部分（你踩腳）'},
+              {value: 'feet', label: '只播腳的部分（你打手）'}, {value: 'none', label: '都不播（只有節拍器）'}]} />
+          <Toggle label="練完自動換下一個" value={S.autoNext} onChange={v => update({autoNext: v})} />
+          <Choose label="每個練習重複幾次" value={S.reps} onChange={v => update({reps: +v})} options={[4, 8, 16, 32]} />
+          <Toggle label="左腳開始" description="雙踏的左右腳對調；單腳連踩改練左腳" value={S.leftLead}
+            onChange={v => { update({leftLead: v}); replay(); }} />
+          <Choose label="練習計時（時間到自動停止）" value={S.timer} onChange={v => { update({timer: +v}); engine.resetTimer(); }}
+            options={[{value: 0, label: '不計時'}, {value: 1, label: '1 分鐘'}, {value: 2, label: '2 分鐘'}, {value: 5, label: '5 分鐘'}, {value: 10, label: '10 分鐘'}]} />
+          <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
+          <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
+            options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
+          <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
+          <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
+          {S.trainer && (
+            <Pair>
+              <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
+              <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
+              <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
+                onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
+            </Pair>
+          )}
+        </FoldGroup>
+      </SideColumn>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

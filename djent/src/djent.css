@@ -1,5 +1,4 @@
 /* Djent: staff and kit grid (rendered as HTML strings by music.js), group bars, ghost notes, and the tablet two-column layout. */
-.col-main, .col-side { min-width: 0; }
 .basic-tg { flex: 1 1 220px; padding: 6px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-element, 10px); background: var(--color-background-body); }
 .basic .basic-tg { border-color: var(--color-accent); background: var(--hl); }
 .cycle { margin: 0; font-size: 13px; }
@@ -78,19 +77,11 @@
 
 /* Tablet: score on the left, settings on the right */
 @media (min-width: 900px) {
-  .app.djent {
-    max-width: 1400px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start;
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
-  }
-  .col-main { position: sticky; top: 12px; max-height: calc(100dvh - 112px); overflow-y: auto; overscroll-behavior: contain; padding-right: 2px; }
-  .col-side { padding-top: 6px; }
-  .col-side > .group:first-child > [role="separator"] { display: none; }
   .practice-body { gap: 8px; }
   .kit { gap: 10px; }
   .kc { height: 24px; }
   .kr.gp .kc { height: 18px; }
   .kr { min-width: 0; }
-  .dock-in { max-width: 1400px; }
   /* Staff: two bars per line, so a 4-bar phrase fits on one screen. */
   .notation { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
   .notation svg { min-width: 0 !important; }

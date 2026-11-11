@@ -2,11 +2,10 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {SegmentedControl, SegmentedControlItem} from '@astryxdesign/core/SegmentedControl';
-import {VStack} from '@astryxdesign/core/VStack';
 import {HStack} from '@astryxdesign/core/HStack';
 import {Text} from '@astryxdesign/core/Text';
 import {
-  AppTheme, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
+  AppTheme, MainColumn, SideColumn, Tip, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Glossary, Group, Guide, Header, Hint, ModeList,
   Page, Pair, PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {CATS, FILLS, LIB, build, cycleText, describe, gridHtml, miniFor, pick, riffText, staffHtml} from './music.js';
@@ -153,8 +152,8 @@ function Djent() {
   const ghost = cur.slots.some(s => s.some(h => h.lvl === 'g'));
 
   return (
-    <Page className={'djent' + (S.basic ? ' basic' : '')}>
-      <VStack gap={4} className="col-main">
+    <Page className={'split djent' + (S.basic ? ' basic' : '')}>
+      <MainColumn>
         <Header title="Djent Grooves"
           guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
         {showGuide && (
@@ -205,9 +204,9 @@ function Djent() {
           <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
           <DoneButton bpm={S.bpm} onClick={record} />
         </PracticeCard>
-      </VStack>
+      </MainColumn>
 
-      <VStack gap={4} className="col-side">
+      <SideColumn>
         <Group title="練什麼" id="h-what">
           <ModeList label="練習類型" value={S.cat} options={CAT_OPTS} onChange={c => { if (engine.isPlaying()) stop(); update({cat: c}); }} />
           <Hint>{CAT_HINT[S.cat]}</Hint>
@@ -285,7 +284,7 @@ function Djent() {
         </FoldGroup>
 
         <FoldGroup title="Djent 小技巧" sub="怎麼不迷路、怎麼練快"><Glossary items={TIPS} /></FoldGroup>
-      </VStack>
+      </SideColumn>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

@@ -2,7 +2,7 @@ import {useEffect, useLayoutEffect, useMemo, useRef, useState} from 'react';
 import {Button} from '@astryxdesign/core/Button';
 import {NumberInput} from '@astryxdesign/core/NumberInput';
 import {
-  AppTheme, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Group, Guide, Header, Hint, ModeList, Page, Pair,
+  AppTheme, MainColumn, SideColumn, Choose, DoneButton, Dock, ExItems, ExNav, Field, FoldGroup, Group, Guide, Header, Hint, ModeList, Page, Pair,
   PracticeCard, SegChoice, SheetHead, Status, Toggle, load, save, useFlash, useKeys, useLatest, useStored,
 } from '../../shared/src/ui.jsx';
 import {ACCENT_BASES, MODES, SUB_NAME, makeRandom, miniFor, notationHtml, sheet as buildSheet, stickString, swapped} from './sticking-data.js';
@@ -118,111 +118,115 @@ function Sticking() {
     : cur.en ? (cur.en === cur.name ? '' : cur.en) : stickString(SL).replace(/(.{4})/g, '$1 ').trim();
 
   return (
-    <Page>
-      <Header nav={<ToolsNav cur="sticking" />} title="Sticking"
-        guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
-      {showGuide && (
-        <Guide tips={TIPS} onOk={() => setHelp(false)}
-        steps={[
-          <><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</>,
-          <><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</>,
-          <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
-        ]} />
-      )}
+    <Page className="split">
+      <MainColumn>
+        <Header nav={<ToolsNav cur="sticking" />} title="Sticking"
+          guideOpen={showGuide} onHelp={() => setHelp(h => !h)} />
+        {showGuide && (
+          <Guide tips={TIPS} onOk={() => setHelp(false)}
+          steps={[
+            <><b>在下方「練什麼」選一個練習</b>，第一次建議從「單擊」開始。</>,
+            <><b>按 ▶</b>，跟著大字母打：<span className="key R">R</span> 右手、<span className="key L">L</span> 左手。有底線的字要打重音（大聲一點），左上角的小字是裝飾音，用另一隻手輕輕先敲。</>,
+            <><b>打順了就按「✓ 打順了」</b>記錄速度，再把速度調快 5 BPM 繼續練。</>,
+          ]} />
+        )}
 
-      <PracticeCard cardRef={practice}>
-        <SheetHead name={cur.name} en={en} best={best[cur.key]} />
-        <div className="meta">
-          {cur.poly ? `節拍器跟著${few}手（每拍一下） · 第 ${idx + 1} / ${sheet.length} 個`
-            : `${SUB_NAME[cur.sub]} · ${cur.notes.length / cur.sub} 拍一循環 · 第 ${idx + 1} / ${sheet.length} 個`}
-        </div>
-        <Status msg={msg} />
-        {!cur.poly && (
-          <div className="big" ref={big} aria-label="手順">
-            {Array.from({length: SL.length / cur.sub}, (_, b) => (
-              <span className="bt" key={b}>
-                {Array.from({length: cur.sub}, (_, k) => {
-                  const i = b * cur.sub + k, n = SL[i];
-                  return (
-                    <span key={k} className={`n ${n.h === '-' ? 'rest' : n.h}${n.acc ? ' acc' : ''}`} data-i={i}>
-                      {!!n.g && <sup>{(n.h === 'R' ? 'l' : 'r').repeat(n.g)}</sup>}
-                      {n.h === 'B' ? <><b className="R">R</b><b className="L">L</b></> : n.h === '-' ? '·' : n.h}
-                    </span>
-                  );
-                })}
-              </span>
-            ))}
+        <PracticeCard cardRef={practice}>
+          <SheetHead name={cur.name} en={en} best={best[cur.key]} />
+          <div className="meta">
+            {cur.poly ? `節拍器跟著${few}手（每拍一下） · 第 ${idx + 1} / ${sheet.length} 個`
+              : `${SUB_NAME[cur.sub]} · ${cur.notes.length / cur.sub} 拍一循環 · 第 ${idx + 1} / ${sheet.length} 個`}
           </div>
-        )}
-        <div className="notation" ref={notation} dangerouslySetInnerHTML={{__html: html}} />
-        <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
-        <DoneButton bpm={S.bpm} onClick={record} />
-      </PracticeCard>
+          <Status msg={msg} />
+          {!cur.poly && (
+            <div className="big" ref={big} aria-label="手順">
+              {Array.from({length: SL.length / cur.sub}, (_, b) => (
+                <span className="bt" key={b}>
+                  {Array.from({length: cur.sub}, (_, k) => {
+                    const i = b * cur.sub + k, n = SL[i];
+                    return (
+                      <span key={k} className={`n ${n.h === '-' ? 'rest' : n.h}${n.acc ? ' acc' : ''}`} data-i={i}>
+                        {!!n.g && <sup>{(n.h === 'R' ? 'l' : 'r').repeat(n.g)}</sup>}
+                        {n.h === 'B' ? <><b className="R">R</b><b className="L">L</b></> : n.h === '-' ? '·' : n.h}
+                      </span>
+                    );
+                  })}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="notation" ref={notation} dangerouslySetInnerHTML={{__html: html}} />
+          <ExNav onPrev={() => go(idx - 1)} onNext={() => go(idx + 1)} reps={repsTxt} />
+          <DoneButton bpm={S.bpm} onClick={record} />
+        </PracticeCard>
+      </MainColumn>
 
-      <Group title="練什麼" id="h-what">
-        <ModeList label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
-        {S.mode === 'rud' && <Hint>鼓手最常用的基本手法，由簡單到難排列。</Hint>}
-        {S.mode === 'para' && <Hint>先練單 Paradiddle 的四種起點（標準、反轉、反向、延遲），再練雙、三 Paradiddle 和加了 Flam 的版本。</Hint>}
-        {S.mode === 'poly' && (
-          <>
-            <Hint>兩隻手在同一段時間裡平均打不同的次數，例如 3 對 2：右手打 3 下的時間，左手剛好打 2 下。圖上方那排是右手、下方是左手，對齊的點兩手同時打（清單裡用 <b>✕</b> 表示）。先用「只聽…」分開聽清楚，再兩手一起。</Hint>
-            <Choose label="聲音" value={S.polyMute} onChange={v => update({polyMute: v})}
-              options={[{value: 'none', label: '兩隻手都出聲'}, {value: 'L', label: '只聽右手'}, {value: 'R', label: '只聽左手'}]} />
-          </>
-        )}
-        {S.mode === 'rand' && (
-          <>
-            <Hint>隨機產生 8 個左右手組合，一個接一個練，訓練看譜反應。</Hint>
-            <Pair>
-              <Field label="一拍打幾個音">
-                <SegChoice label="一拍打幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})} options={[{value: 2, label: '2 個', sub: '8 分'}, {value: 4, label: '4 個', sub: '16 分'}]} />
-              </Field>
-              <Choose label="同一隻手最多連打" value={S.rRun} onChange={v => rebuild({rRun: +v})}
-                options={[{value: 1, label: '1 下（左右交替）'}, {value: 2, label: '2 下'}, {value: 3, label: '3 下'}, {value: 4, label: '4 下'}]} />
-            </Pair>
-            <div><Button size="sm" label="換一組新的" onClick={() => { if (engine.isPlaying()) stop(); setRand(makeRandom(S)); update(s => ({idx: {...s.idx, rand: 0}})); flash('換了一組新的隨機手順'); }} /></div>
-          </>
-        )}
-        {S.mode === 'acc' && (
-          <>
-            <Hint>同一個手順，重音一個一個往後移，練習手的高低控制。選「兩個重音」時，每拍有兩個重音，練遍所有位置組合。</Hint>
-            <Pair>
-              <Choose label="基本手順" value={S.aBase} onChange={v => rebuild(s => ({aBase: ACCENT_BASES[v] ? v : 'single', idx: {...s.idx, acc: 0}}))}
-                options={[{value: 'single', label: '單擊 R L'}, {value: 'single2', label: '單擊 R L（兩個重音）'}, {value: 'double', label: '雙擊 R R L L'}, {value: 'para', label: 'Paradiddle R L R R L R L L'}]} />
-              <Field label="一拍打幾個音">
-                <SegChoice label="一拍打幾個音" value={S.aSub} onChange={v => rebuild(s => ({aSub: v, idx: {...s.idx, acc: 0}}))} options={[{value: 3, label: '3 個'}, {value: 4, label: '4 個'}]} />
-              </Field>
-            </Pair>
-          </>
-        )}
-        <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
-          items={sheet.map(ex => {
-            const notes = swapped(ex.notes, S.leftLead);
-            const st = ex.poly
-              ? notes.map((n, k) => (n.h === '-' ? <b key={k} className="rest">·</b> : n.h === 'B' ? <b key={k} className="B">✕</b> : <b key={k} className={n.h}>{n.h}</b>))
-              : notes.map((n, k) => <b key={k} className={n.h + (n.acc ? ' acc' : '')}>{n.h}</b>);
-            return {key: ex.key, name: ex.name, stick: st, mini: miniFor(ex, S.leftLead), best: best[ex.key]};
-          })} />
-      </Group>
+      <SideColumn>
+        <Group title="練什麼" id="h-what">
+          <ModeList label="練習類型" value={S.mode} options={MODE_OPTS} onChange={m => rebuild({mode: m})} />
+          {S.mode === 'rud' && <Hint>鼓手最常用的基本手法，由簡單到難排列。</Hint>}
+          {S.mode === 'para' && <Hint>先練單 Paradiddle 的四種起點（標準、反轉、反向、延遲），再練雙、三 Paradiddle 和加了 Flam 的版本。</Hint>}
+          {S.mode === 'poly' && (
+            <>
+              <Hint>兩隻手在同一段時間裡平均打不同的次數，例如 3 對 2：右手打 3 下的時間，左手剛好打 2 下。圖上方那排是右手、下方是左手，對齊的點兩手同時打（清單裡用 <b>✕</b> 表示）。先用「只聽…」分開聽清楚，再兩手一起。</Hint>
+              <Choose label="聲音" value={S.polyMute} onChange={v => update({polyMute: v})}
+                options={[{value: 'none', label: '兩隻手都出聲'}, {value: 'L', label: '只聽右手'}, {value: 'R', label: '只聽左手'}]} />
+            </>
+          )}
+          {S.mode === 'rand' && (
+            <>
+              <Hint>隨機產生 8 個左右手組合，一個接一個練，訓練看譜反應。</Hint>
+              <Pair>
+                <Field label="一拍打幾個音">
+                  <SegChoice label="一拍打幾個音" value={S.rSub} onChange={v => rebuild({rSub: v})} options={[{value: 2, label: '2 個', sub: '8 分'}, {value: 4, label: '4 個', sub: '16 分'}]} />
+                </Field>
+                <Choose label="同一隻手最多連打" value={S.rRun} onChange={v => rebuild({rRun: +v})}
+                  options={[{value: 1, label: '1 下（左右交替）'}, {value: 2, label: '2 下'}, {value: 3, label: '3 下'}, {value: 4, label: '4 下'}]} />
+              </Pair>
+              <div><Button size="sm" label="換一組新的" onClick={() => { if (engine.isPlaying()) stop(); setRand(makeRandom(S)); update(s => ({idx: {...s.idx, rand: 0}})); flash('換了一組新的隨機手順'); }} /></div>
+            </>
+          )}
+          {S.mode === 'acc' && (
+            <>
+              <Hint>同一個手順，重音一個一個往後移，練習手的高低控制。選「兩個重音」時，每拍有兩個重音，練遍所有位置組合。</Hint>
+              <Pair>
+                <Choose label="基本手順" value={S.aBase} onChange={v => rebuild(s => ({aBase: ACCENT_BASES[v] ? v : 'single', idx: {...s.idx, acc: 0}}))}
+                  options={[{value: 'single', label: '單擊 R L'}, {value: 'single2', label: '單擊 R L（兩個重音）'}, {value: 'double', label: '雙擊 R R L L'}, {value: 'para', label: 'Paradiddle R L R R L R L L'}]} />
+                <Field label="一拍打幾個音">
+                  <SegChoice label="一拍打幾個音" value={S.aSub} onChange={v => rebuild(s => ({aSub: v, idx: {...s.idx, acc: 0}}))} options={[{value: 3, label: '3 個'}, {value: 4, label: '4 個'}]} />
+                </Field>
+              </Pair>
+            </>
+          )}
+          <ExItems cur={idx} onPick={i => { go(i); practice.current?.scrollIntoView({behavior: 'smooth', block: 'start'}); }}
+            items={sheet.map(ex => {
+              const notes = swapped(ex.notes, S.leftLead);
+              const st = ex.poly
+                ? notes.map((n, k) => (n.h === '-' ? <b key={k} className="rest">·</b> : n.h === 'B' ? <b key={k} className="B">✕</b> : <b key={k} className={n.h}>{n.h}</b>))
+                : notes.map((n, k) => <b key={k} className={n.h + (n.acc ? ' acc' : '')}>{n.h}</b>);
+              return {key: ex.key, name: ex.name, stick: st, mini: miniFor(ex, S.leftLead), best: best[ex.key]};
+            })} />
+        </Group>
 
-      <FoldGroup title="練習設定" sub="次數、自動換下一個、左手開始、節拍器">
-        <Toggle label="練完自動換下一個" value={S.autoNext} onChange={v => update({autoNext: v})} />
-        <Choose label="每個練習重複幾次" value={S.reps} onChange={v => update({reps: +v})} options={[4, 8, 16, 32]} />
-        <Toggle label="左手開始" description="R、L 對調；複節奏則換成左手打多的那邊" value={S.leftLead} onChange={v => { update({leftLead: v}); replay(); }} />
-        <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
-        <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
-          options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
-        <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
-        <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
-        {S.trainer && (
-          <Pair>
-            <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
-            <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
-            <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
-              onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
-          </Pair>
-        )}
-      </FoldGroup>
+        <FoldGroup title="練習設定" sub="次數、自動換下一個、左手開始、節拍器">
+          <Toggle label="練完自動換下一個" value={S.autoNext} onChange={v => update({autoNext: v})} />
+          <Choose label="每個練習重複幾次" value={S.reps} onChange={v => update({reps: +v})} options={[4, 8, 16, 32]} />
+          <Toggle label="左手開始" description="R、L 對調；複節奏則換成左手打多的那邊" value={S.leftLead} onChange={v => { update({leftLead: v}); replay(); }} />
+          <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
+          <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
+            options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
+          <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />
+          <Toggle label="自動加速：打熟了自動變快" value={S.trainer} onChange={v => { update({trainer: v}); engine.resetLoops(); }} />
+          {S.trainer && (
+            <Pair>
+              <Choose label="每重複幾次加快" value={S.trainerEvery} onChange={v => update({trainerEvery: +v})} options={[2, 4, 8]} />
+              <Choose label="每次加快（BPM）" value={S.trainerStep} onChange={v => update({trainerStep: +v})} options={[2, 5, 10]} />
+              <NumberInput label="最快到（BPM）" isIntegerOnly min={30} max={260} value={S.trainerMax}
+                onChange={v => update({trainerMax: Math.max(30, Math.min(260, Math.round(v) || DEFAULTS.trainerMax))})} />
+            </Pair>
+          )}
+        </FoldGroup>
+      </SideColumn>
 
       <Dock actionLabel="下一個" onAction={() => go(idx + 1)} bpm={S.bpm} setBpm={setBpm} min={MIN_BPM} max={MAX_BPM}
         playing={playing} onPlay={toggle} flash={flash} />

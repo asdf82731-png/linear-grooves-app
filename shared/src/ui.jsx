@@ -168,6 +168,15 @@ export function Page({children, className = ''}) {
   return <VStack gap={4} className={('app ' + className).trim()}>{children}</VStack>;
 }
 
+// Two columns on a tablet in landscape (.app.split, see base.css): practice on the left, lists and settings on the right.
+// On a phone or in portrait they stack in this order.
+export function MainColumn({children}) {
+  return <VStack gap={4} className="col-main">{children}</VStack>;
+}
+export function SideColumn({children}) {
+  return <VStack gap={4} className="col-side">{children}</VStack>;
+}
+
 // The practice card at the top of the page.
 export function PracticeCard({children, cardRef, label = '目前的練習'}) {
   return (
@@ -288,19 +297,48 @@ export function BpmField({bpm, min, max, onCommit, onOutOfRange}) {
   );
 }
 
+// − / + on the tempo: a tap moves 1 BPM; holding keeps going, after half a second in jumps to the next multiple of 5.
+// Keyboard activation (Enter / Space on the focused button) moves 1 BPM.
+function useNudge(bpmRef, setBpm, dir) {
+  const timer = useRef(null), byPointer = useRef(false);
+  const stop = () => { clearTimeout(timer.current); clearInterval(timer.current); timer.current = null; };
+  useEffect(() => stop, []);
+  const jump = () => {
+    const v = bpmRef.current;
+    setBpm(dir > 0 ? Math.floor(v / 5) * 5 + 5 : Math.ceil(v / 5) * 5 - 5);
+  };
+  return {
+    onPointerDown: e => {
+      if (e.button !== 0) return;
+      byPointer.current = true;
+      stop();
+      setBpm(bpmRef.current + dir);
+      timer.current = setTimeout(() => { jump(); timer.current = setInterval(jump, 140); }, 450);
+    },
+    onPointerUp: stop, onPointerLeave: stop, onPointerCancel: stop,
+    onContextMenu: e => e.preventDefault(),   // a long press must not open the phone's menu
+    onClick: () => {
+      if (byPointer.current) { byPointer.current = false; return; }
+      setBpm(bpmRef.current + dir);
+    },
+  };
+}
+
 // Bottom bar like a hardware metronome: main action on the left, tempo in the middle, ▶ on the right for the thumb.
-export function Dock({actionLabel, onAction, bpm, setBpm, min = 30, max = 240, step = 5, playing, onPlay, flash, extra}) {
+export function Dock({actionLabel, onAction, bpm, setBpm, min = 30, max = 240, playing, onPlay, flash, extra}) {
+  const bpmRef = useLatest(bpm);
+  const slower = useNudge(bpmRef, setBpm, -1), faster = useNudge(bpmRef, setBpm, 1);
   return (
     <nav className="dock" aria-label="播放控制">
       <div className="dock-in">
         {actionLabel && <Button variant="primary" size="lg" label={actionLabel} onClick={onAction} />}
         <div className="tempo">
           <div className="tempo-top">
-            <Button size="sm" label="−" tooltip="慢一點" onClick={() => setBpm(bpm - step)} />
+            <Button size="sm" label="−" tooltip="慢 1；按住連續變慢" {...slower} />
             <BpmField bpm={bpm} min={min} max={max} onCommit={setBpm}
               onOutOfRange={c => flash?.(`速度可以設定 ${min}–${max}，已改成 ${c}`)} />
             <span className="bpm-unit">速度<br />BPM</span>
-            <Button size="sm" label="+" tooltip="快一點" onClick={() => setBpm(bpm + step)} />
+            <Button size="sm" label="+" tooltip="快 1；按住連續變快" {...faster} />
           </div>
           <Slider label="速度" isLabelHidden valueDisplay="none" min={min} max={max} value={bpm} onChange={setBpm} />
         </div>

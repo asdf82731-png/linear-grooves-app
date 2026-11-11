@@ -1,5 +1,4 @@
 /* Time Keeper: big beat dots, accuracy meter, microphone level, results and practice log, tablet two-column layout. */
-.col-main, .col-side { min-width: 0; }
 .group h2 [class*="badge"] { vertical-align: 4px; }
 
 /* Big beat display: one dot per beat, readable from the drum stool. */
@@ -62,20 +61,12 @@
 
 /* Tablet: practice on the left, settings on the right */
 @media (min-width: 900px) {
-  .app.tk {
-    max-width: 1400px; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 24px; align-items: start;
-    padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
-  }
-  .col-main { position: sticky; top: 12px; max-height: calc(100dvh - 112px); overflow-y: auto; overscroll-behavior: contain; }
-  .col-side { padding-top: 6px; }
-  .col-side > .group:first-child > [role="separator"] { display: none; }
   .beat b { width: 84px; height: 84px; font-size: 34px; }
   .beat.one b { width: 96px; height: 96px; }
   .beats.many .beat b { width: 64px; height: 64px; font-size: 26px; }
   .beats.many .beat.one b { width: 72px; height: 72px; }
   .beats { gap: 22px; padding: 28px 0 14px; }
   .info { font-size: 18px; }
-  .dock-in { max-width: 1400px; }
 }
 @media (min-width: 760px) and (max-width: 899px) {
   .app.tk, .dock-in { max-width: 860px; }
