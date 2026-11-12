@@ -2,7 +2,7 @@
 import {existsSync, rmSync} from 'node:fs';
 import {execSync} from 'node:child_process';
 
-const all = ['linear-grooves', 'double-pedal', 'djent', 'timekeeper'].filter(a => existsSync(`${a}/src`));
+const all = ['linear-grooves', 'double-pedal', 'djent', 'timekeeper', 'metronome'].filter(a => existsSync(`${a}/src`));
 const apps = process.argv.slice(2).length ? process.argv.slice(2) : all;
 for (const app of apps) {
   rmSync(`${app}/assets`, {recursive: true, force: true});

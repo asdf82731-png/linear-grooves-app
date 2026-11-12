@@ -1,32 +1,38 @@
 // Shared Web Audio setup for the drum apps: the loud-but-clean output chain, synth building blocks and the metronome click.
 // Each app passes its own master gain (how hard its drums are pushed into the limiter) and builds its kit from these parts.
 
+// Loud but clean for phone speakers: a limiter that only touches the loudest peaks, then a soft clipper that rounds
+// off any attack the limiter lets through (output stays below 0 dBFS). Returns the node to connect into.
+export function createLimiter(ctx) {
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = 0; comp.knee.value = 0; comp.ratio.value = 20; comp.attack.value = 0; comp.release.value = 0.05;
+  // The shaper's input range is ±1, so feed it half the signal and let its curve cover ±2:
+  // straight line up to 0.7 (normal hits are untouched), then bends smoothly toward 0.98.
+  const half = ctx.createGain();
+  half.gain.value = 0.5;
+  const clip = ctx.createWaveShaper(), curve = new Float32Array(2048);
+  for (let i = 0; i < curve.length; i++) {
+    const x = ((i / (curve.length - 1)) * 2 - 1) * 2, a = Math.abs(x);
+    curve[i] = Math.sign(x) * (a <= 0.7 ? a : 0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
+  }
+  clip.curve = curve;
+  comp.connect(half).connect(clip).connect(ctx.destination);
+  return comp;
+}
+
 export function createAudio({masterGain = 2.8, clickGain = 0.9} = {}) {
   const A = {ctx: null, master: null, clickBus: null, noiseBuf: null};
 
   A.ensure = () => {
     if (!A.ctx) {
       const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      // Loud but clean for phone speakers: boost, then a limiter that only touches the loudest peaks,
-      // then a soft clipper that rounds off any attack the limiter lets through (output stays below 0 dBFS).
-      const comp = ctx.createDynamicsCompressor();
-      comp.threshold.value = 0; comp.knee.value = 0; comp.ratio.value = 20; comp.attack.value = 0; comp.release.value = 0.05;
-      // The shaper's input range is ±1, so feed it half the signal and let its curve cover ±2:
-      // straight line up to 0.7 (normal hits are untouched), then bends smoothly toward 0.98.
-      const half = ctx.createGain();
-      half.gain.value = 0.5;
-      const clip = ctx.createWaveShaper(), curve = new Float32Array(2048);
-      for (let i = 0; i < curve.length; i++) {
-        const x = ((i / (curve.length - 1)) * 2 - 1) * 2, a = Math.abs(x);
-        curve[i] = Math.sign(x) * (a <= 0.7 ? a : 0.7 + 0.28 * Math.tanh((a - 0.7) / 0.28));
-      }
-      clip.curve = curve;
+      const limiter = createLimiter(ctx);
       A.master = ctx.createGain();
       A.master.gain.value = masterGain;
-      A.master.connect(comp).connect(half).connect(clip).connect(ctx.destination);
+      A.master.connect(limiter);
       A.clickBus = ctx.createGain();
       A.clickBus.gain.value = clickGain;
-      A.clickBus.connect(comp);
+      A.clickBus.connect(limiter);
       A.noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
       const d = A.noiseBuf.getChannelData(0);
       for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;

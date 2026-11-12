@@ -1,26 +1,27 @@
-# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal ＋ Djent Grooves ＋ Time Keeper）
+# 鼓手練習 App：專案背景（Linear Grooves ＋ Double Pedal ＋ Djent Grooves ＋ Time Keeper ＋ Pro Metronome）
 
-> 這份文件給 AI 助手或新協作者當背景資料，說明四個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
+> 這份文件給 AI 助手或新協作者當背景資料，說明五個 App 的目的、架構、設計規範、資料格式和踩過的坑。改程式前請先讀完。
 
 ## 1. 專案概要
 
 - **使用者**：學爵士鼓（台灣說的「爵士鼓」＝整組套鼓 drum kit）的鼓手，主要用 **Android 手機的 Chrome**，在練習室跟著 App 練。Djent Grooves 主要在 **Android 平板橫放**使用。
 - **語言**：介面全部是**繁體中文（zh-Hant）**，用白話口語，避免艱深術語；專有名詞保留英文（Paradiddle、Gallop、Heel-Toe…）。
-- **形式**：四個**獨立的 PWA**，各自安裝到主畫面、各自離線使用。
+- **形式**：五個**獨立的 PWA**，各自安裝到主畫面、各自離線使用。
   | App | 練什麼 | 網址 |
   | --- | --- | --- |
   | **Linear Grooves** | 手：線性節奏、手順、Paradiddle、複節奏 | https://asdf82731-png.github.io/linear-grooves-app/linear-grooves/ |
   | **Double Pedal 雙踏腳法** | 腳：雙踏、手腳組合、腳踩鈸、Swing | https://asdf82731-png.github.io/linear-grooves-app/double-pedal/ |
   | **Djent Grooves** | Djent 節奏庫：鈸固定 4/4、大鼓奇數分組跨小節、Gospel chops Fill | https://asdf82731-png.github.io/linear-grooves-app/djent/ |
   | **Time Keeper** | 時間感：Gap click、位移節拍器、漸進速度、麥克風偵測準度 | https://asdf82731-png.github.io/linear-grooves-app/timekeeper/ |
+  | **Pro Metronome** | 節拍器：細分節奏、人聲數拍、複節奏、速度與靜音訓練 | https://asdf82731-png.github.io/linear-grooves-app/metronome/ |
 - **Repo**：`asdf82731-png/linear-grooves-app`，GitHub Pages 從 `main` / `(root)` 發佈。
   - 已決定**不改名**，repo 維持 `linear-grooves-app`，README 網址也已改回 `/linear-grooves-app/`。
 
 ## 2. 技術原則
 
-- **介面用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，四個 App 都已換過：
+- **介面用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，五個 App 都是：
   - 原始碼在 `<app>/src/`，`npm run build`（或 `npm run build -- <app>`）把結果寫到 `<app>/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
-  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入，以及用 Astryx 元件組成的版面和選項：`Page`、`PracticeCard`（Card）、`Group`／`FoldGroup`（VStack＋Divider／Collapsible）、`Pair`（Grid）、`ModeList`（RadioList）、`SegChoice`（SegmentedControl）、`ExItems`／`InfoItems`（List／ListItem）…）、`audio.js`（輸出鏈、合成積木、節拍器 click、Wake Lock）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
+  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入，以及用 Astryx 元件組成的版面和選項：`Page`、`PracticeCard`（Card）、`Group`／`FoldGroup`（VStack＋Divider／Collapsible）、`Pair`（Grid）、`ModeList`（RadioList）、`SegChoice`（SegmentedControl）、`ExItems`／`InfoItems`（List／ListItem）…）、`audio.js`（輸出鏈 `createLimiter`、合成積木、節拍器 click、Wake Lock）、`timer.js`（排程用的計時器，跑在 Web Worker 裡，頁面在背景時不會變慢）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
   - Linear Grooves 有兩個頁面（`index.html`、`sticking.html`），建置會拆出共用的檔案。Astryx 的手機底部選單等部分是需要時才載入，也會拆成獨立檔案。`assets/files.json` 列出全部建置檔案，四個 App 的 `sw.js` 都照它預先快取。
   - `scripts/purge-css.mjs` 在建置後刪掉 `astryx.css` 裡沒被用到的 StyleX class（CSS 約 300 KB → 160 KB），並依新內容重算 CSS 檔名。
 - **聲音全部用 Web Audio API 即時合成**，不用任何音檔。
@@ -32,7 +33,7 @@
 
 ```
 /                      根目錄
-├─ index.html          選擇頁：三個 App 的連結，本身「不能安裝」（沒有 manifest）
+├─ index.html          選擇頁：五個 App 的連結，本身「不能安裝」（沒有 manifest）
 ├─ sw.js               只用來移除舊版的 service worker（見 §5）
 ├─ README.md           總覽
 ├─ .nojekyll           讓 GitHub Pages 原樣提供檔案
@@ -71,14 +72,14 @@
    └─ icons/           深灰底、銅色節拍器、綠色擺錘
 ```
 
-## 4. 四個 App 必須獨立：規則與原因（重要）
+## 4. 五個 App 必須獨立：規則與原因（重要）
 
-四個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把它們當成同一個，「裝一個蓋掉另一個」：
+五個 App 在同一個網域 `asdf82731-png.github.io` 下，以下規則**都不能破壞**，否則手機會把它們當成同一個，「裝一個蓋掉另一個」：
 
 1. **範圍（scope）不可重疊**：每個 App 的 `start_url` 和 `scope` 都是 `"./"`，也就是各自的資料夾。根目錄**不能**放有 manifest 的 App，否則根目錄的 scope 會包含所有子資料夾。
-2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`、`"djent"`、`"timekeeper"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，四個 App 的 `appId` 必須不同。
-3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`、`dj-`、`tk-`），不能刪「所有不等於目前版本」的快取。
-4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`，Djent Grooves 用 `dj.`，Time Keeper 用 `tk.`。
+2. **manifest `id` 必須不同，而且不能寫 `"./"`**：`id` 是以**網站的 origin** 為基準解析，不是 App 所在的資料夾。`"./"` 會讓兩個 App 都變成 `https://asdf82731-png.github.io/`，等於同一個 App（這就是曾經發生的 bug）。現在用 `"linear-grooves"`、`"double-pedal"`、`"djent"`、`"timekeeper"`、`"pro-metronome"`，不含 repo 名稱，改名也不受影響。驗證方式：用 Chromium 的 CDP `Page.getAppId`，四個 App 的 `appId` 必須不同。
+3. **快取名稱要有各自的前綴，只刪自己的快取**：同一個 origin 共用 Cache Storage。service worker 在 `activate` 時只能刪自己前綴的舊快取（`grooves-`、`dp-`、`dj-`、`tk-`、`pro-metronome-`），不能刪「所有不等於目前版本」的快取。
+4. **localStorage 也共用**，所以 key 都要有前綴：Linear Grooves 用 `lg.`（線性節奏）和 `sc.`（手順），Double Pedal 用 `ft.`，Djent Grooves 用 `dj.`，Time Keeper 用 `tk.`。Pro Metronome 沿用搬家前的 `proMetronome`、`proMetronomeSets`（同一個網域，舊設定會留著）。
 
 ### 根目錄 `sw.js` 的用途
 Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個網站。現在根目錄的 `sw.js` 是用來移除舊版：已裝過舊版的手機下次造訪時會抓到它，它會刪掉舊的 `lg-` 快取、取消註冊自己，再重新載入頁面。新版頁面不會再註冊它。
@@ -326,6 +327,14 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 ### 測試
 - 離線：用模擬 pad 打擊（短促噪音 6 ms ＋ 180 Hz 35 ms，−6～−40 dB，背景噪音 −45～−65 dB）測偵測器，40–200 BPM 的 4 分和 8 分音符誤差都在 1 ms 內、漏抓多抓 0。
 - Playwright：click 時間與理論值差距、Gap 安靜小節沒有 click、速度變化、漸進邏輯、計分、校正；加上 Chromium 假麥克風（`--use-file-for-fake-audio-capture`）從頭到尾跑一次 AudioWorklet。
+
+## 7d. App 5：Pro Metronome（節拍器）
+
+- 2026-11 從獨立的 repo `asdf82731-png/metronome` 搬進來，放在 `metronome/`，網址變成 `/linear-grooves-app/metronome/`（已安裝的舊 App 要從新網址重新安裝；設定存在同一個網域的 localStorage，會留著）。
+- **有自己的版面、字型（Figtree）和音色**（木魚等音色組、人聲數拍 `vox.js`、第一拍重音），不套用 §5 的「練習譜」版面、銅色強調色和「每一拍同一個聲音」的規則，也不用 `shared/src/ui.jsx`。
+- 和其他 App 共用的只有 `shared/src/audio.js` 的 `createLimiter`（同一條音量處理鏈）、`createWakeLock`，以及 `shared/src/timer.js`。改這三個東西會影響五個 App，`sw.js` 版本都要加一。
+- `npm run check` 用它自己的選擇器（開始鍵 `.transport button:first-child`、BPM `.bpm input`）和最高速度 300。
+- 細節見 `metronome/README.md`。
 
 ## 8. 安裝與疑難排解（給使用者的說明要點）
 

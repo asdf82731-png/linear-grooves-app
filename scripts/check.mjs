@@ -18,8 +18,10 @@ const PAGES = [
   {app: 'timekeeper', path: 'timekeeper/'},
   {app: 'linear-grooves', path: 'linear-grooves/'},
   {app: 'linear-grooves', path: 'linear-grooves/sticking.html'},
+  // Pro Metronome has its own layout: 開始 sits in the transport row and the tempo goes up to 300
+  {app: 'metronome', path: 'metronome/', play: '.transport button:first-child', bpm: '.bpm input', maxBpm: 300},
 ];
-const MAX_BPM = 240;
+const PLAY = '.dock .play', BPM = 'input.bpm', MAX_BPM = 240;
 // CSS sizes: a Pixel-class phone, and the 11" tablet (2000×1200 screen at 1.5×).
 const SCREENS = [
   {name: '手機直向', viewport: {width: 412, height: 915}},
@@ -56,24 +58,25 @@ async function checkPage(browser, base, page, screen) {
   p.on('requestfailed', r => { if (!/fonts\.(googleapis|gstatic)\.com/.test(r.url())) problems.push(`載入失敗：${r.url()}`); });
   p.on('response', r => { if (r.status() >= 400) problems.push(`找不到檔案（${r.status()}）：${r.url()}`); });
   await p.goto(base + page.path, {waitUntil: 'load'});
-  await p.locator('.dock .play').waitFor({timeout: 10000}).catch(() => {});
+  const playSel = page.play || PLAY, maxBpm = page.maxBpm || MAX_BPM;
+  await p.locator(playSel).waitFor({timeout: 10000}).catch(() => {});
 
   // play button fully inside the screen, before any scrolling
-  const play = await p.locator('.dock .play').boundingBox();
+  const play = await p.locator(playSel).boundingBox();
   if (!play) problems.push('找不到播放鍵');
   else if (play.y < 0 || play.x < 0 || play.y + play.height > screen.viewport.height + 0.5 || play.x + play.width > screen.viewport.width + 0.5) {
     problems.push(`播放鍵沒有完整出現在畫面上（位置 ${Math.round(play.x)},${Math.round(play.y)}，大小 ${Math.round(play.width)}×${Math.round(play.height)}）`);
   }
 
   // three-digit tempo: type the highest tempo, then the number must fit its field
-  const bpm = p.locator('input.bpm');
+  const bpm = p.locator(page.bpm || BPM);
   try {
     await bpm.focus({timeout: 5000});
-    await bpm.fill(String(MAX_BPM), {timeout: 5000, force: true});
+    await bpm.fill(String(maxBpm), {timeout: 5000, force: true});
     await bpm.press('Enter', {timeout: 5000});
     await p.waitForTimeout(150);
     const fit = await bpm.evaluate(el => ({value: el.value, scroll: el.scrollWidth, client: el.clientWidth}));
-    if (fit.value !== String(MAX_BPM)) problems.push(`BPM 輸入 ${MAX_BPM} 後顯示「${fit.value}」`);
+    if (fit.value !== String(maxBpm)) problems.push(`BPM 輸入 ${maxBpm} 後顯示「${fit.value}」`);
     if (fit.scroll > fit.client + 1) problems.push(`BPM ${fit.value} 被截斷（需要 ${fit.scroll}px，只有 ${fit.client}px）`);
   } catch (e) {
     problems.push(`沒辦法在 BPM 欄位輸入數字：${e.message.split('\n')[0]}`);
