@@ -1,6 +1,7 @@
 // Sticking playback: practice-pad sound (R panned right, L left), flams and drags from the other hand,
 // polyrhythm lanes with 「只聽…」, metronome, count-in, auto-speed-up and auto-advance.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
+import {setInterval, clearInterval} from '../../shared/src/timer.js';
 import {swapped} from './sticking-data.js';
 
 export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm}) {

@@ -1,6 +1,7 @@
 // Double Pedal playback: synthesized kit (right foot panned right, left foot left), metronome, count-in,
 // auto-speed-up and auto-advance. Reads the latest settings through get() and reports to the screen through on*.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
+import {setInterval, clearInterval} from '../../shared/src/timer.js';
 import {AMP, swapped} from './data.js';
 
 const PAN = {RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35};

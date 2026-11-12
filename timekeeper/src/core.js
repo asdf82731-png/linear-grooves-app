@@ -5,6 +5,7 @@
 // (tablet → Xenyx → headphones → you → tablet microphone).
 // Moved from the old app.js unchanged in timing and scoring; screen updates go out through the `ui` callbacks.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
+import {setInterval, clearInterval} from '../../shared/src/timer.js';
 
 export const MODE_NAME = {metro: '節拍器', gap: 'Gap click', shift: '位移節拍器', ramp: '漸進速度'};
 export const SHIFT_NAME = {24: '2、4 拍', and: '每拍的 &', e: '每拍的 e', a: '每拍的 a', bar: '每小節第 1 拍', '2bar': '每 2 小節第 1 拍'};

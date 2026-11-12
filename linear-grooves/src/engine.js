@@ -1,6 +1,7 @@
 // Linear Grooves playback: synthesised kit (accented notes louder), metronome, count-in and auto-speed-up.
 // Plays the current flattened slots from get().SL, so edits made while playing are heard on the next slot.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
+import {setInterval, clearInterval} from '../../shared/src/timer.js';
 
 export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
   const A = createAudio({masterGain: 2});

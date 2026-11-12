@@ -1,6 +1,7 @@
 // Djent playback: synthesized metal kit (tight kick, crash, china, toms), metronome, count-in,
 // auto-speed-up, auto-advance and the practice timer. Reads the latest state through get().
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
+import {setInterval, clearInterval} from '../../shared/src/timer.js';
 import {AMP, LEVEL, PAN} from './music.js';
 
 export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm, onTimeUp}) {
