@@ -37,11 +37,26 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     return p === 'hands' ? limb[1] === 'H' : limb[1] === 'F';
   }
 
+  // The metronome click for slot `pos` of a beat. With 八分音符 the "&" sounds exactly like the beat.
+  // Triplets and quarter notes have no slot on the "&", so there it is scheduled half a beat after the beat's slot.
+  // Returns true when this slot got a full click (so no softer subdivision click is added on top).
+  function beatClick(pos, sub, t) {
+    const eighth = get().S.clickNote === 'e';
+    if (pos === 0) {
+      A.click(t);
+      if (eighth && sub % 2) A.click(t + 30 / bpm);
+      return true;
+    }
+    if (eighth && pos === sub / 2) { A.click(t); return true; }
+    return false;
+  }
+
   function scheduleSlot(n, t) {
     const {S, sheet} = get(), sub = schedEx.sub;
     if (n < 0) {
       const k = n + countSlots;
-      if (k % sub === 0) { A.click(t); queue.push({t, count: k / sub + 1}); }
+      beatClick(k % sub, sub, t);
+      if (k % sub === 0) queue.push({t, count: k / sub + 1});
       return;
     }
     let i = n % schedEx.len;
@@ -66,8 +81,7 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
       const h = l.hits[i];
       if (h !== '.' && audible(l.limb)) hit(l.inst, t, AMP[h], PAN[l.limb]);
     }
-    if (S.click && i % sub === 0) A.click(t);
-    else if (S.click && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
+    if (S.click && !beatClick(i % sub, sub, t) && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
     queue.push({t, i});
   }
 
