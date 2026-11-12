@@ -39,7 +39,8 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     const {S, sheet} = get(), sub = schedEx.sub;
     if (n < 0) {
       const k = n + countSlots;
-      if (k % sub === 0) { A.click(t); queue.push({t, count: k / sub + 1}); }
+      A.beatClick(k % sub, sub, t, S.clickNote === 'e' && !schedEx.poly, bpm);
+      if (k % sub === 0) queue.push({t, count: k / sub + 1});
       return;
     }
     let i = n % schedSL.length;
@@ -73,8 +74,8 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
       }
       pad(t, note.h, amp);
     }
-    if (S.click && i % sub === 0) A.click(t);
-    else if (S.click && S.clickSub !== 'off' && !schedEx.poly) A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
+    // polyrhythms keep the plain beat: no eighth-note or subdivision clicks
+    if (S.click && !A.beatClick(i % sub, sub, t, S.clickNote === 'e' && !schedEx.poly, bpm) && S.clickSub !== 'off' && !schedEx.poly) A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
     queue.push({t, i});
   }
 

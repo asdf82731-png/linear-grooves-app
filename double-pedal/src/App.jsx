@@ -220,6 +220,8 @@ function DoublePedal() {
         <FoldGroup title="腳法技巧" sub="踩法、設定、常見問題"><Glossary items={TECHNIQUE} /></FoldGroup>
 
         <FoldGroup title="練習設定" sub="聲音、次數、左腳開始、計時、節拍器">
+          <Choose label="節拍器打幾分音符" value={S.clickNote} onChange={v => update({clickNote: v})}
+            options={[{value: 'q', label: '四分音符（每拍一聲）'}, {value: 'e', label: '八分音符（每拍兩聲）'}]} />
           <Choose label="App 幫你打哪些聲部" value={S.playPart} onChange={v => update({playPart: v})}
             options={[{value: 'all', label: '全部（手和腳）'}, {value: 'hands', label: '只播手的部分（你踩腳）'},
               {value: 'feet', label: '只播腳的部分（你打手）'}, {value: 'none', label: '都不播（只有節拍器）'}]} />
@@ -230,8 +232,6 @@ function DoublePedal() {
           <Choose label="練習計時（時間到自動停止）" value={S.timer} onChange={v => { update({timer: +v}); engine.resetTimer(); }}
             options={[{value: 0, label: '不計時'}, {value: 1, label: '1 分鐘'}, {value: 2, label: '2 分鐘'}, {value: 5, label: '5 分鐘'}, {value: 10, label: '10 分鐘'}]} />
           <Toggle label="節拍器" value={S.click} onChange={v => update({click: v})} />
-          <Choose label="節拍器打幾分音符" value={S.clickNote} onChange={v => update({clickNote: v})}
-            options={[{value: 'q', label: '四分音符（每拍一聲）'}, {value: 'e', label: '八分音符（每拍兩聲）'}]} />
           <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
             options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />

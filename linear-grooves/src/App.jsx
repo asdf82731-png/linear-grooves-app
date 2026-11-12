@@ -21,7 +21,7 @@ const MIN_BPM = 40, MAX_BPM = 240;
 const DEFAULTS = {
   sub: 4, beats: 4, bars: 1, sizes: [3, 4], kickPos: 'end', doubleKick: false, lib: 'classic',
   orch: 'hh', accents: true, bpm: 80, src: 'lib', libIdx: 0, libLast: {}, type: 'normal', dCell: '5', dPhrase: 4, dEnd: 'cut',
-  click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
+  click: true, clickNote: 'q', clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
 };
 const TERMS = [
   ['一組', '幾個音連成的小片段，例如 R L K。整個節奏是由好幾組接起來的。'],
@@ -34,6 +34,7 @@ const clone = o => JSON.parse(JSON.stringify(o));
 const finalize = p => { if (p.cell) p.groups = expand(p); return p; };
 
 function migrate(S) {
+  if (!['q', 'e'].includes(S.clickNote)) S.clickNote = 'q';
   if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
   if (!DJENT_CELLS[S.dCell]) S.dCell = '5';
   if (![2, 4, 8].includes(S.dPhrase)) S.dPhrase = 4;
@@ -280,7 +281,9 @@ function Grooves() {
         </FoldGroup>
 
         <FoldGroup title="練習設定" sub="節拍器、預備拍、自動加速">
-          <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
+          <Choose label="節拍器打幾分音符" value={S.clickNote} onChange={v => update({clickNote: v})}
+            options={[{value: 'q', label: '四分音符（每拍一聲）'}, {value: 'e', label: '八分音符（每拍兩聲）'}]} />
+          <Toggle label="節拍器" value={S.click} onChange={v => update({click: v})} />
           <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
             options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />

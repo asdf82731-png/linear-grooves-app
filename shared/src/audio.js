@@ -97,6 +97,19 @@ export function createAudio({masterGain = 2.8, clickGain = 0.9} = {}) {
     o.stop(t + 0.11);
     return o;
   };
+  // The metronome click for slot `pos` of a beat that is split into `sub` slots.
+  // With `eighth` the "&" sounds exactly like the beat. Triplets and quarter notes have no slot on the "&",
+  // so there it is scheduled half a beat after the beat's slot. Returns true when this slot got a full click
+  // (so the caller adds no softer subdivision click on top).
+  A.beatClick = (pos, sub, t, eighth, bpm) => {
+    if (pos === 0) {
+      A.click(t);
+      if (eighth && sub % 2) A.click(t + 30 / bpm);
+      return true;
+    }
+    if (eighth && pos === sub / 2) { A.click(t); return true; }
+    return false;
+  };
   return A;
 }
 

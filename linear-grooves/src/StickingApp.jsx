@@ -13,7 +13,7 @@ const MIN_BPM = 30, MAX_BPM = 240;
 const DEFAULTS = {
   mode: 'rud', rSub: 4, rRun: 2, aBase: 'single', aSub: 4,
   reps: 8, autoNext: false, leftLead: false,
-  bpm: 70, click: true, clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
+  bpm: 70, click: true, clickNote: 'q', clickSub: 'soft', countIn: false, trainer: false, trainerEvery: 4, trainerStep: 5, trainerMax: 140,
   polyMute: 'none', idx: {rud: 0, para: 0, rand: 0, acc: 0, poly: 0},
 };
 const MODE_OPTS = [
@@ -33,6 +33,7 @@ const TIPS = [
 function migrate(S) {
   S.idx = {...DEFAULTS.idx, ...S.idx};
   if (!S.loopByDefault) { S.autoNext = false; S.loopByDefault = true; }   // exercises loop by default now
+  if (!['q', 'e'].includes(S.clickNote)) S.clickNote = 'q';
   if (!['soft', 'same', 'off'].includes(S.clickSub)) S.clickSub = S.clickSub === false ? 'off' : 'soft';
   if (!MODES.includes(S.mode)) S.mode = 'rud';
   if (!ACCENT_BASES[S.aBase]) S.aBase = 'single';
@@ -192,10 +193,12 @@ function Sticking() {
         </Group>
 
         <FoldGroup title="練習設定" sub="次數、自動換下一個、左手開始、節拍器">
+          <Choose label="節拍器打幾分音符" value={S.clickNote} onChange={v => update({clickNote: v})}
+            options={[{value: 'q', label: '四分音符（每拍一聲）'}, {value: 'e', label: '八分音符（每拍兩聲）'}]} />
           <Toggle label="練完自動換下一個" value={S.autoNext} onChange={v => update({autoNext: v})} />
           <Choose label="每個練習重複幾次" value={S.reps} onChange={v => update({reps: +v})} options={[4, 8, 16, 32]} />
           <Toggle label="左手開始" description="R、L 對調；複節奏則換成左手打多的那邊" value={S.leftLead} onChange={v => { update({leftLead: v}); replay(); }} />
-          <Toggle label="節拍器：每拍響一聲" value={S.click} onChange={v => update({click: v})} />
+          <Toggle label="節拍器" value={S.click} onChange={v => update({click: v})} />
           <Choose label="節拍器的細分音（例如 16 分音符的 e & a）" value={S.clickSub} onChange={v => update({clickSub: v})}
             options={[{value: 'soft', label: '比拍點小聲'}, {value: 'same', label: '跟拍點一樣大聲'}, {value: 'off', label: '不打，只有拍點'}]} />
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => update({countIn: v})} />

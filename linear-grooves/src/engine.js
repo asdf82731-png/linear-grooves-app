@@ -55,7 +55,8 @@ export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
     const {S, SL, pattern} = get(), sub = pattern.sub;
     if (n < 0) {
       const k = n + countSlots;
-      if (k % sub === 0) { A.click(t); queue.push({t, count: k / sub + 1}); }
+      A.beatClick(k % sub, sub, t, S.clickNote === 'e', bpm);
+      if (k % sub === 0) queue.push({t, count: k / sub + 1});
       return;
     }
     const i = n % SL.length;
@@ -68,8 +69,7 @@ export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
     }
     const s = SL[i];
     KIT[s.voice](t, s.acc ? 1 : 0.55);
-    if (S.click && i % sub === 0) A.click(t);
-    else if (S.click && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
+    if (S.click && !A.beatClick(i % sub, sub, t, S.clickNote === 'e', bpm) && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
     queue.push({t, i});
   }
 
