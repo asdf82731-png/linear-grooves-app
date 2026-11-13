@@ -21,11 +21,11 @@
 
 - **介面用 Astryx**（Meta 開源設計系統，React 19）＋ Vite 建置，五個 App 都是：
   - 原始碼在 `<app>/src/`，`npm run build`（或 `npm run build -- <app>`）把結果寫到 `<app>/`（`index.html`、`assets/`、`sw.js`…），GitHub Pages 直接提供，**不要手動改建置出來的檔案**。
-  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入，以及用 Astryx 元件組成的版面和選項：`Page`、`PracticeCard`（Card）、`Group`／`FoldGroup`（VStack＋Divider／Collapsible）、`Pair`（Grid）、`ModeList`（RadioList）、`SegChoice`（SegmentedControl）、`ExItems`／`InfoItems`（List／ListItem）…）、`audio.js`（輸出鏈 `createLimiter`、合成積木、節拍器 click、Wake Lock）、`timer.js`（排程用的計時器，跑在 Web Worker 裡，頁面在背景時不會變慢）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
-  - Linear Grooves 有兩個頁面（`index.html`、`sticking.html`），建置會拆出共用的檔案。Astryx 的手機底部選單等部分是需要時才載入，也會拆成獨立檔案。`assets/files.json` 列出全部建置檔案，四個 App 的 `sw.js` 都照它預先快取。
+  - 共用的部分在 `shared/src/`：`ui.jsx`（Astryx 主題、底部播放列、BPM 輸入，以及用 Astryx 元件組成的版面和選項：`Page`、`PracticeCard`（Card）、`Group`／`FoldGroup`（VStack＋Divider／Collapsible）、`Pair`（Grid）、`ModeList`（RadioList）、`SegChoice`（SegmentedControl）、`ExItems`／`InfoItems`（List／ListItem）…）、`audio.js`（輸出鏈 `createLimiter`、合成積木、節拍器 click、Wake Lock）、`timer.js`（排程用的計時器，跑在 Web Worker 裡，頁面在背景時不會變慢）、`scheduler.js`（五個 App 共用的預排迴圈：每 25 ms 把接下來 0.12 秒內的音排到 AudioContext 時鐘上，畫面事件到點才交給 App；各 engine 只寫「一格要發什麼聲音、多長」）、`share.js`（把資料放進網址 `#` 後面的分享連結）、`fonts.css`（Figtree 字型，跟著建置一起提供）、`sw-template.js`（service worker 範本）、`base.css`（版面與色彩 token；強調色維持銅色，四肢顏色不變）。`shared/mini-staff.js` 仍是清單小譜。
+  - Linear Grooves 有兩個頁面（`index.html`、`sticking.html`），建置會拆出共用的檔案。Astryx 的手機底部選單等部分是需要時才載入，也會拆成獨立檔案。每個 App 的 `sw.js` 由 `vite.config.js` 的 serviceWorker 外掛依 `shared/src/sw-template.js` 產生：預先快取頁面、`public/` 裡的檔案和全部建置檔案，快取版本是這些檔案內容的雜湊（前綴不變：`grooves-`、`dp-`、`dj-`、`tk-`、`pro-metronome-`）。`assets/files.json` 仍會產生。
   - `scripts/purge-css.mjs` 在建置後刪掉 `astryx.css` 裡沒被用到的 StyleX class（CSS 約 300 KB → 160 KB），並依新內容重算 CSS 檔名。
 - **聲音全部用 Web Audio API 即時合成**，不用任何音檔。
-- 外部資源只有 Google Fonts（Big Shoulders Display、IBM Plex Mono、IBM Plex Sans），service worker 會把它快取起來離線用。
+- 沒有外部資源：字型 Figtree 來自 npm 套件 `@fontsource-variable/figtree`（只取拉丁字母子集），建置時打包進 `assets/`，第一次打開就能離線。
 - 資料只存在使用者裝置的 `localStorage`，沒有後端、沒有帳號。
 - 本機開發：在 repo 根目錄執行 `python3 -m http.server 8000`，再開 `/linear-grooves/` 或 `/double-pedal/`。
 
@@ -85,8 +85,8 @@
 Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個網站。現在根目錄的 `sw.js` 是用來移除舊版：已裝過舊版的手機下次造訪時會抓到它，它會刪掉舊的 `lg-` 快取、取消註冊自己，再重新載入頁面。新版頁面不會再註冊它。
 
 ### 發佈新版的步驟
-- 修改任何會被快取的檔案後，要把該 App 的 `sw.js` 裡的 `VERSION` 加一，並保留前綴，例如 `grooves-v3 → grooves-v4`、`dp-v4 → dp-v5`、`dj-v1 → dj-v2`、`tk-v1 → tk-v2`。
-- service worker 用 stale-while-revalidate：先回快取、背景更新，所以使用者通常要**關掉 App 再開一次**才看到新版。
+- **不用手動改版本**：`npm run build` 產生的 `sw.js` 版本是所有檔案的雜湊，任何改動都會變成新版本。
+- 已安裝的 App 每次回到前景都會檢查更新；新版裝好後畫面上方出現「有新版本了／重新載入」，不會自己重新整理（以免打斷練習）。
 - GitHub Pages 的 HTTP 快取大約 10 分鐘。
 
 ## 5. 設計規範（四個 App 共用）
@@ -145,7 +145,7 @@ Linear Grooves 以前放在根目錄，它的 service worker 範圍包含整個�
 - 各 App 把自己的資料轉成 `{ sub, slots: [[{ inst, limb, acc, ghost, grace }]], letters, line }` 再呼叫 `MiniStaff.svg()`；手順練習用單線譜（`line: true`），複節奏不畫小譜。
 - 用到的地方：Linear Grooves 手順練習清單與「我的收藏」、Double Pedal、Djent Grooves、Time Keeper「打什麼」。
 - 顏色用 Astryx 的 `--color-text-primary`、`--color-text-secondary` 和四肢顏色（`--r`、`--l`、`--k`、`--lf`），CSS 由這個檔自己插入。
-- **改這個檔時，四個 App 的 `sw.js` 版本都要加一**，因為每個 App 都把 `../shared/mini-staff.js` 放在自己的快取清單裡。
+- 空的格子畫休止符（整拍空：4 分休止符；其他：8 分或 16 分休止符，半拍開頭連續兩個空 16 分合成一個 8 分休止符），傳 `rests: false` 可關掉。
 
 ### 文案語氣
 - 直接、口語、短句。例如「打順了就按…」「寧可慢也不要亂」。
@@ -333,7 +333,7 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 
 - 2026-11 從獨立的 repo `asdf82731-png/metronome` 搬進來，放在 `metronome/`，網址變成 `/linear-grooves-app/metronome/`（已安裝的舊 App 要從新網址重新安裝；設定存在同一個網域的 localStorage，會留著）。
 - **有自己的版面、字型（Figtree）和音色**（木魚等音色組、人聲數拍 `vox.js`、第一拍重音），不套用 §5 的「練習譜」版面、銅色強調色和「每一拍同一個聲音」的規則，也不用 `shared/src/ui.jsx`。
-- 和其他 App 共用的只有 `shared/src/audio.js` 的 `createLimiter`（同一條音量處理鏈）、`createWakeLock`，以及 `shared/src/timer.js`。改這三個東西會影響五個 App，`sw.js` 版本都要加一。
+- 和其他 App 共用的只有 `shared/src/audio.js` 的 `createLimiter`（同一條音量處理鏈）、`createWakeLock`，以及 `shared/src/timer.js`。也共用 `shared/src/scheduler.js`（預排迴圈）和 `registerSW`。
 - `npm run check` 用它自己的選擇器（開始鍵 `.transport button:first-child`、BPM `.bpm input`）和最高速度 300。
 - 細節見 `metronome/README.md`。
 
@@ -363,3 +363,17 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 - Djent Grooves 之後的候選：「自己組」產生器、奇數拍號（7/8 等）、32 分音符。
 - Time Keeper 第二版候選：電子鼓 MIDI 輸入、16 分以上密集連打的偵測、奇數拍號 5/8、7/8。
 - `double-pedal/style.css` 是從 Linear Grooves 整份複製來的，裡面有用不到的樣式，之後可以精簡。
+
+## 2026-11 參考開源專案做的優化
+
+| 項目 | 參考 | 做了什麼 | 怎麼確認 |
+| --- | --- | --- | --- |
+| 共用排程 | Tone.js 的 Transport | `shared/src/scheduler.js`，五個 engine 不再各寫一份 | `npm run check` 會按播放、確認畫面跟著拍子動、再按會停 |
+| 自動產生 service worker | Workbox／vite-plugin-pwa | 見上面「發佈新版的步驟」 | `npm run check` 打開一次後斷網重開，每個 App 都要能用 |
+| 字型放進 App | — | Figtree 打包進建置，不再連 Google Fonts | 同上，離線時字型也要載入 |
+| Time Keeper 頻譜偵測 | aubio、Essentia、Meyda 的 spectral flux（SuperFlux） | `onset-worklet.js` 在原本的音量偵測之外，每 128 個取樣做一次 256 點 FFT，頻譜突然變多就算一下；時間點仍對到取樣 | `npm test`：低音持續響時的 Hi-hat 從 3/32 抓到 32/32，沒有多抓 |
+| 電子鼓 MIDI | Web MIDI API（webmidi.js 的做法，不加套件） | Time Keeper「電子鼓（MIDI）」：用 MIDI 訊息自己的時間戳記換算成 AudioContext 時間，只扣掉輸出延遲，不用校正 | `npm run check` 用假的 MIDI 裝置打 4 秒 |
+| 分享連結 | GrooveScribe 的網址分享 | Linear Grooves「分享連結」：節奏和速度放在網址 `#g=` 後面（不會送到伺服器） | `npm run check` 在兩個全新的瀏覽器之間來回打開 |
+| 休止符 | GrooveScribe／一般鼓譜 | `mini-staff.js` 空格子畫休止符 | 截圖確認 |
+
+沒有改用 VexFlow：App 已經用自己的 SVG 畫標準鼓譜（叉頭、鬼音括號、重音、Djent 分組括號），VexFlow 約 1 MB，離線 PWA 不划算。

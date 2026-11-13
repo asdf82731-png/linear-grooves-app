@@ -47,7 +47,7 @@
 python3 -m http.server 8000
 # 開 http://localhost:8000/linear-grooves/
 ```
-純 HTML/CSS/JS，沒有建置步驟。修改後記得把 `sw.js` 的 `VERSION` 加一，已安裝的 App 才會更新快取。
+原始碼在 `src/`，用 `npm run build` 建置（見根目錄 README）。`sw.js` 由建置產生，版本自動更新，不用手動改。
 
 ## 另一個 App：Double Pedal
 `../double-pedal/` 是獨立的雙踏與雙腳技巧練習 App，有自己的圖示，可以另外安裝，說明見 [double-pedal/README.md](../double-pedal/README.md)。
