@@ -8,6 +8,9 @@
  * limb colours the letter row: R / L (hands), K, fR / fL (feet), rest.
  * The same drum notation as the big staff in each app, drawn small: cymbals are x heads,
  * drums are note heads, accents are > above the beam, ghost notes sit in parentheses.
+ * Empty slots get rests, as in GrooveScribe and printed drum music: a quarter rest for an empty beat, otherwise an
+ * eighth or sixteenth rest per empty slot (two empty sixteenths on the half beat merge into an eighth rest).
+ * Pass rests: false to leave empty slots blank.
  * Colours are Astryx tokens (--color-text-primary, --color-text-secondary) and the limb colours (--r, --l, --k, --lf), so both themes work.
  */
 (function () {
@@ -33,7 +36,9 @@
 .ms .lt.R { fill: var(--r); } .ms .lt.L { fill: var(--l); }
 .ms .lt.K, .ms .lt.fR { fill: var(--k); } .ms .lt.fL { fill: var(--lf, #7A4FB0); }
 .ms .lt.rest { fill: var(--color-border); }
-.ms .hl { fill: var(--hl); }`;
+.ms .hl { fill: var(--hl); }
+.ms .rs { fill: none; stroke: var(--color-text-primary); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.ms .rd { fill: var(--color-text-primary); }`;
 
   function injectCss() {
     if (document.getElementById('mini-staff-css')) return;
@@ -61,8 +66,37 @@
     if (o.line) s += `<line class="sl" x1="2" x2="${W - 1}" y1="${TOP + 12}" y2="${TOP + 12}"/>`;
     else for (let l = 0; l < 5; l++) s += `<line class="sl" x1="2" x2="${W - 1}" y1="${TOP + l * 6}" y2="${TOP + l * 6}"/>`;
 
+    // Rests sit around the middle of the staff (or on the single line).
+    const mid = o.line ? TOP + 12 : TOP + 12;
+    const quarterRest = (x) => `<path class="rs" d="M${x - 1.5} ${mid - 9}L${x + 2} ${mid - 4}L${x - 1.5} ${mid}L${x + 2} ${mid + 4.5}C${x - 1} ${mid + 3} ${x - 2.5} ${mid + 5} ${x} ${mid + 8}"/>`;
+    const flagRest = (x, flags) => {
+      let r = '';
+      for (let f = 0; f < flags; f++) {
+        const fy = mid - 4 + f * 5, fx = x - 1 - f * 1.2;
+        r += `<circle class="rd" cx="${fx - 2}" cy="${fy}" r="1.5"/><path class="rs" d="M${fx - 1} ${fy + 1}C${fx + 0.5} ${fy + 1.5} ${fx + 2} ${fy} ${fx + 3} ${fy - 1.5}"/>`;
+      }
+      return r + `<path class="rs" d="M${x + 2} ${mid - 5.5}L${x - 1.5 - (flags - 1) * 1.2} ${mid + 5 + (flags - 1) * 5}"/>`;
+    };
+    const showRests = o.rests !== false;
+
     for (let b = 0; b < beats; b++) {
       const xs = [];
+      if (showRests) {
+        const idx = [];
+        for (let k = 0; k < sub && b * sub + k < n; k++) idx.push(b * sub + k);
+        const empty = idx.map((i) => !(slots[i] && slots[i].length));
+        if (idx.length === sub && empty.every(Boolean)) {
+          body.push(quarterRest((X(idx[0]) + X(idx[idx.length - 1])) / 2));
+        } else {
+          const flags = sub >= 4 ? 2 : 1;
+          for (let k = 0; k < idx.length; k++) {
+            if (!empty[k]) continue;
+            // two empty sixteenths that start a half beat read as one eighth rest
+            if (sub === 4 && k % 2 === 0 && empty[k + 1]) { body.push(flagRest((X(idx[k]) + X(idx[k + 1])) / 2, 1)); k++; continue; }
+            body.push(flagRest(X(idx[k]), flags));
+          }
+        }
+      }
       for (let k = 0; k < sub; k++) {
         const i = b * sub + k;
         if (i >= n) break;

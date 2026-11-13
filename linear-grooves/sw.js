@@ -2,8 +2,8 @@
 // VERSION is a hash of every built file, so it changes by itself whenever anything changes; nothing to bump by hand.
 // Cache names carry the app's own prefix: the apps share one origin, so each only cleans up its own caches.
 const PREFIX = "grooves-";
-const VERSION = PREFIX + "850995be89";
-const PRECACHE = ["./","assets/BottomSheet-Dr47EPqN.js","assets/ItemSwipeLayer-CNceHrRL.js","assets/Tooltip-QwVo1poo.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index-2FUmqL_p.js","assets/nav-OsLHiZk2.css","assets/nav-q8djIQhp.js","assets/sticking-BEPenS16.js","index.html","sticking.html","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest"];
+const VERSION = PREFIX + "505f409455";
+const PRECACHE = ["./","assets/BottomSheet-BoIk8K3W.js","assets/ItemSwipeLayer-DUAUOgCj.js","assets/Tooltip-Cd48cSGG.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index-By0KOcYT.js","assets/nav-DlTn7rWD.js","assets/nav-OsLHiZk2.css","assets/sticking-B7iHVK_o.js","index.html","sticking.html","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest"];
 
 // cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
 self.addEventListener('install', (e) => {

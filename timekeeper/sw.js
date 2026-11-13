@@ -2,8 +2,8 @@
 // VERSION is a hash of every built file, so it changes by itself whenever anything changes; nothing to bump by hand.
 // Cache names carry the app's own prefix: the apps share one origin, so each only cleans up its own caches.
 const PREFIX = "tk-";
-const VERSION = PREFIX + "b8090702cc";
-const PRECACHE = ["./","assets/BottomSheet-ddcbGMWO.js","assets/ItemSwipeLayer-BQlEmhlc.js","assets/Tooltip-Dtgkvt2b.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index-DUozU-uo.js","assets/index-yRXn4SVp.css","index.html","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest","onset-worklet.js"];
+const VERSION = PREFIX + "65cfcbdf0d";
+const PRECACHE = ["./","assets/BottomSheet-BaxWBlLz.js","assets/ItemSwipeLayer-B6C-IaPy.js","assets/Tooltip-C_8qPbRh.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index-C_Ggvy8G.js","assets/index-yRXn4SVp.css","index.html","icons/icon-192.png","icons/icon-512.png","icons/icon-maskable-512.png","manifest.webmanifest","onset-worklet.js"];
 
 // cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
 self.addEventListener('install', (e) => {

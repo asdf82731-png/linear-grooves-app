@@ -2,8 +2,8 @@
 // VERSION is a hash of every built file, so it changes by itself whenever anything changes; nothing to bump by hand.
 // Cache names carry the app's own prefix: the apps share one origin, so each only cleans up its own caches.
 const PREFIX = "pro-metronome-";
-const VERSION = PREFIX + "de40a1a135";
-const PRECACHE = ["./","assets/ItemSwipeLayer-DqKdHInd.js","assets/ProgressBarMarkTooltip-mCWZA2qO.js","assets/Tooltip-B5_DCl1R.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index--nzV0CAW.css","assets/index-BjDXsufn.js","index.html","icons/apple-touch-icon-180.png","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","manifest.webmanifest"];
+const VERSION = PREFIX + "71278e01f7";
+const PRECACHE = ["./","assets/ItemSwipeLayer-CKCuUyNy.js","assets/ProgressBarMarkTooltip-cwfJKehH.js","assets/Tooltip-CoEx3j2D.js","assets/figtree-latin-wght-normal-D_ZTVpCC.woff2","assets/index--nzV0CAW.css","assets/index-Cs4a-fWq.js","index.html","icons/apple-touch-icon-180.png","icons/icon-192.png","icons/icon-512.png","icons/maskable-512.png","manifest.webmanifest"];
 
 // cache: 'reload' skips the browser's HTTP cache, so a new version never mixes in old files.
 self.addEventListener('install', (e) => {
