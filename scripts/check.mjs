@@ -3,7 +3,8 @@
 //   - it opens without errors,
 //   - the play button is fully on screen without scrolling,
 //   - the tempo number shows all three digits (it is set to the highest tempo for this),
-//   - the page does not scroll sideways.
+//   - the page does not scroll sideways,
+//   - (phone portrait only) pressing play makes the screen follow the beat without errors, and play again stops it.
 // Run `npm run build` first, then `npm run check` (or `npm run check -- djent` for one app).
 // First time on a new computer: `npx playwright install chromium`.
 import {createServer} from 'node:http';
@@ -85,6 +86,26 @@ async function checkPage(browser, base, page, screen) {
   // nothing wider than the screen
   const wide = await p.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
   if (wide > 1) problems.push(`頁面可以左右捲動（多出 ${wide}px）`);
+
+  // playback: the scheduler runs and the screen follows the beat (counted as DOM changes while playing)
+  if (screen === SCREENS[0]) {
+    try {
+      await p.evaluate(() => { window.__mut = 0; new MutationObserver(m => { window.__mut += m.length; }).observe(document.body, {subtree: true, attributes: true, childList: true, characterData: true}); });
+      await p.locator(playSel).click({timeout: 5000});
+      await p.waitForTimeout(1500);
+      const moved = await p.evaluate(() => window.__mut);
+      if (process.env.DEBUG) console.log(page.path, moved);
+      if (moved < 5) problems.push(`按播放後畫面沒有跟著拍子動（只有 ${moved} 次變化）`);
+      await p.locator(playSel).click({timeout: 5000});
+      await p.waitForTimeout(300);
+      const after = await p.evaluate(() => window.__mut);
+      await p.waitForTimeout(600);
+      const still = await p.evaluate(() => window.__mut) - after;
+      if (still > 3) problems.push(`再按一次播放後還在動（${still} 次變化），沒有停下來`);
+    } catch (e) {
+      problems.push(`播放測試失敗：${e.message.split('\n')[0]}`);
+    }
+  }
 
   await ctx.close();
   return problems;

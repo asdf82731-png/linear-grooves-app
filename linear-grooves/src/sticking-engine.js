@@ -1,14 +1,14 @@
 // Sticking playback: practice-pad sound (R panned right, L left), flams and drags from the other hand,
 // polyrhythm lanes with 「只聽…」, metronome, count-in, auto-speed-up and auto-advance.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
-import {setInterval, clearInterval} from '../../shared/src/timer.js';
+import {createScheduler} from '../../shared/src/scheduler.js';
 import {swapped} from './sticking-data.js';
 
 export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm}) {
   const A = createAudio({masterGain: 2.4});
   const wake = createWakeLock();
-  let playing = false, step = 0, nextTime = 0, timer = null, raf = 0, countSlots = 0, reps = 0, loops = 0;
-  let queue = [], schedEx = null, schedSL = [], schedIdx = 0, bpm = 70;
+  let playing = false, step = 0, countSlots = 0, reps = 0, loops = 0;
+  let schedEx = null, schedSL = [], schedIdx = 0, bpm = 70;
 
   function pad(t, hand, amp) {
     const ctx = A.ctx, dest = A.out(hand === 'R' ? 0.35 : -0.35);
@@ -40,7 +40,7 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     if (n < 0) {
       const k = n + countSlots;
       A.beatClick(k % sub, sub, t, S.clickNote === 'e' && !schedEx.poly, bpm);
-      if (k % sub === 0) queue.push({t, count: k / sub + 1});
+      if (k % sub === 0) sch.push({t, count: k / sub + 1});
       return;
     }
     let i = n % schedSL.length;
@@ -49,7 +49,7 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
       loops++;
       if (S.trainer && loops % S.trainerEvery === 0 && bpm < S.trainerMax) {
         bpm = Math.min(S.trainerMax, bpm + S.trainerStep);
-        queue.push({t, bpm, msg: `加快到 ${bpm} BPM`});
+        sch.push({t, bpm, msg: `加快到 ${bpm} BPM`});
       }
       if (S.autoNext && S.reps && reps >= S.reps) {
         reps = 0;
@@ -57,9 +57,9 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
         schedEx = sheet[schedIdx];
         schedSL = swapped(schedEx.notes, S.leftLead);
         step = 0; n = 0; i = 0;
-        queue.push({t, show: schedIdx});
+        sch.push({t, show: schedIdx});
       }
-      queue.push({t, reps});
+      sch.push({t, reps});
     }
     const note = schedSL[i];
     const amp = note.acc ? 1 : 0.42;
@@ -76,29 +76,24 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     }
     // polyrhythms keep the plain beat: no eighth-note or subdivision clicks
     if (S.click && !A.beatClick(i % sub, sub, t, S.clickNote === 'e' && !schedEx.poly, bpm) && S.clickSub !== 'off' && !schedEx.poly) A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
-    queue.push({t, i});
+    sch.push({t, i});
   }
 
-  function tick() {
-    while (nextTime < A.ctx.currentTime + 0.12) {
-      scheduleSlot(step, nextTime);
-      nextTime += 60 / bpm / schedEx.sub;
-      step++;
-    }
-  }
+  const sch = createScheduler({
+    ctx: () => A.ctx,
+    step: t => { scheduleSlot(step, t); step++; return 60 / bpm / schedEx.sub; },
+    onEvent,
+    onFrame,
+  });
 
-  function draw() {
-    if (!playing) return;
-    const now = A.ctx.currentTime;
-    while (queue.length && queue[0].t <= now) {
-      const e = queue.shift();
-      if (e.show !== undefined) onShow(e.show);
-      else if (e.count !== undefined) onCount(e.count);
-      else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
-      else if (e.reps !== undefined) onReps(e.reps);
-      else onSlot(e.i);
-    }
-    raf = requestAnimationFrame(draw);
+  function onFrame() {
+  }
+  function onEvent(e) {
+    if (e.show !== undefined) onShow(e.show);
+    else if (e.count !== undefined) onCount(e.count);
+    else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
+    else if (e.reps !== undefined) onReps(e.reps);
+    else onSlot(e.i);
   }
 
   function play() {
@@ -111,18 +106,13 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     bpm = S.bpm;
     countSlots = S.countIn ? 4 * schedEx.sub : 0;
     step = -countSlots;
-    reps = 0; loops = 0; queue = [];
-    nextTime = A.ctx.currentTime + 0.08;
-    tick();
-    timer = setInterval(tick, 25);
-    raf = requestAnimationFrame(draw);
+    reps = 0; loops = 0;
+    sch.start(0.08);
     wake.on();
   }
   function stop() {
     playing = false;
-    clearInterval(timer);
-    cancelAnimationFrame(raf);
-    queue = [];
+    sch.stop();
     wake.off();
   }
 
