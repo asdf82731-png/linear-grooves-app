@@ -4,6 +4,8 @@
 // with the beat it belongs to. The latency calibration removes the delay of the whole loop
 // (tablet → Xenyx → headphones → you → tablet microphone).
 // Moved from the old app.js unchanged in timing and scoring; screen updates go out through the `ui` callbacks.
+// Hits can also come from an electronic kit over Web MIDI (eDRUMin on USB): every note-on is a hit, and its
+// timestamp is moved onto the AudioContext clock, so the scoring below is the same for both inputs.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
 import {setInterval, clearInterval} from '../../shared/src/timer.js';
 
@@ -25,7 +27,7 @@ export function describeOff(off) {
 const avg = a => a.reduce((s, x) => s + x, 0) / a.length;
 const sd = a => { const m = avg(a); return Math.sqrt(avg(a.map(x => (x - m) ** 2))); };
 
-// get() → {S, latencyMs}; ui: onCount onBpm onMsg onBeat onStopped onLevel onHit onMic onMicError onCalib onCalibDone onSession
+// get() → {S, latencyMs}; ui: onCount onBpm onMsg onBeat onStopped onLevel onHit onMic onMicError onMidi onNote onCalib onCalibDone onSession
 export function createKeeper(get, ui) {
   const A = createAudio({masterGain: 1});
   const wake = createWakeLock();
@@ -74,7 +76,7 @@ export function createKeeper(get, ui) {
       if (next !== curBpm) { curBpm = next; queue.push({t, bpm: curBpm}); }
     }
     if (s.mode === 'gap' && s.gapGrow && cycleNo > 0 && cycleBar === s.gapPlay && muteBars < s.gapMax) {
-      const ok = !micActive || (lastReturn && lastReturn.cycle === cycleNo && Math.abs(lastReturn.off) <= GAP_OK_MS);
+      const ok = !listening() || (lastReturn && lastReturn.cycle === cycleNo && Math.abs(lastReturn.off) <= GAP_OK_MS);
       if (ok) { muteBars++; queue.push({t, msg: `成功！這一輪安靜 ${muteBars} 小節`}); }
     }
   }
@@ -218,6 +220,55 @@ export function createKeeper(get, ui) {
     if (calib) cancelCalib('麥克風關了，校正取消');
     ui.onMic(false);
   }
+
+  /* ---------- Electronic drums over Web MIDI ---------- */
+  let midiActive = false, midiAccess = null;
+  const listening = () => micActive || midiActive;
+
+  const midiNames = () => (midiAccess ? [...midiAccess.inputs.values()].filter(i => i.state !== 'disconnected').map(i => i.name || '沒有名稱的裝置') : []);
+  // Listen on every MIDI input; called again whenever a device is plugged in or pulled out.
+  function midiBind() {
+    if (!midiAccess) return;
+    for (const input of midiAccess.inputs.values()) input.onmidimessage = midiActive ? onMidi : null;
+    ui.onMidi(midiActive, midiActive ? midiNames() : []);
+  }
+  async function midiStart() {
+    A.ensure();
+    try {
+      if (!navigator.requestMIDIAccess) throw Object.assign(new Error('這個瀏覽器不支援 MIDI（請用 Android 或電腦的 Chrome）'), {name: 'NoMidi'});
+      midiAccess = await navigator.requestMIDIAccess();
+      midiActive = true;
+      midiAccess.onstatechange = midiBind;
+      midiBind();
+      const names = midiNames();
+      ui.onMsg(names.length ? `電子鼓接上了：${names.join('、')}` : '還沒看到 MIDI 裝置：請把 eDRUMin 的 USB 接上');
+    } catch (err) {
+      midiStop();
+      const denied = err.name === 'SecurityError' || err.name === 'NotAllowedError';
+      ui.onMicError(denied ? '沒有 MIDI 權限：請到 Chrome 的網站設定允許 MIDI 裝置' : err.name === 'NoMidi' ? err.message : `MIDI 打不開：${err.message}`);
+    }
+  }
+  function midiStop() {
+    midiActive = false;
+    if (midiAccess) { midiAccess.onstatechange = null; midiBind(); }
+    if (calib) cancelCalib('停止聽電子鼓，校正取消');
+    ui.onMidi(false, []);
+  }
+  // A MIDI event's timestamp is on the page clock (performance.now). getOutputTimestamp() pairs that clock with the
+  // AudioContext time of the sound leaving the device right now, so the result is "what the click clock showed when
+  // you hit" with the output delay of this device already taken out.
+  function midiTime(stamp) {
+    const ctx = A.ctx, ts = stamp > 0 ? stamp : performance.now();
+    const o = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null;
+    if (o && o.performanceTime > 0) return o.contextTime + (ts - o.performanceTime) / 1000;
+    return ctx.currentTime - (ctx.outputLatency || 0) - (performance.now() - ts) / 1000;
+  }
+  function onMidi(e) {
+    const d = e.data;
+    if (!d || d.length < 3 || (d[0] & 0xf0) !== 0x90 || d[2] === 0) return;   // note-on only (velocity 0 is a note-off)
+    ui.onNote(d[1], d[2]);
+    handleHit(midiTime(e.timeStamp));
+  }
   function onMic(e) {
     const d = e.data;
     if (d.level !== undefined) ui.onLevel(d.level, d.threshold);
@@ -263,7 +314,7 @@ export function createKeeper(get, ui) {
   /* ---------- Latency calibration: tap 8 times along with the click ---------- */
   let calib = null, calibTimer = null;
   function startCalib() {
-    if (!micActive) { ui.onMsg('先按左下角「開始聽」打開麥克風'); return; }
+    if (!listening()) { ui.onMsg('先按左下角「開始聽」'); return; }
     if (playing) stop();
     A.ensure();
     const ctx = A.ctx, beat = 60 / 80, t0 = ctx.currentTime + 0.4;
@@ -287,7 +338,7 @@ export function createKeeper(get, ui) {
     if (!calib) return;
     const h = calib.hits.slice().sort((a, b) => a - b);
     calib = null;
-    if (h.length < 6) { ui.onCalib(`只抓到 ${h.length} 下，請調高靈敏度再試一次`, false); return; }
+    if (h.length < 6) { ui.onCalib(`只抓到 ${h.length} 下，${midiActive ? '請確認電子鼓有接上' : '請調高靈敏度'}再試一次`, false); return; }
     const mid = Math.floor(h.length / 2);
     const med = h.length % 2 ? h[mid] : (h[mid - 1] + h[mid]) / 2;
     if (med < -30 || med > 400) { ui.onCalib(`量到 ${Math.round(med)} 毫秒，不太合理，請再試一次`, false); return; }
@@ -330,8 +381,10 @@ export function createKeeper(get, ui) {
     isPlaying: () => playing,
     // takes effect from the next beat (the ramp keeps its own tempo)
     setBpm: v => { if (playing && S().mode !== 'ramp') curBpm = v; },
-    micToggle: () => (micActive ? micStop() : micStart()),
-    isMic: () => micActive,
+    // 開始聽／停止聽: the microphone, or the electronic kit when S.input is 'midi'
+    listenToggle: () => (micActive ? micStop() : midiActive ? midiStop() : S().input === 'midi' ? midiStart() : micStart()),
+    stopListening: () => { if (micActive) micStop(); if (midiActive) midiStop(); },
+    isListening: listening,
     setSensitivity: v => micNode?.port.postMessage({sensitivity: v}),
     calibToggle: () => (calib ? cancelCalib('已取消校正') : startCalib()),
     isCalibrating: () => !!calib,

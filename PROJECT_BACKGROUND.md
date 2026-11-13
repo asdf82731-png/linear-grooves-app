@@ -303,7 +303,7 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 - 平板只有**一個 USB-C 孔**，用轉 3.5mm 轉接頭接 Xenyx 502 CH1（單聲道），和筆電鼓聲混音後進耳機。click 不會被麥克風收進去。
 - Time Keeper 只用在**模式 1「快速練」**；模式 2、3 用 Studio Pro 的節拍器。
 - 偵測只能用**平板內建麥克風**聽鼓棒打在 pad 上的聲音（Xenyx 502 沒有 USB）。
-- **電子鼓 MIDI 留到第二版**：要先有能同時接 eDRUMin 和耳機、支援 Android USB 音訊的 USB-C 擴充器。
+- **電子鼓 MIDI**：2026-11 已加入（見下面「電子鼓 MIDI 輸入」）。平板只有一個 USB-C 孔的問題還在：要同時接 eDRUMin 和耳機，需要支援 Android USB 音訊的 USB-C 擴充器，使用者還沒實測。
 
 ### 打什麼（`PATTERNS`）
 10 個動作，分成單擊、手法、節奏、大鼓四組；每一下都落在 4 分或 8 分格線上，選了動作就自動設定「你打的音符」（`det`）。練習卡顯示一整小節的譜，清單顯示前 2 拍。動作只告訴你打什麼，App 不會播放鼓聲。
@@ -324,6 +324,13 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 - 延遲校正：80 BPM 先聽 4 下，再跟著打 8 下，取中位數（偶數取中間兩個的平均），存在 `tk.latency`。
 - 結果：平均偏差、穩定度（標準差）、速度飄移（只有 Gap click 開麥克風才有）、每一下的偏差圖（依容器寬度畫，手機上字不會縮小）。抓到的少於應打的 90% 會提示數字不準。
 - localStorage：`tk.settings`、`tk.log`（練超過 10 秒才存，最多 500 筆）、`tk.latency`。
+
+### 電子鼓 MIDI 輸入（`S.input` = `mic`（預設）或 `midi`，設定在「打擊偵測 → 用什麼聽」）
+- Web MIDI：按「開始聽」時 `navigator.requestMIDIAccess()`，監聽**所有** MIDI 輸入；裝置插拔時（`statechange`）重新綁定。只有 Android／電腦的 Chrome 支援，iPhone 的 Safari 不行。
+- **每個 note-on（力度 > 0）都算一下**，不分哪個 pad，和麥克風「聽到就算」一致；同一拍只算第一下，所以同時踩大鼓和打鈸只算一次。hi-hat 踏板的 CC 不算。
+- 時間：MIDI 事件的時間戳在頁面時鐘（`performance.now`）上，用 `ctx.getOutputTimestamp()` 換到 AudioContext 時鐘，而且是「現在從裝置輸出的聲音」的時間，所以這台裝置的輸出延遲已經扣掉。沒有 `getOutputTimestamp` 時退回 `currentTime − outputLatency`。之後的對拍、計分、Gap 回來拍、校正都和麥克風走同一段程式（`handleHit`）。
+- 延遲：MIDI 的校正值另外存在 `tk.latencyMidi`，**沒校正時當 0 毫秒**（麥克風沒校正是 null、會提示先校正）。畫面上顯示已連接的裝置名稱和剛收到的 note。
+- 測試（Playwright，假的 MIDI 裝置）：打點放在 click 後 +20、−15、0 毫秒，結果的平均偏差分別是 +20、−15、0，穩定度 ±0.1；校正量到 12 毫秒（假裝置設定的值）；切回麥克風會停止聽。**還沒用真的 eDRUMin 測過。**
 
 ### 測試
 - 離線：用模擬 pad 打擊（短促噪音 6 ms ＋ 180 Hz 35 ms，−6～−40 dB，背景噪音 −45～−65 dB）測偵測器，40–200 BPM 的 4 分和 8 分音符誤差都在 1 ms 內、漏抓多抓 0。
@@ -361,5 +368,5 @@ pattern = { sub, beats, bars, shift, groups: [{ stick: 'RLRK', voices: ['hh','sn
 
 - 使用者提過、可以考慮加入的內容：Blast Beat、更多爵士雙腳練法、聲音音量或音色調整。
 - Djent Grooves 之後的候選：「自己組」產生器、奇數拍號（7/8 等）、32 分音符。
-- Time Keeper 第二版候選：電子鼓 MIDI 輸入、16 分以上密集連打的偵測、奇數拍號 5/8、7/8。
+- Time Keeper 第二版候選：16 分以上密集連打的偵測、奇數拍號 5/8、7/8。
 - `double-pedal/style.css` 是從 Linear Grooves 整份複製來的，裡面有用不到的樣式，之後可以精簡。

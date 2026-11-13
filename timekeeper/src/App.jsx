@@ -22,7 +22,7 @@ const DEFAULTS = {
   mode: 'gap', bpm: 80, meter: 4, subGrid: 2, subLevel: 'off', countIn: true,
   gapPlay: 2, gapMute: 2, gapShow: false, gapGrow: false, gapMax: 8,
   shiftPos: '24', rampKind: 'linear', rampEnd: 120, rampEvery: 4, rampStep: 5,
-  detNote: 'q', sens: 6, pattern: 'q-single',
+  detNote: 'q', sens: 6, pattern: 'q-single', input: 'mic',
 };
 const MODE_OPTS = [
   {value: 'metro', label: '節拍器', sub: '一般的 click'},
@@ -34,7 +34,7 @@ const TERMS = [
   ['Gap click', '節拍器響幾小節、安靜幾小節，一直循環。安靜時靠自己維持速度。'],
   ['偏差', '你打的時間點和拍點差幾毫秒。負數＝太早（搶拍），正數＝太晚（拖拍）。'],
   ['穩定度', '每一下偏差的分散程度（標準差），數字越小越穩。'],
-  ['延遲校正', '平板的聲音要經過 Xenyx 才到耳機，麥克風也有延遲。校正後 App 會自動扣掉。'],
+  ['延遲校正', '平板的聲音要經過 Xenyx 才到耳機，麥克風也有延遲。校正後 App 會自動扣掉。接電子鼓 MIDI 時延遲很小，不校正也能用。'],
 ];
 
 function migrate(S) {
@@ -42,6 +42,7 @@ function migrate(S) {
   if (!PATTERNS.some(p => p.id === S.pattern)) S.pattern = PATTERNS[0].id;
   if (!['off', 'soft', 'same'].includes(S.subLevel)) S.subLevel = 'off';
   if (![2, 3, 4, 5, 6, 7].includes(S.meter)) S.meter = 4;
+  if (!['mic', 'midi'].includes(S.input)) S.input = 'mic';
   S.bpm = clampBpm(S.bpm);
   return S;
 }
@@ -55,7 +56,9 @@ export default function App() {
 function TimeKeeper() {
   const [S, update] = useStored('tk.settings', DEFAULTS, migrate);
   const [log, setLog] = useState(() => load('tk.log', []));
-  const [latency, setLatency] = useState(() => load('tk.latency', null));   // {ms, date}
+  const [latency, setLatency] = useState(() => load('tk.latency', null));   // {ms, date}: microphone
+  const [latMidi, setLatMidi] = useState(() => load('tk.latencyMidi', null));   // {ms, date}: electronic kit; 0 ms until calibrated
+  const [midi, setMidi] = useState({names: [], note: null});
   const [playing, setPlaying] = useState(false);
   const [beat, setBeat] = useState({lit: -1, quiet: false, info: ''});
   const [mic, setMic] = useState(false);
@@ -73,8 +76,11 @@ function TimeKeeper() {
 
   useEffect(() => save('tk.log', log), [log]);
   useEffect(() => { if (latency) save('tk.latency', latency); }, [latency]);
+  useEffect(() => { if (latMidi) save('tk.latencyMidi', latMidi); }, [latMidi]);
 
-  const live = useLatest({S, latencyMs: latency ? latency.ms : null});
+  const byMidi = S.input === 'midi';
+  const cal = byMidi ? latMidi : latency;
+  const live = useLatest({S, latencyMs: byMidi ? (latMidi ? latMidi.ms : 0) : latency ? latency.ms : null});
   const keeper = useMemo(() => createKeeper(() => live.current, {
     onCount: n => { setMsg(`預備 ${n}`); setBeat(b => ({...b, lit: n - 1})); },
     onBpm: v => flash(`${v} BPM`),
@@ -85,8 +91,10 @@ function TimeKeeper() {
     onHit: off => setRecent(r => [...r.slice(-7), off]),
     onMic: on => { setMic(on); if (!on) setLevel(l => ({...l, bar: 0})); },
     onMicError: m => { flash(m); setLevel(l => ({...l, note: m})); },
+    onMidi: (on, names) => { setMic(on); setMidi(m => ({names, note: on ? m.note : null})); },
+    onNote: (note, vel) => setMidi(m => ({...m, note: {note, vel}})),
     onCalib: (text, active) => { setCalibText(text); setCalibbing(active); },
-    onCalibDone: rec => { setLatency(rec); setCalibText(null); setCalibbing(false); flash(`校正完成：延遲 ${rec.ms} 毫秒`); },
+    onCalibDone: rec => { (live.current.S.input === 'midi' ? setLatMidi : setLatency)(rec); setCalibText(null); setCalibbing(false); flash(`校正完成：延遲 ${rec.ms} 毫秒`); },
     onSession: (entry, res, keep) => {
       if (res) setResult(res);
       if (keep) setLog(l => [entry, ...l].slice(0, LOG_MAX));
@@ -143,7 +151,7 @@ function TimeKeeper() {
           steps={[
             <><b>在「打什麼」選一個動作、「怎麼練」選一種練法</b>，第一次建議「4 分音符 R L R L」配「Gap click」（響 2 小節、安靜 2 小節）。</>,
             <><b>按 ▶</b>，照練習卡上的譜跟著 click 打；安靜的時候繼續打，心裡數拍。</>,
-            <><b>想知道準不準，按左下角「開始聽」</b>打開麥克風。第一次要先做「延遲校正」：跟著 click 打 8 下。</>,
+            <><b>想知道準不準，按左下角「開始聽」</b>打開麥克風（或在「打擊偵測」改成電子鼓 MIDI）。用麥克風的話，第一次要先做「延遲校正」：跟著 click 打 8 下。</>,
           ]} />
         )}
 
@@ -165,7 +173,7 @@ function TimeKeeper() {
               </span>
             ))}
           </div>
-          <div className="info">{playing ? beat.info : `${S.meter}/4 · 按 ▶ 開始${mic ? '，麥克風正在聽' : ''}`}</div>
+          <div className="info">{playing ? beat.info : `${S.meter}/4 · 按 ▶ 開始${mic ? (byMidi ? '，正在聽電子鼓' : '，麥克風正在聽') : ''}`}</div>
           {mic && (
             <div className="meter">
               <div className="meter-track" aria-hidden="true">
@@ -188,7 +196,7 @@ function TimeKeeper() {
             <Card className="result-card">
               <VStack gap={3}>
                 <Heading level={2} id="h-result">這次的結果</Heading>
-                <Result r={result} latency={latency} chartBox={chartBox} chartW={chartW} />
+                <Result r={result} latency={cal} byMidi={byMidi} chartBox={chartBox} chartW={chartW} />
               </VStack>
             </Card>
           </section>
@@ -197,7 +205,7 @@ function TimeKeeper() {
 
       <SideColumn>
         <Group title="打什麼" id="h-play">
-          <Hint>選一個動作，練習卡上會顯示一整小節的譜。麥克風會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</Hint>
+          <Hint>選一個動作，練習卡上會顯示一整小節的譜。開始聽之後，App 會照這個動作的音符（4 分或 8 分）檢查你打得準不準。</Hint>
           {groups.map(([g, qs]) => (
             <ExItems key={g} header={g} cur={p.id} onPick={(i, it) => {
               // the microphone checks the grid this pattern is played on
@@ -223,7 +231,7 @@ function TimeKeeper() {
               {S.gapGrow && (
                 <>
                   <Choose label="最多安靜幾小節" value={S.gapMax} onChange={v => set({gapMax: +v})} options={[4, 8, 16]} />
-                  <Hint>開麥克風時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</Hint>
+                  <Hint>有在聽（麥克風或電子鼓）時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</Hint>
                 </>
               )}
             </>
@@ -263,21 +271,33 @@ function TimeKeeper() {
           <Toggle label="預備拍：開始前先數一小節" value={S.countIn} onChange={v => set({countIn: v})} />
         </Group>
 
-        <Group title={<>麥克風偵測 <Badge label="Beta" /></>} id="h-mic">
-          <Hint>用平板的麥克風聽鼓棒打在 pad 上的聲音。只在這台裝置上即時處理，不錄音、不上傳。平板請放在鼓架上，靠近小鼓。</Hint>
+        <Group title={<>打擊偵測 <Badge label="Beta" /></>} id="h-mic">
+          <Field label="用什麼聽">
+            <SegChoice label="用什麼聽" value={S.input} onChange={v => { keeper.stopListening(); set({input: v}); }}
+              options={[{value: 'mic', label: '麥克風'}, {value: 'midi', label: '電子鼓 MIDI'}]} />
+          </Field>
+          {byMidi
+            ? <Hint>把 eDRUMin 的 USB 接到這台裝置，按左下角「開始聽」。每打一下（任何一個 pad）都算一下，比麥克風準，也不怕雜音。要用 Android 或電腦的 Chrome；iPhone 不支援。</Hint>
+            : <Hint>用平板的麥克風聽鼓棒打在 pad 上的聲音。只在這台裝置上即時處理，不錄音、不上傳。平板請放在鼓架上，靠近小鼓。</Hint>}
           <Field label="你打的音符">
             <SegChoice label="你打的音符" value={S.detNote} onChange={v => set({detNote: v})}
               options={[{value: 'q', label: '4 分音符', sub: '每拍一下'}, {value: 'e', label: '8 分音符', sub: '每拍兩下'}]} />
           </Field>
-          <VStack gap={1.5}>
+          {byMidi && (
+            <Text type="supporting">
+              {!mic ? '還沒開始聽。' : midi.names.length ? `已連接：${midi.names.join('、')}。` : '還沒看到 MIDI 裝置，請接上 eDRUMin。'}
+              {mic && midi.note ? ` 剛收到 note ${midi.note.note}（力度 ${midi.note.vel}）。` : ''}
+            </Text>
+          )}
+          {!byMidi && <VStack gap={1.5}>
             <Slider label={`靈敏度：${S.sens}（抓不到就調高，雜音也被算進去就調低）`} valueDisplay="none" min={1} max={10} value={S.sens}
               onChange={v => { update({sens: v}); keeper.setSensitivity(v); }} />
             <div className="level" aria-hidden="true"><span className="level-bar" style={{width: `${mic ? level.bar : 0}%`}} /><span className="level-thr" style={{left: `${level.thr}%`}} /></div>
             <Text type="supporting">{level.note}</Text>
-          </VStack>
+          </VStack>}
           <HStack gap={3} vAlign="center" wrap="wrap">
             <Button size="sm" label={calibbing ? '取消校正' : '延遲校正'} onClick={() => keeper.calibToggle()} />
-            <Text type="supporting">{calibText ?? (latency ? `延遲 ${latency.ms} 毫秒（${latency.date} 校正）；換了平板位置或接線請重做` : '還沒校正')}</Text>
+            <Text type="supporting">{calibText ?? (cal ? `延遲 ${cal.ms} 毫秒（${cal.date} 校正）；換了平板位置或接線請重做` : byMidi ? '沒校正也能用（當作 0 毫秒）；想更準可以做一次' : '還沒校正')}</Text>
           </HStack>
         </Group>
 
@@ -298,13 +318,13 @@ function TimeKeeper() {
         </Group>
       </SideColumn>
 
-      <Dock actionLabel={mic ? '停止聽' : '開始聽'} onAction={() => keeper.micToggle()} bpm={S.bpm} setBpm={setBpm}
+      <Dock actionLabel={mic ? '停止聽' : '開始聽'} onAction={() => keeper.listenToggle()} bpm={S.bpm} setBpm={setBpm}
         min={MIN_BPM} max={MAX_BPM} playing={playing} onPlay={toggle} flash={flash} />
     </Page>
   );
 }
 
-function Result({r, latency, chartBox, chartW}) {
+function Result({r, latency, byMidi, chartBox, chartW}) {
   const e = r.entry;
   const lean = e.mean < -5 ? '偏早（搶拍）' : e.mean > 5 ? '偏晚（拖拍）' : '很準';
   const steady = e.sd < 10 ? '非常穩' : e.sd < 20 ? '穩' : '不太穩';
@@ -314,11 +334,11 @@ function Result({r, latency, chartBox, chartW}) {
       <Grid columns={3} gap={2}>
         <Stat label="平均偏差" value={`${e.mean > 0 ? '+' : ''}${e.mean} ms`} note={lean} />
         <Stat label="穩定度" value={`±${e.sd} ms`} note={steady} />
-        {e.gap == null ? <Stat label="速度飄移" value="—" note="Gap click 開麥克風才有" />
+        {e.gap == null ? <Stat label="速度飄移" value="—" note="Gap click 有在聽才有" />
           : <Stat label="速度飄移" value={`${e.gap > 0 ? '+' : ''}${e.gap} BPM`} note={`安靜時比設定${Math.abs(e.gap) < 1 ? '幾乎一樣' : e.gap > 0 ? '快' : '慢'}`} />}
       </Grid>
       <div className="chart" ref={chartBox} dangerouslySetInnerHTML={{__html: hitChart(r.hits, r.dur, chartW)}} />
-      <Hint>抓到 {e.n} / {e.due} 下{rate < 0.9 ? '：抓不到的太多，數字可能不準，試著調高靈敏度或把平板放近一點' : ''}。{latency ? '' : '還沒做延遲校正，平均偏差會包含裝置延遲。'}</Hint>
+      <Hint>抓到 {e.n} / {e.due} 下{rate < 0.9 ? (byMidi ? '：少了不少，數字可能不準，確認每一下都有打到 pad' : '：抓不到的太多，數字可能不準，試著調高靈敏度或把平板放近一點') : ''}。{latency || byMidi ? '' : '還沒做延遲校正，平均偏差會包含裝置延遲。'}</Hint>
     </>
   );
 }
