@@ -5,7 +5,7 @@
 // (tablet → Xenyx → headphones → you → tablet microphone).
 // Moved from the old app.js unchanged in timing and scoring; screen updates go out through the `ui` callbacks.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
-import {setInterval, clearInterval} from '../../shared/src/timer.js';
+import {createScheduler} from '../../shared/src/scheduler.js';
 
 export const MODE_NAME = {metro: '節拍器', gap: 'Gap click', shift: '位移節拍器', ramp: '漸進速度'};
 export const SHIFT_NAME = {24: '2、4 拍', and: '每拍的 &', e: '每拍的 e', a: '每拍的 a', bar: '每小節第 1 拍', '2bar': '每 2 小節第 1 拍'};
@@ -25,7 +25,7 @@ export function describeOff(off) {
 const avg = a => a.reduce((s, x) => s + x, 0) / a.length;
 const sd = a => { const m = avg(a); return Math.sqrt(avg(a.map(x => (x - m) ** 2))); };
 
-// get() → {S, latencyMs}; ui: onCount onBpm onMsg onBeat onStopped onLevel onHit onMic onMicError onCalib onCalibDone onSession
+// get() → {S, latencyMs}; ui: onCount onBpm onMsg onBeat onStopped onLevel onHit onMic onMicError onCalib onCalibDone onSession onMidi
 export function createKeeper(get, ui) {
   const A = createAudio({masterGain: 1});
   const wake = createWakeLock();
@@ -41,13 +41,12 @@ export function createKeeper(get, ui) {
   }
 
   /* ---------- Scheduler: one beat at a time ---------- */
-  let playing = false, timer = null;
+  let playing = false;
   let nextT = 0, beatNo = 0, beatInBar = 0, barNo = 0, curBpm = 80, firstBeatT = 0;
   let cycleNo = 0, cycleBar = 0, muteBars = 2;   // Gap click
   let rampDir = 1;                               // 漸進速度
-  let queue = [];                                // what the screen should show, and when
   let expected = [];                             // beat grid the hits are compared with
-  let lastReturn = null, gapPairs = [], raf = 0;
+  let lastReturn = null, gapPairs = [];
 
   function startState() {
     const s = S();
@@ -71,11 +70,11 @@ export function createKeeper(get, ui) {
       } else {
         next = rampDir > 0 ? Math.min(end, next) : Math.max(end, next);
       }
-      if (next !== curBpm) { curBpm = next; queue.push({t, bpm: curBpm}); }
+      if (next !== curBpm) { curBpm = next; sch.push({t, bpm: curBpm}); }
     }
     if (s.mode === 'gap' && s.gapGrow && cycleNo > 0 && cycleBar === s.gapPlay && muteBars < s.gapMax) {
-      const ok = !micActive || (lastReturn && lastReturn.cycle === cycleNo && Math.abs(lastReturn.off) <= GAP_OK_MS);
-      if (ok) { muteBars++; queue.push({t, msg: `成功！這一輪安靜 ${muteBars} 小節`}); }
+      const ok = !(micActive || midiOn) || (lastReturn && lastReturn.cycle === cycleNo && Math.abs(lastReturn.off) <= GAP_OK_MS);
+      if (ok) { muteBars++; sch.push({t, msg: `成功！這一輪安靜 ${muteBars} 小節`}); }
     }
   }
 
@@ -98,7 +97,7 @@ export function createKeeper(get, ui) {
     const s = S(), dur = 60 / curBpm;
     if (beatNo < 0) {                                   // count-in: a plain click on every beat
       click(t);
-      queue.push({t, count: beatNo + s.meter + 1});
+      sch.push({t, count: beatNo + s.meter + 1});
     } else {
       if (beatInBar === 0) barStart(t);
       const d = 60 / curBpm;                            // barStart may have changed the tempo
@@ -121,7 +120,7 @@ export function createKeeper(get, ui) {
         if (sess) sess.grid.push(t + (d * k) / parts);
       }
       const hide = muted && !s.gapShow;
-      queue.push({t, beat: beatInBar, muted, hide, info: hide ? `第 ${cycleNo + 1} 輪 · 安靜中，繼續打` : infoText(muted)});
+      sch.push({t, beat: beatInBar, muted, hide, info: hide ? `第 ${cycleNo + 1} 輪 · 安靜中，繼續打` : infoText(muted)});
     }
     nextT = t + (beatNo < 0 ? dur : 60 / curBpm);
     beatNo++;
@@ -133,26 +132,23 @@ export function createKeeper(get, ui) {
     }
   }
 
-  function tick() {
-    const ctx = A.ctx;
-    while (nextT < ctx.currentTime + 0.15) scheduleBeat(nextT);
-    const old = ctx.currentTime - 2;
+  // housekeeping after each scheduling pass: forget beats and clicks that are long gone
+  function tidy() {
+    const ctx = A.ctx, old = ctx.currentTime - 2;
     if (expected.length && expected[0].t < old) expected = expected.filter(e => e.t >= old);
     if (nodes.length > 64) nodes = nodes.filter(n => n.t > ctx.currentTime - 1);
   }
-
-  function draw() {
-    if (!playing) return;
-    const now = A.ctx.currentTime;
-    while (queue.length && queue[0].t <= now) {
-      const e = queue.shift();
-      if (e.count !== undefined) ui.onCount(e.count);
-      else if (e.bpm !== undefined) ui.onBpm(e.bpm);
-      else if (e.msg) ui.onMsg(e.msg);
-      else ui.onBeat(e);
-    }
-    raf = requestAnimationFrame(draw);
+  function onEvent(e) {
+    if (e.count !== undefined) ui.onCount(e.count);
+    else if (e.bpm !== undefined) ui.onBpm(e.bpm);
+    else if (e.msg) ui.onMsg(e.msg);
+    else ui.onBeat(e);
   }
+  const sch = createScheduler({
+    ctx: () => A.ctx,
+    step: t => { scheduleBeat(t); return nextT - t; },
+    onEvent, onTick: tidy, ahead: 0.15,
+  });
 
   function play() {
     if (calib) cancelCalib('已取消校正');
@@ -160,22 +156,18 @@ export function createKeeper(get, ui) {
     const s = S();
     playing = true;
     startState();
-    queue = []; expected = []; nodes = [];
+    expected = []; nodes = [];
     nextT = A.ctx.currentTime + 0.1;
     firstBeatT = nextT + (s.countIn ? (s.meter * 60) / s.bpm : 0);
     startSession();
-    tick();
-    timer = setInterval(tick, 25);
-    raf = requestAnimationFrame(draw);
+    sch.start(0.1);
     wake.on();
   }
   function stop() {
     if (!playing) return;
     playing = false;
-    clearInterval(timer);
-    cancelAnimationFrame(raf);
+    sch.stop();
     silenceFuture();
-    queue = [];
     finishSession(A.ctx.currentTime);
     wake.off();
     ui.onStopped();
@@ -225,10 +217,11 @@ export function createKeeper(get, ui) {
   }
 
   // A hit at AudioContext time `raw`: match it to the nearest beat (or eighth) and score it.
-  function handleHit(raw) {
-    if (calib) { calibHit(raw); return; }
+  // raw: AudioContext time of the hit; exact: already corrected (MIDI), so the microphone latency is not taken off
+  function handleHit(raw, exact = false) {
+    if (calib && !exact) { calibHit(raw); return; }
     if (!playing || !sess) return;
-    const t = raw - (get().latencyMs || 0) / 1000;
+    const t = exact ? raw : raw - (get().latencyMs || 0) / 1000;
     let best = null, bd = Infinity;
     for (const e of expected) {
       const d = Math.abs(t - e.t);
@@ -258,6 +251,52 @@ export function createKeeper(get, ui) {
     const slope = num / den, bpm = p[0].bpm / slope;
     if (sess) sess.gapBpms.push({bpm, target: p[0].bpm});
     return {bpm};
+  }
+
+  /* ---------- Electronic drums over MIDI (Web MIDI API) ----------
+   * Every note-on from any connected MIDI input is a hit. A MIDI message carries the exact time it arrived
+   * (performance.now clock), turned here into AudioContext time, so no microphone and no latency calibration:
+   * the only delay left is the tablet's own audio output (you play along with the click you hear), which
+   * the browser reports as outputLatency. Works over USB (OTG) in Chrome on Android, Windows and macOS. */
+  let midi = null, midiOn = false;
+  const midiNames = () => (midi ? [...midi.inputs.values()].filter(i => i.state === 'connected').map(i => i.name || 'MIDI') : []);
+  function toCtxTime(perfMs) {
+    const ctx = A.ctx, ts = ctx.getOutputTimestamp ? ctx.getOutputTimestamp() : null;
+    if (ts && ts.performanceTime) return ts.contextTime + (perfMs - ts.performanceTime) / 1000;
+    return ctx.currentTime - (performance.now() - perfMs) / 1000;
+  }
+  function outLatency() { const c = A.ctx; return (c.outputLatency || 0) + (c.baseLatency || 0); }
+  function onMidiMessage(e) {
+    const [st, note, vel] = e.data;
+    if ((st & 0xf0) !== 0x90 || !vel) return;          // note-on with velocity > 0
+    const t = toCtxTime(e.timeStamp || performance.now()) - outLatency();
+    if (calib) return;                                  // calibration is for the microphone only
+    handleHit(t, true);
+    ui.onMidiHit?.(note, vel);
+  }
+  function midiListen() {
+    for (const input of midi.inputs.values()) input.onmidimessage = midiOn ? onMidiMessage : null;
+    ui.onMidi?.(midiOn, midiNames());
+  }
+  async function midiStart() {
+    A.ensure();
+    try {
+      if (!navigator.requestMIDIAccess) throw new Error('這個瀏覽器不支援 MIDI（請用 Chrome）');
+      midi = midi || await navigator.requestMIDIAccess();
+      midi.onstatechange = () => midiListen();          // plugged in or out while the app is open
+      midiOn = true;
+      midiListen();
+      const n = midiNames();
+      ui.onMsg(n.length ? `已連接電子鼓：${n.join('、')}` : 'MIDI 已開啟，請用 USB 接上電子鼓');
+    } catch (err) {
+      midiOn = false;
+      ui.onMidi?.(false, []);
+      ui.onMicError(err.name === 'SecurityError' || err.name === 'NotAllowedError' ? '沒有 MIDI 權限：請到 Chrome 的網站設定允許' : `MIDI 打不開：${err.message}`);
+    }
+  }
+  function midiStop() {
+    midiOn = false;
+    if (midi) midiListen();
   }
 
   /* ---------- Latency calibration: tap 8 times along with the click ---------- */
@@ -332,6 +371,8 @@ export function createKeeper(get, ui) {
     setBpm: v => { if (playing && S().mode !== 'ramp') curBpm = v; },
     micToggle: () => (micActive ? micStop() : micStart()),
     isMic: () => micActive,
+    midiToggle: () => (midiOn ? midiStop() : midiStart()),
+    isMidi: () => midiOn,
     setSensitivity: v => micNode?.port.postMessage({sensitivity: v}),
     calibToggle: () => (calib ? cancelCalib('已取消校正') : startCalib()),
     isCalibrating: () => !!calib,

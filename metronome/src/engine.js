@@ -4,7 +4,7 @@
 import {KITS, clamp, patOf} from './music.js';
 import {VOX} from './vox.js';
 import {createLimiter, createWakeLock} from '../../shared/src/audio.js';
-import {setInterval, clearInterval} from '../../shared/src/timer.js';
+import {createScheduler} from '../../shared/src/scheduler.js';
 
 const LVLGAIN = {3: 0.8, s: 0.8, p: 0.6};
 const BOOST = 1, HOLD = 0.025;
@@ -13,8 +13,8 @@ const BOOST = 1, HOLD = 0.025;
 try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch {}
 
 export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
-  let ctx = null, master = null, running = false, timer = null;
-  let nextTime = 0, beatIdx = 0, bars = 0, queue = [], raf = 0;
+  let ctx = null, master = null, running = false;
+  let beatIdx = 0, bars = 0;
   const wake = createWakeLock();   // keeps the screen on while running, asks again when the app comes back to the front
   let voxBuf = null, voxLoading = false;
   const S = () => getSettings();
@@ -92,74 +92,60 @@ export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
   const gapMuted = b => S().gap && (b % (S().gPlay + S().gMute)) >= S().gPlay;
 
   let bpm = 120; // the engine's own tempo, so the trainer can speed up ahead of the UI
-  function schedule() {
-    let added = false;
-    while (nextTime < ctx.currentTime + 0.12) {
-      added = true;
-      const s = S(), D = 60 / bpm, bi = beatIdx, lvl = s.accents[bi] ?? 2, mute = gapMuted(bars);
-      const pat = patOf(s.pat), voice = s.kit === 'voice' && voxBuf;
-      let off = 0;
-      pat.s.forEach(([f, p], i) => {
-        const t = nextTime + off * D;
-        if (p && !mute && lvl > 0) {
-          if (voice) {
-            let j = i + 1;
-            while (j < pat.s.length && !pat.s[j][1]) j++;
-            const until = nextTime + (j < pat.s.length ? pat.s.slice(0, j).reduce((a, x) => a + x[0], 0) : 1) * D;
-            const acc = i === 0 && lvl === 3;
-            if (!say(syl(pat.k, i, off, bi), t, 0.8, until)) blip(acc ? 3 : 's', t);
-            else if (acc) blip(3, t);
-          } else blip(i === 0 && lvl === 3 ? 3 : 's', t);
-        }
-        queue.push({t, bi, sub: i, beat: i === 0, dur: D, mute});
-        off += f;
-      });
-      if (bi === 0 && s.poly) {
-        const barD = D * s.beats;
-        for (let j = 0; j < s.polyN; j++) {
-          const t = nextTime + barD * j / s.polyN;
-          if (!mute) blip('p', t);
-          queue.push({t, poly: j});
-        }
+  // one beat: its subdivisions, the polyrhythm clicks of the bar, and the speed trainer
+  function beat(nextTime, push) {
+    const s = S(), D = 60 / bpm, bi = beatIdx, lvl = s.accents[bi] ?? 2, mute = gapMuted(bars);
+    const pat = patOf(s.pat), voice = s.kit === 'voice' && voxBuf;
+    let off = 0;
+    pat.s.forEach(([f, p], i) => {
+      const t = nextTime + off * D;
+      if (p && !mute && lvl > 0) {
+        if (voice) {
+          let j = i + 1;
+          while (j < pat.s.length && !pat.s[j][1]) j++;
+          const until = nextTime + (j < pat.s.length ? pat.s.slice(0, j).reduce((a, x) => a + x[0], 0) : 1) * D;
+          const acc = i === 0 && lvl === 3;
+          if (!say(syl(pat.k, i, off, bi), t, 0.8, until)) blip(acc ? 3 : 's', t);
+          else if (acc) blip(3, t);
+        } else blip(i === 0 && lvl === 3 ? 3 : 's', t);
       }
-      nextTime += D;
-      beatIdx++;
-      if (beatIdx >= s.beats) {
-        beatIdx = 0;
-        bars++;
-        if (s.trainer && bars % Math.max(1, s.tBars) === 0 && bpm < s.tTarget) {
-          bpm = Math.min(s.tTarget, bpm + Math.max(1, s.tStep));
-          queue.push({t: nextTime, setBpm: bpm});
-        }
+      push({t, bi, sub: i, beat: i === 0, dur: D, mute});
+      off += f;
+    });
+    if (bi === 0 && s.poly) {
+      const barD = D * s.beats;
+      for (let j = 0; j < s.polyN; j++) {
+        const t = nextTime + barD * j / s.polyN;
+        if (!mute) blip('p', t);
+        push({t, poly: j});
       }
     }
-    if (added) queue.sort((a, b) => a.t - b.t);
+    beatIdx++;
+    if (beatIdx >= s.beats) {
+      beatIdx = 0;
+      bars++;
+      if (s.trainer && bars % Math.max(1, s.tBars) === 0 && bpm < s.tTarget) {
+        bpm = Math.min(s.tTarget, bpm + Math.max(1, s.tStep));
+        push({t: nextTime + D, setBpm: bpm});
+      }
+    }
+    return D;
   }
 
-  function draw() {
-    if (!running) return;
-    const now = ctx.currentTime;
-    while (queue.length && queue[0].t <= now) {
-      const q = queue.shift();
-      if (q.setBpm) onBpm(q.setBpm);
-      else if (q.poly !== undefined) onPoly(q.poly);
-      else onBeat(q, now);
-    }
-    raf = requestAnimationFrame(draw);
+  function onEvent(q, now) {
+    if (q.setBpm) onBpm(q.setBpm);
+    else if (q.poly !== undefined) onPoly(q.poly);
+    else onBeat(q, now);
   }
+  const sch = createScheduler({ctx: () => ctx, step: beat, onEvent});
 
   function start() {
     ensureCtx();
-    running = true; beatIdx = 0; bars = 0; queue = [];
+    running = true; beatIdx = 0; bars = 0;
     const s = S();
     bpm = s.trainer ? s.tStart : s.bpm;
     if (s.trainer) onBpm(bpm);
-    const kick = () => {
-      nextTime = ctx.currentTime + 0.06;
-      schedule();
-      clearInterval(timer);
-      timer = setInterval(schedule, 25);
-    };
+    const kick = () => sch.start(0.06);
     if (ctx.state === 'running') kick();
     else {
       const p = ctx.resume();
@@ -169,13 +155,10 @@ export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
       }, 600);
     }
     wake.on();
-    raf = requestAnimationFrame(draw);
   }
   function stop() {
     running = false;
-    clearInterval(timer);
-    cancelAnimationFrame(raf);
-    queue = [];
+    sch.stop();
     wake.off();
     onStop();
   }
@@ -184,7 +167,7 @@ export function createEngine({getSettings, onBeat, onPoly, onBpm, onStop}) {
     if (document.visibilityState !== 'visible') return;
     if (ctx && ctx.state !== 'running') {
       try { ctx.resume(); } catch {}
-      if (running) setTimeout(() => { if (ctx.state === 'running') { nextTime = ctx.currentTime + 0.06; queue = []; } }, 50);
+      if (running) setTimeout(() => { if (ctx.state === 'running') sch.resync(0.06); }, 50);
     }
   }
   document.addEventListener('visibilitychange', onVisible);

@@ -22,7 +22,7 @@
 python3 -m http.server 8000
 # 開 http://localhost:8000/timekeeper/
 ```
-麥克風只在 https 或 localhost 可用。修改後把 `sw.js` 的 `VERSION` 加一（保留 `tk-` 開頭）。
+麥克風只在 https 或 localhost 可用。`sw.js` 由建置產生，版本自動更新，不用手動改。
 
 ## 檔案
 - `index.html`、`style.css`（從 Double Pedal 複製，加上 Time Keeper 與平板版面）

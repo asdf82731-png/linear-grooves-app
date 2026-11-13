@@ -1,3 +1,4 @@
+import '../../shared/src/fonts.css';
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import {registerSW} from '../../shared/src/ui.jsx';

@@ -1,3 +1,5 @@
+import '../../shared/src/fonts.css';
+import {registerSW} from '../../shared/src/ui.jsx';
 import {StrictMode} from 'react';
 import {createRoot} from 'react-dom/client';
 import '@astryxdesign/core/reset.css';
@@ -11,3 +13,4 @@ createRoot(document.getElementById('root')).render(
     <App />
   </StrictMode>,
 );
+registerSW();

@@ -26,7 +26,7 @@
 python3 -m http.server 8000
 # 開 http://localhost:8000/double-pedal/
 ```
-純 HTML/CSS/JS，沒有建置步驟。修改後把 `sw.js` 的 `VERSION` 加一（保留 `dp-` 開頭），已安裝的 App 才會更新。
+原始碼在 `src/`，用 `npm run build` 建置（見根目錄 README）。`sw.js` 由建置產生，版本自動更新，不用手動改。
 
 ## 檔案
 - `index.html` — 版面

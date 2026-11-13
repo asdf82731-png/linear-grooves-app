@@ -1,7 +1,7 @@
 // Double Pedal playback: synthesized kit (right foot panned right, left foot left), metronome, count-in,
 // auto-speed-up and auto-advance. Reads the latest settings through get() and reports to the screen through on*.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
-import {setInterval, clearInterval} from '../../shared/src/timer.js';
+import {createScheduler} from '../../shared/src/scheduler.js';
 import {AMP, swapped} from './data.js';
 
 const PAN = {RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35};
@@ -9,8 +9,8 @@ const PAN = {RH: 0.2, LH: -0.1, RF: 0.35, LF: -0.35};
 export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm, onTimeUp}) {
   const A = createAudio({masterGain: 2.8});
   const wake = createWakeLock();
-  let playing = false, step = 0, nextTime = 0, timer = null, raf = 0, countSlots = 0, reps = 0, loops = 0, startedAt = 0;
-  let queue = [], schedEx = null, schedCL = [], schedIdx = 0, bpm = 70;
+  let playing = false, step = 0, countSlots = 0, reps = 0, loops = 0, startedAt = 0;
+  let schedEx = null, schedCL = [], schedIdx = 0, bpm = 70;
 
   function hit(inst, t, amp, pan) {
     const {env, tone, noise} = A, dest = A.out(pan);
@@ -42,7 +42,7 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     if (n < 0) {
       const k = n + countSlots;
       A.beatClick(k % sub, sub, t, S.clickNote === 'e', bpm);
-      if (k % sub === 0) queue.push({t, count: k / sub + 1});
+      if (k % sub === 0) sch.push({t, count: k / sub + 1});
       return;
     }
     let i = n % schedEx.len;
@@ -51,7 +51,7 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
       loops++;
       if (S.trainer && loops % S.trainerEvery === 0 && bpm < S.trainerMax) {
         bpm = Math.min(S.trainerMax, bpm + S.trainerStep);
-        queue.push({t, bpm, msg: `加快到 ${bpm} BPM`});
+        sch.push({t, bpm, msg: `加快到 ${bpm} BPM`});
       }
       if (S.autoNext && S.reps && reps >= S.reps) {
         reps = 0;
@@ -59,40 +59,35 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
         schedEx = sheet[schedIdx];
         schedCL = swapped(schedEx, S.leftLead);
         step = 0; n = 0; i = 0;
-        queue.push({t, show: schedIdx});
+        sch.push({t, show: schedIdx});
       }
-      queue.push({t, reps});
+      sch.push({t, reps});
     }
     for (const l of schedCL) {
       const h = l.hits[i];
       if (h !== '.' && audible(l.limb)) hit(l.inst, t, AMP[h], PAN[l.limb]);
     }
     if (S.click && !A.beatClick(i % sub, sub, t, S.clickNote === 'e', bpm) && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
-    queue.push({t, i});
+    sch.push({t, i});
   }
 
-  function tick() {
-    while (nextTime < A.ctx.currentTime + 0.12) {
-      scheduleSlot(step, nextTime);
-      nextTime += 60 / bpm / schedEx.sub;
-      step++;
-    }
-  }
+  const sch = createScheduler({
+    ctx: () => A.ctx,
+    step: t => { scheduleSlot(step, t); step++; return 60 / bpm / schedEx.sub; },
+    onEvent,
+    onFrame,
+  });
 
-  function draw() {
-    if (!playing) return;
+  function onFrame() {
     const {S} = get();
-    if (S.timer && performance.now() - startedAt >= S.timer * 60000) { stop(); onTimeUp(S.timer); return; }
-    const now = A.ctx.currentTime;
-    while (queue.length && queue[0].t <= now) {
-      const e = queue.shift();
-      if (e.show !== undefined) onShow(e.show);
-      else if (e.count !== undefined) onCount(e.count);
-      else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
-      else if (e.reps !== undefined) onReps(e.reps);
-      else onSlot(e.i, schedEx.sub);
-    }
-    raf = requestAnimationFrame(draw);
+    if (S.timer && performance.now() - startedAt >= S.timer * 60000) { stop(); onTimeUp(S.timer); }
+  }
+  function onEvent(e) {
+    if (e.show !== undefined) onShow(e.show);
+    else if (e.count !== undefined) onCount(e.count);
+    else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
+    else if (e.reps !== undefined) onReps(e.reps);
+    else onSlot(e.i, schedEx.sub);
   }
 
   function play() {
@@ -105,19 +100,14 @@ export function createEngine({get, onSlot, onCount, onReps, onShow, onMsg, onBpm
     bpm = S.bpm;
     countSlots = S.countIn ? 4 * schedEx.sub : 0;
     step = -countSlots;
-    reps = 0; loops = 0; queue = [];
+    reps = 0; loops = 0;
     startedAt = performance.now();
-    nextTime = A.ctx.currentTime + 0.08;
-    tick();
-    timer = setInterval(tick, 25);
-    raf = requestAnimationFrame(draw);
+    sch.start(0.08);
     wake.on();
   }
   function stop() {
     playing = false;
-    clearInterval(timer);
-    cancelAnimationFrame(raf);
-    queue = [];
+    sch.stop();
     wake.off();
   }
 

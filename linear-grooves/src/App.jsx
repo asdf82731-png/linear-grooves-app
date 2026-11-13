@@ -16,6 +16,7 @@ import {
 } from './groove.js';
 import {createEngine} from './engine.js';
 import {ToolsNav} from './nav.jsx';
+import {clearShared, readShared, sendLink, shareLink} from '../../shared/src/share.js';
 
 const MIN_BPM = 40, MAX_BPM = 240;
 const DEFAULTS = {
@@ -69,6 +70,17 @@ function Grooves() {
 
   // a saved pattern brings its own settings along (once, at start)
   useEffect(() => { if (S.src === 'gen') update(adopt(pattern)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // opened from a shared link (#g=…): take that groove in as one of your own, then tidy the address
+  useEffect(() => {
+    const sh = readShared('g');
+    if (!sh) return;
+    clearShared();
+    if (!validPattern(sh.p)) { flash('分享的連結看不懂，可能被截斷了'); return; }
+    const p = clone(sh.p);
+    setS(s => ({...s, src: 'gen', ...adopt(p), bpm: Math.max(MIN_BPM, Math.min(MAX_BPM, Math.round(+sh.bpm || s.bpm)))}));
+    apply(p, true);
+    flash('已打開分享的節奏，喜歡就按「☆ 收藏」');
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => save('lg.pattern', pattern), [pattern]);
   useEffect(() => save('lg.favs', favs), [favs]);
   useEffect(() => save('lg.best', best), [best]);
@@ -181,6 +193,10 @@ function Grooves() {
               <Button size="sm" variant="ghost" label="複製" onClick={async () => {
                 const text = `${stickingText(pattern)}  (${SUB_NAME[pattern.sub]}, ${pattern.beats}/4, ${S.bpm} BPM)`;
                 try { await navigator.clipboard.writeText(text); flash('已複製，可以貼到筆記或傳給別人'); } catch { flash(text); }
+              }} />
+              <Button size="sm" variant="ghost" label="分享連結" onClick={async () => {
+                const m = await sendLink(shareLink('g', {p: pattern, bpm: S.bpm}), `Linear Grooves：${stickingText(pattern)}`);
+                if (m) flash(m);
               }} />
             </HStack>
           </HStack>

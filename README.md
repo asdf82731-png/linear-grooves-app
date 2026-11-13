@@ -31,7 +31,9 @@ python3 -m http.server 8000
 # Pro Metronome:  http://localhost:8000/metronome/
 ```
 
-建置結果（`<app>/index.html`、`<app>/assets/`、`<app>/sw.js`…）要和 `src/` 一起 commit，GitHub Pages 直接提供它們。發佈新版前把 `<app>/src/public/sw.js` 的 `VERSION` 加一。
+建置結果（`<app>/index.html`、`<app>/assets/`、`<app>/sw.js`…）要和 `src/` 一起 commit，GitHub Pages 直接提供它們。`<app>/sw.js` 是建置時產生的（範本在 `shared/src/sw-template.js`），快取版本是所有建置檔案的雜湊，**不用再手動改版本**；已安裝的 App 回到前景時會檢查更新，出現「有新版本了」時按「重新載入」。
+
+`npm test` 用合成的錄音測 Time Keeper 的打擊偵測（`timekeeper/src/public/onset-worklet.js`）。
 
 ### 自動檢查
 建置完、commit 之前跑一次：

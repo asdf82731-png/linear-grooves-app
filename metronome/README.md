@@ -23,13 +23,13 @@
   - `music.js`：拍號、細分節奏、音色等資料
   - `vox.js`：人聲數拍的音檔（base64）
   - `styles.css`：版面、擺錘、拍子條等節拍器專用的樣式（顏色用 Astryx 主題 token）
-  - `public/`：`sw.js`、`manifest.webmanifest`、`icons/`，建置時原樣複製到根目錄
+  - `public/`：`manifest.webmanifest`、`icons/`，建置時原樣複製到根目錄；`sw.js` 由建置依 `../shared/src/sw-template.js` 產生
 - 共用的部分在 `../shared/src/`：`audio.js`（限幅器＋軟削波的輸出鏈 `createLimiter`、螢幕恆亮 `createWakeLock`）、`timer.js`（排程用的計時器）。畫面沒有用 `shared/src/ui.jsx`，節拍器有自己的版面和字型。
 - `metronome/` 底下的 `index.html`、`assets/`、`sw.js`、`manifest.webmanifest`、`icons/` 是**建置產生的檔案**，GitHub Pages 直接提供它們。不要手動修改。
 
 ## 更新版本
 
-在 repo 根目錄執行：
+1. 在 repo 根目錄執行：
 
 ```bash
 npm install                  # 第一次
@@ -37,8 +37,7 @@ npm run build -- metronome   # 改完 metronome/src/ 之後重新建置
 npm run check -- metronome   # 自動檢查
 ```
 
-1. 把 `metronome/src/public/sw.js` 的版本（例如 `pro-metronome-v27`）加一。
 2. 建置後把 `src/` 和建置產生的檔案一起 commit。
-3. 手機重新開啟 App 一兩次就會拿到新版。
+3. 已安裝的 App 回到前景時會檢查更新，出現「有新版本了」時按「重新載入」。
 
 自動檢查在手機直向、手機橫向、平板直向、平板橫向（TCL NXTPAPER 11）各開一次，檢查：打開沒有錯誤、開始鍵完整出現在畫面上（不用捲動）、BPM 輸入 300 時三位數沒有被截斷、頁面不會左右捲動。

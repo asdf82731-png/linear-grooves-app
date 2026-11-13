@@ -1,12 +1,12 @@
 // Linear Grooves playback: synthesised kit (accented notes louder), metronome, count-in and auto-speed-up.
 // Plays the current flattened slots from get().SL, so edits made while playing are heard on the next slot.
 import {createAudio, createWakeLock, SUB_CLICK} from '../../shared/src/audio.js';
-import {setInterval, clearInterval} from '../../shared/src/timer.js';
+import {createScheduler} from '../../shared/src/scheduler.js';
 
 export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
   const A = createAudio({masterGain: 2});
   const wake = createWakeLock();
-  let playing = false, cur = 0, nextTime = 0, timer = null, raf = 0, countSlots = 0, loops = 0, queue = [], bpm = 80;
+  let playing = false, cur = 0, countSlots = 0, loops = 0, bpm = 80;
 
   function env(g, t, peak, dec) {
     g.gain.setValueAtTime(peak, t);
@@ -56,7 +56,7 @@ export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
     if (n < 0) {
       const k = n + countSlots;
       A.beatClick(k % sub, sub, t, S.clickNote === 'e', bpm);
-      if (k % sub === 0) queue.push({t, count: k / sub + 1});
+      if (k % sub === 0) sch.push({t, count: k / sub + 1});
       return;
     }
     const i = n % SL.length;
@@ -64,33 +64,28 @@ export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
       loops++;
       if (S.trainer && loops % S.trainerEvery === 0 && bpm < S.trainerMax) {
         bpm = Math.min(S.trainerMax, bpm + S.trainerStep);
-        queue.push({t, bpm, msg: `加速到 ${bpm} BPM`});
+        sch.push({t, bpm, msg: `加速到 ${bpm} BPM`});
       }
     }
     const s = SL[i];
     KIT[s.voice](t, s.acc ? 1 : 0.55);
     if (S.click && !A.beatClick(i % sub, sub, t, S.clickNote === 'e', bpm) && S.clickSub !== 'off') A.click(t, S.clickSub === 'same' ? 1 : SUB_CLICK);
-    queue.push({t, i});
+    sch.push({t, i});
   }
 
-  function tick() {
-    while (nextTime < A.ctx.currentTime + 0.12) {
-      scheduleSlot(cur, nextTime);
-      nextTime += 60 / bpm / get().pattern.sub;
-      cur++;
-    }
-  }
+  const sch = createScheduler({
+    ctx: () => A.ctx,
+    step: t => { scheduleSlot(cur, t); cur++; return 60 / bpm / get().pattern.sub; },
+    onEvent,
+    onFrame,
+  });
 
-  function draw() {
-    if (!playing) return;
-    const now = A.ctx.currentTime;
-    while (queue.length && queue[0].t <= now) {
-      const e = queue.shift();
-      if (e.count !== undefined) onCount(e.count);
-      else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
-      else onSlot(e.i);
-    }
-    raf = requestAnimationFrame(draw);
+  function onFrame() {
+  }
+  function onEvent(e) {
+    if (e.count !== undefined) onCount(e.count);
+    else if (e.msg) { onBpm(e.bpm); onMsg(e.msg); }
+    else onSlot(e.i);
   }
 
   function play() {
@@ -100,18 +95,13 @@ export function createEngine({get, onSlot, onCount, onMsg, onBpm}) {
     bpm = S.bpm;
     countSlots = S.countIn ? pattern.beats * pattern.sub : 0;
     cur = -countSlots;
-    loops = 0; queue = [];
-    nextTime = A.ctx.currentTime + 0.08;
-    tick();
-    timer = setInterval(tick, 25);
-    raf = requestAnimationFrame(draw);
+    loops = 0;
+    sch.start(0.08);
     wake.on();
   }
   function stop() {
     playing = false;
-    clearInterval(timer);
-    cancelAnimationFrame(raf);
-    queue = [];
+    sch.stop();
     wake.off();
   }
 

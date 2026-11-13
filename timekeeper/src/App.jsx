@@ -59,6 +59,7 @@ function TimeKeeper() {
   const [playing, setPlaying] = useState(false);
   const [beat, setBeat] = useState({lit: -1, quiet: false, info: ''});
   const [mic, setMic] = useState(false);
+  const [midi, setMidi] = useState({on: false, names: []});
   const [level, setLevel] = useState({bar: 0, thr: 0, note: '按「開始聽」後，這裡會顯示麥克風收到的音量；直線是門檻，打擊要超過它才算。'});
   const [recent, setRecent] = useState([]);
   const [calibText, setCalibText] = useState(null);
@@ -84,6 +85,7 @@ function TimeKeeper() {
     onLevel: (lv, thr) => setLevel({bar: levelPos(lv), thr: levelPos(thr), note: lv > thr ? '有聽到打擊' : '目前很安靜'}),
     onHit: off => setRecent(r => [...r.slice(-7), off]),
     onMic: on => { setMic(on); if (!on) setLevel(l => ({...l, bar: 0})); },
+    onMidi: (on, names) => setMidi({on, names}),
     onMicError: m => { flash(m); setLevel(l => ({...l, note: m})); },
     onCalib: (text, active) => { setCalibText(text); setCalibbing(active); },
     onCalibDone: rec => { setLatency(rec); setCalibText(null); setCalibbing(false); flash(`校正完成：延遲 ${rec.ms} 毫秒`); },
@@ -165,8 +167,8 @@ function TimeKeeper() {
               </span>
             ))}
           </div>
-          <div className="info">{playing ? beat.info : `${S.meter}/4 · 按 ▶ 開始${mic ? '，麥克風正在聽' : ''}`}</div>
-          {mic && (
+          <div className="info">{playing ? beat.info : `${S.meter}/4 · 按 ▶ 開始${mic ? '，麥克風正在聽' : ''}${midi.on ? '，電子鼓已連接' : ''}`}</div>
+          {(mic || midi.on) && (
             <div className="meter">
               <div className="meter-track" aria-hidden="true">
                 <span className="meter-zone" /><span className="meter-mid" />
@@ -223,7 +225,7 @@ function TimeKeeper() {
               {S.gapGrow && (
                 <>
                   <Choose label="最多安靜幾小節" value={S.gapMax} onChange={v => set({gapMax: +v})} options={[4, 8, 16]} />
-                  <Hint>開麥克風時，回來那一拍差 30 毫秒以內才算成功；沒開就每一輪都加。</Hint>
+                  <Hint>開麥克風或接電子鼓時，回來那一拍差 30 毫秒以內才算成功；都沒開就每一輪都加。</Hint>
                 </>
               )}
             </>
@@ -281,6 +283,14 @@ function TimeKeeper() {
           </HStack>
         </Group>
 
+        <Group title="電子鼓（MIDI）" id="h-midi">
+          <Hint>有電子鼓就用 USB 線（手機／平板要接 OTG 轉接頭）接上，按「連接電子鼓」。每一下都用電子鼓送出的時間來算，比麥克風準，也不用做延遲校正。可以和麥克風一起開。</Hint>
+          <HStack gap={3} vAlign="center" wrap="wrap">
+            <Button size="sm" label={midi.on ? '中斷電子鼓' : '連接電子鼓'} onClick={() => keeper.midiToggle()} />
+            <Text type="supporting">{!midi.on ? '沒有連接' : midi.names.length ? `已連接：${midi.names.join('、')}` : '等待電子鼓接上…'}</Text>
+          </HStack>
+        </Group>
+
         <Group title="練習紀錄" id="h-log">
           <div className="chart" dangerouslySetInnerHTML={{__html: logSvg}} />
           <InfoItems empty="還沒有紀錄。練超過 10 秒、按停止後會記在這裡。"
@@ -314,7 +324,7 @@ function Result({r, latency, chartBox, chartW}) {
       <Grid columns={3} gap={2}>
         <Stat label="平均偏差" value={`${e.mean > 0 ? '+' : ''}${e.mean} ms`} note={lean} />
         <Stat label="穩定度" value={`±${e.sd} ms`} note={steady} />
-        {e.gap == null ? <Stat label="速度飄移" value="—" note="Gap click 開麥克風才有" />
+        {e.gap == null ? <Stat label="速度飄移" value="—" note="Gap click 開麥克風或接電子鼓才有" />
           : <Stat label="速度飄移" value={`${e.gap > 0 ? '+' : ''}${e.gap} BPM`} note={`安靜時比設定${Math.abs(e.gap) < 1 ? '幾乎一樣' : e.gap > 0 ? '快' : '慢'}`} />}
       </Grid>
       <div className="chart" ref={chartBox} dangerouslySetInnerHTML={{__html: hitChart(r.hits, r.dur, chartW)}} />
