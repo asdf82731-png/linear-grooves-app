@@ -5,6 +5,7 @@
 //   - the tempo number shows all three digits (it is set to the highest tempo for this),
 //   - the page does not scroll sideways,
 //   - after one visit the app opens offline with its font (generated service worker),
+//   - Time Keeper counts hits from an electronic drum (fake MIDI input),
 //   - (phone portrait only) pressing play makes the screen follow the beat without errors, and play again stops it.
 // Run `npm run build` first, then `npm run check` (or `npm run check -- djent` for one app).
 // First time on a new computer: `npx playwright install chromium`.
@@ -138,6 +139,35 @@ async function checkOffline(browser, port, app) {
   return problems;
 }
 
+// Time Keeper with an electronic drum: a fake MIDI input sends a note-on every 100 ms while playing;
+// the hits must reach the timing meter.
+async function checkMidi(browser, base) {
+  const problems = [];
+  const ctx = await browser.newContext({viewport: SCREENS[0].viewport, serviceWorkers: 'block'});
+  await ctx.addInitScript(() => {
+    const input = {name: '測試電子鼓', state: 'connected', onmidimessage: null};
+    window.__midiInput = input;
+    navigator.requestMIDIAccess = async () => ({inputs: new Map([['1', input]]), outputs: new Map(), onstatechange: null});
+  });
+  const p = await ctx.newPage();
+  p.on('pageerror', e => problems.push(`程式錯誤：${e.message}`));
+  try {
+    await p.goto(base + 'timekeeper/', {waitUntil: 'load'});
+    await p.getByRole('button', {name: '連接電子鼓'}).click({timeout: 5000});
+    await p.getByText('已連接：測試電子鼓').first().waitFor({timeout: 3000});
+    await p.locator(PLAY).click();
+    await p.evaluate(() => { window.__midiTimer = setInterval(() => window.__midiInput.onmidimessage?.({data: [0x99, 38, 100], timeStamp: performance.now()}), 100); });
+    await p.waitForTimeout(4000);
+    const last = await p.locator('.meter-last').textContent();
+    if (!last || last.includes('還沒有聽到')) problems.push(`電子鼓的打擊沒有被算進去（顯示「${last}」）`);
+    await p.locator(PLAY).click();
+  } catch (e) {
+    problems.push(`MIDI 測試失敗：${e.message.split('\n')[0]}`);
+  }
+  await ctx.close();
+  return problems;
+}
+
 const only = process.argv.slice(2);
 const pages = only.length ? PAGES.filter(pg => only.includes(pg.app)) : PAGES;
 const server = await serve();
@@ -155,6 +185,12 @@ for (const page of pages) {
 for (const app of [...new Set(pages.map(pg => pg.app))]) {
   const problems = await checkOffline(browser, server.address().port, app);
   console.log(`${problems.length ? '✗' : '✓'} ${(app + '/').padEnd(30)} 離線`);
+  for (const pr of problems) console.log(`    ${pr}`);
+  if (problems.length) failed++;
+}
+if (pages.some(pg => pg.app === 'timekeeper')) {
+  const problems = await checkMidi(browser, base);
+  console.log(`${problems.length ? '✗' : '✓'} ${'timekeeper/'.padEnd(30)} 電子鼓（MIDI）`);
   for (const pr of problems) console.log(`    ${pr}`);
   if (problems.length) failed++;
 }
