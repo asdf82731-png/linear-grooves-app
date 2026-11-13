@@ -5,6 +5,7 @@
 //   - the tempo number shows all three digits (it is set to the highest tempo for this),
 //   - the page does not scroll sideways,
 //   - after one visit the app opens offline with its font (generated service worker),
+//   - a Linear Grooves share link opens the same groove,
 //   - Time Keeper counts hits from an electronic drum (fake MIDI input),
 //   - (phone portrait only) pressing play makes the screen follow the beat without errors, and play again stops it.
 // Run `npm run build` first, then `npm run check` (or `npm run check -- djent` for one app).
@@ -168,6 +169,42 @@ async function checkMidi(browser, base) {
   return problems;
 }
 
+// Linear Grooves share link: make a new groove, copy its link, open the link in a fresh browser: same groove.
+async function checkShare(browser, base) {
+  const problems = [];
+  const ctx = await browser.newContext({viewport: SCREENS[0].viewport, serviceWorkers: 'block'});
+  await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], {origin: base});
+  await ctx.addInitScript(() => { delete Navigator.prototype.share; });   // use the clipboard path
+  const p = await ctx.newPage();
+  p.on('pageerror', e => problems.push(`程式錯誤：${e.message}`));
+  try {
+    await p.goto(base + 'linear-grooves/', {waitUntil: 'load'});
+    // change the groove so it is not simply the default one
+    await p.getByRole('radio', {name: /隨機產生/}).check({timeout: 5000, force: true});
+    await p.getByRole('button', {name: /修改這個節奏/}).click({timeout: 5000});
+    await p.getByRole('button', {name: '對調', exact: true}).click({timeout: 5000});
+    await p.getByRole('button', {name: '換起點', exact: true}).click({timeout: 5000});
+    const before = await p.locator('.notation, .meta').allTextContents();
+    await p.getByRole('button', {name: '分享連結'}).click({timeout: 5000});
+    await p.waitForTimeout(200);
+    const url = await p.evaluate(() => navigator.clipboard.readText());
+    if (!/#g=[A-Za-z0-9_-]+$/.test(url)) throw new Error(`連結格式不對：${url.slice(0, 80)}`);
+    const ctx2 = await browser.newContext({viewport: SCREENS[0].viewport, serviceWorkers: 'block'});
+    const p2 = await ctx2.newPage();
+    p2.on('pageerror', e => problems.push(`程式錯誤（打開連結）：${e.message}`));
+    await p2.goto(url.replace(/^https?:\/\/[^/]+\//, base), {waitUntil: 'load'});
+    await p2.waitForTimeout(500);
+    const after = await p2.locator('.notation, .meta').allTextContents();
+    if (JSON.stringify(after) !== JSON.stringify(before)) problems.push('打開分享連結後，節奏和分享的不一樣');
+    if ((await p2.evaluate(() => location.hash))) problems.push('打開分享連結後網址還留著 #g=');
+    await ctx2.close();
+  } catch (e) {
+    problems.push(`分享連結測試失敗：${e.message.split('\n')[0]}`);
+  }
+  await ctx.close();
+  return problems;
+}
+
 const only = process.argv.slice(2);
 const pages = only.length ? PAGES.filter(pg => only.includes(pg.app)) : PAGES;
 const server = await serve();
@@ -185,6 +222,12 @@ for (const page of pages) {
 for (const app of [...new Set(pages.map(pg => pg.app))]) {
   const problems = await checkOffline(browser, server.address().port, app);
   console.log(`${problems.length ? '✗' : '✓'} ${(app + '/').padEnd(30)} 離線`);
+  for (const pr of problems) console.log(`    ${pr}`);
+  if (problems.length) failed++;
+}
+if (pages.some(pg => pg.app === 'linear-grooves')) {
+  const problems = await checkShare(browser, base);
+  console.log(`${problems.length ? '✗' : '✓'} ${'linear-grooves/'.padEnd(30)} 分享連結`);
   for (const pr of problems) console.log(`    ${pr}`);
   if (problems.length) failed++;
 }
