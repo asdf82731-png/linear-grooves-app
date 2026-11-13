@@ -4,6 +4,7 @@
 //   - the play button is fully on screen without scrolling,
 //   - the tempo number shows all three digits (it is set to the highest tempo for this),
 //   - the page does not scroll sideways,
+//   - after one visit the app opens offline with its font (generated service worker),
 //   - (phone portrait only) pressing play makes the screen follow the beat without errors, and play again stops it.
 // Run `npm run build` first, then `npm run check` (or `npm run check -- djent` for one app).
 // First time on a new computer: `npx playwright install chromium`.
@@ -111,6 +112,32 @@ async function checkPage(browser, base, page, screen) {
   return problems;
 }
 
+// Offline: the generated sw.js precaches everything, so after one visit the app opens with the network off,
+// with the Figtree font (bundled with the app, no Google Fonts) loaded.
+async function checkOffline(browser, port, app) {
+  const problems = [];
+  const ctx = await browser.newContext({viewport: SCREENS[0].viewport});
+  const p = await ctx.newPage();
+  p.on('pageerror', e => problems.push(`程式錯誤：${e.message}`));
+  try {
+    // a service worker needs a secure origin: localhost counts
+    await p.goto(`http://localhost:${port}/${app}/`, {waitUntil: 'load'});
+    await p.evaluate(() => navigator.serviceWorker.ready);
+    await p.waitForTimeout(300);
+    await ctx.setOffline(true);
+    await p.reload({waitUntil: 'load'});
+    await p.waitForTimeout(500);
+    const buttons = await p.evaluate(() => document.querySelectorAll('button').length);
+    if (buttons < 3) problems.push(`離線時打不開（只有 ${buttons} 個按鈕）`);
+    const font = await p.evaluate(async () => (await document.fonts.load('16px Figtree')).some(f => f.family.replace(/["']/g, '') === 'Figtree' && f.status === 'loaded'));
+    if (!font) problems.push('離線時 Figtree 字型沒有載入');
+  } catch (e) {
+    problems.push(`離線測試失敗：${e.message.split('\n')[0]}`);
+  }
+  await ctx.close();
+  return problems;
+}
+
 const only = process.argv.slice(2);
 const pages = only.length ? PAGES.filter(pg => only.includes(pg.app)) : PAGES;
 const server = await serve();
@@ -124,6 +151,12 @@ for (const page of pages) {
     for (const pr of problems) console.log(`    ${pr}`);
     if (problems.length) failed++;
   }
+}
+for (const app of [...new Set(pages.map(pg => pg.app))]) {
+  const problems = await checkOffline(browser, server.address().port, app);
+  console.log(`${problems.length ? '✗' : '✓'} ${(app + '/').padEnd(30)} 離線`);
+  for (const pr of problems) console.log(`    ${pr}`);
+  if (problems.length) failed++;
 }
 await browser.close();
 server.close();

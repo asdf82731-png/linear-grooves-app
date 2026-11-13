@@ -364,8 +364,41 @@ export function useKeys(map) {
   }, [ref]);
 }
 
+// Registers the app's generated sw.js. When a new version has installed while the app was open, a small bar offers
+// to reload into it (the new files are already cached, so this also works offline). Never reloads by itself:
+// that would cut off a practice run.
 export function registerSW() {
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
-    window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
-  }
+  if (!('serviceWorker' in navigator) || !(location.protocol === 'https:' || location.hostname === 'localhost')) return;
+  const hadController = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadController) showUpdateBar(); });
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      // look for an update whenever the app comes back to the front (installed PWAs can stay open for days)
+      document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') reg.update().catch(() => {}); });
+    }).catch(() => {});
+  });
+}
+
+function showUpdateBar() {
+  if (document.getElementById('sw-update')) return;
+  const bar = document.createElement('div');
+  bar.id = 'sw-update';
+  bar.setAttribute('role', 'status');
+  bar.style.cssText = 'position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:9999;display:flex;gap:12px;align-items:center;'
+    + 'padding:10px 14px;border-radius:12px;background:#222;color:#fff;font:14px/1.3 system-ui,sans-serif;box-shadow:0 4px 16px rgba(0,0,0,.3);max-width:calc(100vw - 32px)';
+  const text = document.createElement('span');
+  text.textContent = '有新版本了';
+  const go = document.createElement('button');
+  go.type = 'button';
+  go.textContent = '重新載入';
+  go.style.cssText = 'border:0;border-radius:8px;padding:6px 12px;background:#c8793a;color:#fff;font:inherit;font-weight:600;cursor:pointer';
+  go.onclick = () => location.reload();
+  const close = document.createElement('button');
+  close.type = 'button';
+  close.textContent = '稍後';
+  close.setAttribute('aria-label', '稍後再更新');
+  close.style.cssText = 'border:0;background:none;color:#ccc;font:inherit;cursor:pointer';
+  close.onclick = () => bar.remove();
+  bar.append(text, go, close);
+  document.body.append(bar);
 }
